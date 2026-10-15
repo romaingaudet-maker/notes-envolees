@@ -117,3 +117,57 @@
   .rstrip .dot.extra { top: 3px; }
   .card { gap: 8px; padding-top: 10px; padding-bottom: 12px; }
 }
+
+/* niveau 2 : « Toute la comptine » à côté de « À toi », tortue en icône */
+.listen .btn .ic { display: inline-grid; place-items: center; }
+[data-level="2"] .listen .btn.icon { width: 46px; padding: 0; justify-content: center; }
+[data-level="2"] .listen .btn.icon .lbl { display: none; }
+
+/* carte de fin : jouer toute la comptine d'un coup, et son bilan */
+.full-ask { margin: 0; font-weight: 700; color: var(--text); }
+.full-res { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 12px; border-radius: 14px; background: var(--panel); border: 2px solid var(--line); }
+.full-res.is-ok { border-color: #2FA35A; }
+.full-res p { margin: 0; flex: 1 1 16em; color: var(--text); }
+.full-ph { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 5px; }
+.full-ph li { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-size: 13px; font-weight: 700; color: #fff; }
+.full-ph li.ok { background: #2FA35A; }
+.full-ph li.near { background: #F0A020; }
+.full-ph li.bad { background: #E5484D; }
+@media (max-width: 899px) {
+  .done-card { gap: 8px; padding: 12px 14px 14px; }
+  .done-card .done-stars svg { width: 30px; height: 30px; }
+  .done-actions { gap: 8px; }
+  .done-actions .btn { height: 40px; }
+}
+
+/* carte de fin, plus compacte : étoiles et titre sur une ligne, boutons resserrés */
+.fin .listen #b-to { display: none; }
+.done-card { gap: 10px; padding: 14px 18px 16px; }
+.done-head { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; }
+.done-card h2 { font-size: clamp(22px, 2.1vw, 28px); }
+.done-card .done-stars svg { width: 28px; height: 28px; }
+.done-actions { gap: 8px; }
+.done-actions .btn { height: 40px; padding: 0 14px; font-size: 14px; }
+.done-actions .btn-big { height: 46px; font-size: 16px; padding-right: 16px; }
+.done-actions .btn-big .ic { width: 34px; height: 34px; }
+@media (max-width: 899px) {
+  .done-card h2 { font-size: 20px; }
+  .done-card .done-stars svg { width: 24px; height: 24px; }
+  .done-card > p { font-size: 15px; }
+  .full-res, .full-ask { font-size: 15px; }
+}
+
+/* carte de fin affichée : l'indication du bas (redite du titre) et le pied de page s'effacent ;
+   s'il manque encore de la place, le xylophone (ou le micro) se replie jusqu'à ce qu'on rejoue */
+.song:has(#done:not([hidden])) .dock > .hint,
+.song:has(#done:not([hidden])) .play-foot { display: none; }
+.song.tight:has(#done:not([hidden])) .dock > .xylo,
+.song.tight:has(#done:not([hidden])) .dock > .ear { display: none; }
+.done-actions .short { display: none; }
+@media (max-width: 899px) {
+  .done-actions .long { display: none; }
+  .done-actions .short { display: inline; }
+  .done-actions #d-again { width: 40px; padding: 0; justify-content: center; }
+}
+/* niveau 2, carte de fin : son grand bouton remplace « À toi » (qui revient en « Arrêter » pendant la prise) */
+.song:has(#done:not([hidden])) #b-go { display: none; }

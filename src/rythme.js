@@ -3,14 +3,18 @@
    - les notes jouées sont associées aux notes attendues dans l'ordre
      (programmation dynamique : hauteur + écart de temps, notes oubliées
      ou en trop permises) ;
-   - le décalage d'ensemble (latence du son ou du micro, départ un peu
-     tardif) est retiré : on juge la place de chaque attaque par rapport
-     à la pulsation donnée par le décompte ;
-   - écarts exprimés en pulsations : ≤ 0,2 en place, ≤ 0,4 un peu tôt ou
-     un peu tard, au-delà nettement en avance ou en retard.
+   - on retire le décalage d'ensemble (latence du son ou du micro, départ
+     un peu tardif) et, sur les phrases assez longues, le tempo réellement
+     tenu s'il reste proche du décompte (± 12 %) : un léger ralenti régulier
+     ne fait pas « tomber » toutes les notes de la fin ;
+   - écarts exprimés en pulsations : ≤ 0,25 en place, ≤ 0,45 un peu tôt ou
+     un peu tard, au-delà nettement en avance ou en retard ;
+   - indulgence qui grandit avec la longueur : sur une longue phrase, une
+     note nettement à côté est pardonnée ; sur toute une comptine, quelques
+     fausses notes aussi.
 ------------------------------------------------------------------- */
 const Rhythm = (() => {
-  const OK = 0.2, NEAR = 0.4;
+  const OK = 0.25, NEAR = 0.45;
 
   const median = (a) => {
     const s = [...a].sort((x, y) => x - y), n = s.length;
@@ -18,7 +22,8 @@ const Rhythm = (() => {
   };
 
   // exp, got : [{ t (secondes) , … }] ; same(e, g) : bonne hauteur ?
-  function align(exp, got, same, off, win) {
+  // modèle de temps : une note attendue à t doit sonner à off + k·t
+  function align(exp, got, same, off, k, win) {
     const n = exp.length, m = got.length;
     // une fausse note coûte plus qu'un écart de temps, même grand :
     // on associe d'abord les bonnes hauteurs, dans l'ordre
@@ -29,64 +34,78 @@ const Rhythm = (() => {
     for (let j = 1; j <= m; j++) { D[0][j] = j * EXTRA; B[0][j] = 2; }
     for (let i = 1; i <= n; i++) {
       for (let j = 1; j <= m; j++) {
-        const dt = (got[j - 1].t - exp[i - 1].t - off) / win;
-        let best = D[i - 1][j - 1] + (same(exp[i - 1], got[j - 1]) ? 0 : WRONG) + Math.min(2, dt * dt), k = 0;
-        if (D[i - 1][j] + MISS < best) { best = D[i - 1][j] + MISS; k = 1; }
-        if (D[i][j - 1] + EXTRA < best) { best = D[i][j - 1] + EXTRA; k = 2; }
-        D[i][j] = best; B[i][j] = k;
+        const dt = (got[j - 1].t - off - k * exp[i - 1].t) / win;
+        let best = D[i - 1][j - 1] + (same(exp[i - 1], got[j - 1]) ? 0 : WRONG) + Math.min(2, dt * dt), b = 0;
+        if (D[i - 1][j] + MISS < best) { best = D[i - 1][j] + MISS; b = 1; }
+        if (D[i][j - 1] + EXTRA < best) { best = D[i][j - 1] + EXTRA; b = 2; }
+        D[i][j] = best; B[i][j] = b;
       }
     }
     const pairs = new Array(n).fill(-1), extra = [];
     let i = n, j = m;
     while (i > 0 || j > 0) {
-      const k = B[i][j];
-      if (k === 0 && i > 0 && j > 0) { pairs[i - 1] = j - 1; i--; j--; } else if (k === 1) i--; else { extra.push(j - 1); j--; }
+      const b = B[i][j];
+      if (b === 0 && i > 0 && j > 0) { pairs[i - 1] = j - 1; i--; j--; } else if (b === 1) i--; else { extra.push(j - 1); j--; }
     }
     return { pairs, extra: extra.reverse() };
   }
 
   /* exp : notes attendues { t } (t en secondes, la première à 0)
      got : notes jouées { t } (même origine : l'instant où la phrase devait commencer)
-     beat : durée d'une pulsation (s) ; same(e, g) : la hauteur est-elle juste ? */
-  function evaluate({ exp, got, beat, same }) {
+     beat : durée d'une pulsation (s) ; same(e, g) : la hauteur est-elle juste ?
+     mic : notes venues du micro (une note répétée peut lui échapper) */
+  function evaluate({ exp, got, beat, same, mic = false }) {
     const n = exp.length;
     const win = Math.max(0.12, beat * 0.5);
     let off = got.length && same(exp[0], got[0]) && Math.abs(got[0].t) < beat * 1.5 ? got[0].t : 0;
-    let A = align(exp, got, same, off, win);
-    const firstDevs = [];
-    A.pairs.forEach((j, i) => { if (j >= 0 && same(exp[i], got[j])) firstDevs.push(got[j].t - exp[i].t); });
-    if (firstDevs.length) { off = median(firstDevs); A = align(exp, got, same, off, win); }
+    let k = 1, raw = 1;
+    let A = align(exp, got, same, off, k, win);
+    const rightPairs = () => A.pairs.map((j, i) => [i, j]).filter(([i, j]) => j >= 0 && same(exp[i], got[j]));
+    let rp = rightPairs();
+    if (rp.length) { off = median(rp.map(([i, j]) => got[j].t - exp[i].t)); A = align(exp, got, same, off, k, win); rp = rightPairs(); }
+    // tempo réellement tenu (phrases assez longues seulement : sinon on effacerait les erreurs de rythme)
+    for (let it = 0; it < 2 && rp.length >= 5; it++) {
+      const xs = rp.map(([i]) => exp[i].t), ys = rp.map(([, j]) => got[j].t);
+      const mx = xs.reduce((a, v) => a + v, 0) / xs.length, my = ys.reduce((a, v) => a + v, 0) / ys.length;
+      let sxy = 0, sxx = 0;
+      xs.forEach((x, q) => { sxy += (x - mx) * (ys[q] - my); sxx += (x - mx) * (x - mx); });
+      if (sxx < (3 * beat) * (3 * beat)) break;
+      raw = sxy / sxx;
+      k = Math.max(0.88, Math.min(1.12, raw));
+      off = median(rp.map(([i, j]) => got[j].t - k * exp[i].t));
+      A = align(exp, got, same, off, k, win);
+      rp = rightPairs();
+    }
 
     const notes = exp.map((e, i) => {
       const j = A.pairs[i];
       if (j < 0) return { i, kind: 'missed' };
       const g = got[j];
-      const dev = (g.t - e.t - off) / beat;
+      const dev = (g.t - off - k * e.t) / beat;
       const a = Math.abs(dev);
       const timing = a <= OK ? 'ok' : a <= NEAR ? (dev < 0 ? 'early' : 'late') : (dev < 0 ? 'early!' : 'late!');
       return { i, j, kind: same(e, g) ? 'right' : 'wrong', dev, timing };
     });
     const right = notes.filter((x) => x.kind === 'right');
+    const missed = notes.filter((x) => x.kind === 'missed').length;
+    const wrong = n - right.length - missed;
     const inPlace = right.filter((x) => x.timing === 'ok').length;
     const farOff = right.filter((x) => x.timing.endsWith('!')).length;
+    const drift = raw > 1.1 ? 'slower' : raw < 0.9 ? 'faster' : null;
+    const tempoOk = raw >= 0.86 && raw <= 1.14;
 
-    // tempo : pente entre temps joués et temps attendus (1 = tenu)
-    let slope = 1;
-    if (right.length >= 4) {
-      const xs = right.map((x) => exp[x.i].t), ys = right.map((x) => got[x.j].t);
-      const mx = xs.reduce((s, v) => s + v, 0) / xs.length, my = ys.reduce((s, v) => s + v, 0) / ys.length;
-      let sxy = 0, sxx = 0;
-      xs.forEach((x, k) => { sxy += (x - mx) * (ys[k] - my); sxx += (x - mx) * (x - mx); });
-      if (sxx > beat * beat) slope = sxy / sxx;
-    }
-    const drift = slope > 1.1 ? 'slower' : slope < 0.9 ? 'faster' : null;
-
-    const pitchOk = right.length === n;
-    const rhythmOk = farOff === 0 && inPlace >= Math.ceil(0.75 * n);
+    // indulgence selon la longueur
+    const okWrong = n >= 20 ? Math.floor(n / 20) : 0;
+    const okMissed = (mic && n >= 8 ? 1 : 0) + (n >= 20 ? Math.floor(n / 20) : 0);
+    const okFar = (n >= 10 ? 1 : 0) + (n >= 24 ? Math.floor((n - 10) / 12) : 0);
+    const okExtra = 1 + Math.floor(n / 8);
+    const pitchOk = wrong <= okWrong && missed <= okMissed;
+    const rhythmOk = tempoOk && farOff <= okFar && inPlace >= Math.ceil(0.6 * right.length);
     return {
-      notes, extra: A.extra, off, entry: off / beat, slope, drift,
-      right: right.length, inPlace, farOff, total: n,
-      pitchOk, rhythmOk, pass: pitchOk && rhythmOk && A.extra.length <= 1,
+      notes, extra: A.extra, off, k, slope: raw, entry: off / beat, drift,
+      right: right.length, wrong, missed, inPlace, farOff, total: n,
+      pitchOk, rhythmOk, pass: pitchOk && rhythmOk && A.extra.length <= okExtra,
+      perfect: right.length === n && inPlace === n && !A.extra.length,
       played: got.length,
     };
   }
@@ -94,21 +113,19 @@ const Rhythm = (() => {
   /* Phrase courte pour l'enfant */
   function verdict(r, ordinal) {
     if (!r.played) return { text: 'Je n’ai rien entendu… Recommence après le décompte.', mood: 'down' };
-    if (r.pass) return r.inPlace === r.total ? { text: 'Parfait : juste et en rythme !', mood: 'ok' } : { text: 'Bravo, c’est réussi !', mood: 'ok' };
+    if (r.pass) return r.perfect ? { text: 'Parfait : juste et en rythme !', mood: 'ok' } : { text: 'Bravo, c’est réussi !', mood: 'ok' };
     if (!r.pitchOk) {
-      const missed = r.notes.filter((x) => x.kind === 'missed').length;
-      const wrong = r.total - r.right - missed;
-      if (missed === r.total) return { text: 'Je n’ai pas reconnu la phrase. Écoute l’exemple.', mood: 'down' };
-      if (!wrong) return { text: missed === 1 ? 'Presque ! Il manque une note.' : `Il manque ${missed} notes.`, mood: 'down' };
-      if (!missed) return { text: wrong === 1 ? 'Presque ! Une note n’est pas la bonne.' : `${wrong} notes ne sont pas les bonnes.`, mood: 'down' };
-      return { text: `${wrong + missed} notes ne sont pas les bonnes.`, mood: 'down' };
+      if (r.missed === r.total) return { text: 'Je n’ai pas reconnu la phrase. Écoute l’exemple.', mood: 'down' };
+      if (!r.wrong) return { text: r.missed === 1 ? 'Presque ! Il manque une note.' : `Il manque ${r.missed} notes.`, mood: 'down' };
+      if (!r.missed) return { text: r.wrong === 1 ? 'Presque ! Une note n’est pas la bonne.' : `${r.wrong} notes ne sont pas les bonnes.`, mood: 'down' };
+      return { text: `${r.wrong + r.missed} notes ne sont pas les bonnes.`, mood: 'down' };
     }
     if (r.drift === 'faster') return { text: 'Les notes sont justes, mais tu as accéléré.', mood: 'up' };
     if (r.drift === 'slower') return { text: 'Les notes sont justes, mais tu as ralenti.', mood: 'up' };
     const worst = r.notes.filter((x) => x.kind === 'right' && x.timing !== 'ok').sort((a, b) => Math.abs(b.dev) - Math.abs(a.dev))[0];
     if (worst) {
       const where = ordinal ? ordinal(worst.i) : `La ${worst.i ? worst.i + 1 + 'e' : '1re'} note`;
-      return { text: `Notes justes ! ${where} arrive ${worst.dev < 0 ? 'trop tôt' : 'trop tard'}.`, mood: 'up' };
+      return { text: `Notes justes ! ${where} arrive ${worst.dev < 0 ? 'trop tôt' : 'trop tard'}.`, mood: 'up' };
     }
     return { text: 'Les notes sont justes. Attention aux notes en trop.', mood: 'up' };
   }

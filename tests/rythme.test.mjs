@@ -50,5 +50,26 @@ total++;
   console.log(`${good ? '✓' : '✗'} ${'noire pointée-croche jouée comme deux noires'.padEnd(46)} → ${verdict(flat).text}`);
 }
 
+// ---- indulgence sur les longues phrases et sur toute une comptine ----
+function longCheck(name, n, mk, expectFn, opts = {}) {
+  total++;
+  const ex = Array.from({ length: n }, (_, i) => ({ t: i * 0.5 * beat, p: 60 + ((i * 5) % 7) }));
+  const r = evaluate({ exp: ex, got: mk(ex).map(([p, t]) => ({ p, t: t + 0.1 })), beat, same, mic: !!opts.mic });
+  let ok = false; try { ok = expectFn(r); } catch (e) { ok = false; }
+  if (!ok) fails++;
+  console.log(`${ok ? '✓' : '✗'} ${name.padEnd(46)} → ${verdict(r).text}${ok ? '' : `   [${JSON.stringify({ pass: r.pass, right: r.right, inPlace: r.inPlace, far: r.farOff, wrong: r.wrong, missed: r.missed, k: +r.k.toFixed(3), slope: +r.slope.toFixed(3) })}]`}`);
+}
+const jit = (i) => [0.04, -0.05, 0.06, -0.03, 0.05, -0.06, 0.02, -0.04][i % 8];
+longCheck('16 croches, un peu plus lentes (× 1,07)', 16, (ex) => ex.map((e) => [e.p, e.t * 1.07]), (r) => r.pass);
+longCheck('16 croches, ± 60 ms à chaque note', 16, (ex) => ex.map((e, i) => [e.p, e.t + jit(i)]), (r) => r.pass);
+longCheck('12 croches, une note nettement en retard', 12, (ex) => ex.map((e, i) => [e.p, e.t + (i === 7 ? 0.6 * beat : 0)]), (r) => r.pass && r.farOff === 1);
+longCheck('12 croches, deux notes nettement à côté', 12, (ex) => ex.map((e, i) => [e.p, e.t + (i === 4 || i === 9 ? 0.6 * beat : 0)]), (r) => !r.pass);
+longCheck('8 croches, une note nettement en retard', 8, (ex) => ex.map((e, i) => [e.p, e.t + (i === 5 ? 0.6 * beat : 0)]), (r) => !r.pass);
+longCheck('12 notes au micro, une note répétée manquée', 12, (ex) => ex.filter((_, i) => i !== 6).map((e) => [e.p, e.t]), (r) => r.pass, { mic: true });
+longCheck('12 notes au xylophone, une note oubliée', 12, (ex) => ex.filter((_, i) => i !== 6).map((e) => [e.p, e.t]), (r) => !r.pass);
+longCheck('comptine entière (44 notes), 2 fausses notes', 44, (ex) => ex.map((e, i) => [i === 10 || i === 30 ? e.p + 2 : e.p, e.t + jit(i)]), (r) => r.pass && r.wrong === 2);
+longCheck('comptine entière (44 notes), 4 fausses notes', 44, (ex) => ex.map((e, i) => [i % 11 === 3 ? e.p + 2 : e.p, e.t]), (r) => !r.pass && r.wrong === 4);
+longCheck('comptine entière, ralentit peu à peu (× 1,2)', 44, (ex) => ex.map((e) => [e.p, e.t * (1 + 0.2 * e.t / ex[43].t)]), (r) => !r.pass);
+
 console.log(fails ? `\n${fails}/${total} tests en échec` : `\nLes ${total} tests du rythme passent.`);
 process.exit(fails ? 1 : 0);

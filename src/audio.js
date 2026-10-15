@@ -1,6 +1,7 @@
 /* ------------------------------------------------------------------
    Moteur sonore : un timbre synthétisé par comptine (Web Audio)
-   - transposition globale pour les instruments en si♭, mi♭ et fa
+   - transposition globale pour les instruments en si♭, mi♭ et fa, et
+     timbre de l’instrument de l’élève quand il en a choisi un
    - garde en mémoire quand la page se tait, pour que l'écoute du micro
      ne confonde pas le haut-parleur avec l'instrument : l'écoute reprend
      un peu avant la fin de la dernière note (EARLY), et les notes de la
@@ -51,6 +52,26 @@ const Sound = (() => {
     clarinet:  { kind: 'wind', rev: 0.22, gain: 0.2, attack: 0.04, release: 0.06,
                  wave: [1, 0.02, 0.5, 0.02, 0.24, 0.02, 0.1], vibrato: [5, 0.0018], breath: 0.03 },
     accordion: { kind: 'reed', rev: 0.2, gain: 0.15, attack: 0.03, release: 0.08, detune: 4, lp: 3200 },
+
+    /* Timbres des instruments de l'élève (sons tenus) : spectre harmonique,
+       filtre qui s'ouvre à l'attaque (cuivres), résonances de caisse (cordes),
+       vibrato qui arrive après l'attaque, souffle ou frottement de l'archet. */
+    flute:     { kind: 'sust', rev: 0.28, gain: 0.26, attack: 0.06, release: 0.09, wave: [1, 0.22, 0.07, 0.03, 0.012],
+                 vibrato: [5, 0.0042, 0.18], breath: 0.085, noise: [1.6, 0.9], lp: [8, 8, 0.01] },
+    sax:       { kind: 'sust', rev: 0.22, gain: 0.22, attack: 0.035, release: 0.07, wave: [1, 0.8, 0.62, 0.52, 0.44, 0.36, 0.28, 0.21, 0.15, 0.11, 0.07, 0.05],
+                 vibrato: [5.2, 0.0035, 0.25], breath: 0.04, noise: [3, 1], lp: [3, 6.5, 0.08] },
+    trumpet:   { kind: 'sust', rev: 0.22, gain: 0.2, attack: 0.03, release: 0.06, wave: [1, 0.95, 0.9, 0.75, 0.6, 0.48, 0.36, 0.27, 0.2, 0.14, 0.1, 0.07, 0.05],
+                 vibrato: [5.5, 0.002, 0.3], breath: 0.015, noise: [4, 1], lp: [2.5, 9, 0.06] },
+    trombone:  { kind: 'sust', rev: 0.24, gain: 0.24, attack: 0.045, release: 0.08, wave: [1, 0.85, 0.7, 0.55, 0.42, 0.32, 0.24, 0.17, 0.12, 0.08],
+                 vibrato: [5, 0.0015, 0.3], breath: 0.012, noise: [4, 1], lp: [2, 7, 0.08] },
+    horn:      { kind: 'sust', rev: 0.34, gain: 0.27, attack: 0.06, release: 0.1, wave: [1, 0.55, 0.32, 0.2, 0.12, 0.07, 0.04],
+                 vibrato: [4.8, 0.0012, 0.3], breath: 0.008, noise: [3, 1], lp: [2, 4.2, 0.1] },
+    violin:    { kind: 'sust', rev: 0.3, gain: 0.2, attack: 0.08, release: 0.13, wave: Array.from({ length: 16 }, (_, k) => Math.pow(k + 1, -0.85)),
+                 vibrato: [5.6, 0.0045, 0.22], breath: 0.03, noise: [6, 0.7], lp: [14, 14, 0.01, 7000], body: [[450, 3], [2600, 4]] },
+    viola:     { kind: 'sust', rev: 0.3, gain: 0.22, attack: 0.09, release: 0.14, wave: Array.from({ length: 14 }, (_, k) => Math.pow(k + 1, -0.95)),
+                 vibrato: [5.3, 0.004, 0.25], breath: 0.03, noise: [5, 0.7], lp: [12, 12, 0.01, 5000], body: [[350, 3], [1600, 3]] },
+    cello:     { kind: 'sust', rev: 0.3, gain: 0.24, attack: 0.1, release: 0.16, wave: Array.from({ length: 14 }, (_, k) => Math.pow(k + 1, -0.9)),
+                 vibrato: [5, 0.0035, 0.28], breath: 0.025, noise: [5, 0.7], lp: [12, 12, 0.01, 4000], body: [[220, 3], [1200, 2]] },
   };
   Object.keys(VOICES).forEach((k) => { VOICES[k].id = k; });
 
@@ -268,6 +289,72 @@ const Sound = (() => {
     o.stop(stop); lfo.stop(stop); n.stop(stop);
   }
 
+  /* --- instruments tenus de l'élève : flûte, saxophone, cuivres, cordes frottées --- */
+  function sustNote(v, dest, midi, t, dur, vel) {
+    const f = hz(midi);
+    let wave = waves.get(v.id);
+    if (!wave) {
+      const imag = new Float32Array([0].concat(v.wave));
+      wave = ctx.createPeriodicWave(new Float32Array(imag.length), imag);
+      waves.set(v.id, wave);
+    }
+    const end = t + Math.max(0.08, dur * 0.94);
+    const peak = v.gain * vel;
+    const o = ctx.createOscillator();
+    o.setPeriodicWave(wave);
+    o.frequency.value = f;
+    // vibrato qui arrive après l'attaque
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = v.vibrato[0];
+    const lg = ctx.createGain();
+    const vd = Math.min(v.vibrato[2], dur * 0.5);
+    lg.gain.setValueAtTime(0, t);
+    lg.gain.setValueAtTime(0, t + vd);
+    lg.gain.linearRampToValueAtTime(f * v.vibrato[1], t + vd + 0.25);
+    lfo.connect(lg);
+    lg.connect(o.frequency);
+    // filtre : s'ouvre à l'attaque (éclat des cuivres), plafonné pour les cordes
+    const [lp0, lp1, lpT, lpMax = 12000] = v.lp;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.Q.value = 0.7;
+    lp.frequency.setValueAtTime(Math.min(lpMax, f * lp0), t);
+    lp.frequency.linearRampToValueAtTime(Math.min(lpMax, f * lp1), t + lpT);
+    o.connect(lp);
+    let last = lp;
+    (v.body || []).forEach(([fr, db]) => {
+      const pk = ctx.createBiquadFilter();
+      pk.type = 'peaking'; pk.frequency.value = fr; pk.Q.value = 1.1; pk.gain.value = db;
+      last.connect(pk); last = pk;
+    });
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(peak, t + v.attack);
+    g.gain.setValueAtTime(peak, end);
+    g.gain.setTargetAtTime(0, end, v.release / 3);
+    last.connect(g);
+    g.connect(dest);
+    // souffle (vents) ou frottement de l'archet (cordes)
+    const n = ctx.createBufferSource();
+    n.buffer = noise;
+    n.loop = true;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = Math.min(9000, f * v.noise[0]);
+    bp.Q.value = v.noise[1];
+    const ng = ctx.createGain();
+    ng.gain.setValueAtTime(0, t);
+    ng.gain.linearRampToValueAtTime(v.breath * vel, t + Math.min(0.03, v.attack));
+    ng.gain.setTargetAtTime(v.breath * 0.35 * vel, t + v.attack, 0.06);
+    ng.gain.setTargetAtTime(0, end, 0.03);
+    n.connect(bp);
+    bp.connect(ng);
+    ng.connect(dest);
+    const stop = end + v.release + 0.4;
+    o.start(t); lfo.start(t); n.start(t, Math.random() * 0.5);
+    o.stop(stop); lfo.stop(stop); n.stop(stop);
+  }
+
   /* --- accordéon (anches légèrement désaccordées : effet musette) --- */
   function reedNote(v, dest, midi, t, dur, vel) {
     const f = hz(midi);
@@ -298,13 +385,16 @@ const Sound = (() => {
     g.connect(dest);
   }
 
+  let lastVoice = null;
   function note(voiceId, dest, midi, t, dur, vel) {
     const v = voiceOf(voiceId);
+    lastVoice = v.id;
     const m = midi + transpose;
     mark(v, m, t, dur, dest);
     if (v.kind === 'add') addNote(v, dest, m, t, dur, vel);
     else if (v.kind === 'ks') ksNote(v, dest, m, t, dur, vel);
     else if (v.kind === 'wind') windNote(v, dest, m, t, dur, vel);
+    else if (v.kind === 'sust') sustNote(v, dest, m, t, dur, vel);
     else reedNote(v, dest, m, t, dur, vel);
   }
 
@@ -377,6 +467,8 @@ const Sound = (() => {
     quietAt: () => quietUntil,
     ringing, EARLY,
     lastConcert: () => lastConcert,
+    lastVoice: () => lastVoice,
+    hasVoice: (id) => !!VOICES[id],
     setTranspose: (n) => { transpose = n | 0; },
     available: !!AC,
   };
