@@ -71,23 +71,44 @@ const PitchKit = (() => {
     return f0 * Math.pow(2, (-SPAN + (b + off) * STEP) / 1200);
   }
 
-  /* Suivi des notes. push() renvoie une note jouée { r, cents, f } ou null */
+  /* Suivi des notes. push() renvoie une note jouée { r, cents, f, t } ou null ;
+     t = instant de la première trame de la note (pour juger le rythme).
+     T.ring = { pcs, body } : ce que la page fait encore entendre. Tant qu'une
+     note de la page n'est pas finie (body), et ensuite sur les hauteurs qui
+     résonnent encore (pcs), seule une vraie attaque compte : le volume monte
+     nettement au-dessus de ce qu'on entendait juste avant. Le haut-parleur
+     qui s'éteint, ou le mélange de deux notes, ne passent pas pour une note. */
   function makeTracker() {
-    const T = { cand: null, held: null, silent: 0, tune: 0, expectPc: null };
-    T.push = (res, rms, gate) => {
+    const T = { cand: null, held: null, silent: 0, tune: 0, expectPc: null, ring: null, hist: [] };
+    const ATK = 2, HIST = 10;
+    const remember = (rms) => { T.hist.push(rms); if (T.hist.length > HIST) T.hist.shift(); };
+    T.push = (res, rms, gate, now = 0) => {
+      const floor = T.hist.length ? Math.min(...T.hist) : 0;
+      remember(rms);
+      // attaque : le volume dépasse nettement le plus faible des ~280 ms précédentes
+      const rise = rms > floor * ATK && rms > gate * 1.3;
       if (res && res.f >= FMIN && res.f <= FMAX) {
         const m = 69 + 12 * Math.log2(res.f / 440) - T.tune / 100;
         const r = Math.round(m), cents = (m - r) * 100;
         T.silent = 0;
-        if (T.cand && T.cand.r === r) { T.cand.n++; T.cand.c = T.cand.c * 0.6 + cents * 0.4; }
-        else T.cand = { r, n: 1, c: cents };
+        if (T.cand && T.cand.r === r) {
+          T.cand.n++; T.cand.c = T.cand.c * 0.6 + cents * 0.4;
+          if (rise) T.cand.atk = true;
+        } else T.cand = { r, n: 1, c: cents, t: now, atk: rise };
         const pc = ((r % 12) + 12) % 12;
         const need = T.expectPc == null || pc === T.expectPc ? 3 : 5;
         if (T.cand.n < need) return null;
+        const masked = T.ring && !T.cand.atk && (T.ring.body || T.ring.pcs.has(pc));
+        if (masked && (!T.held || T.held.pc !== pc)) T.held = { pc, peak: rms, min: rms, armed: false, ring: true };
         const h = T.held;
         if (!h || h.pc !== pc) {
           T.held = { pc, peak: rms, min: rms, armed: false };
-          return { r, cents: T.cand.c, f: res.f };
+          return { r, cents: T.cand.c, f: res.f, t: T.cand.t };
+        }
+        if (h.ring && !masked && T.cand.atk) {
+          // l'instrument attaque par-dessus ce que la page fait encore résonner
+          T.held = { pc, peak: rms, min: rms, armed: false };
+          return { r, cents: T.cand.c, f: res.f, t: now };
         }
         h.peak = Math.max(h.peak, rms);
         if (!h.armed && rms < h.peak * 0.55) { h.armed = true; h.min = rms; }
@@ -95,7 +116,7 @@ const PitchKit = (() => {
           h.min = Math.min(h.min, rms);
           if (rms > h.min * 1.8 && rms > gate * 1.3) {
             T.held = { pc, peak: rms, min: rms, armed: false };
-            return { r, cents: T.cand.c, f: res.f };
+            return { r, cents: T.cand.c, f: res.f, t: now };
           }
         }
         return null;
@@ -109,7 +130,7 @@ const PitchKit = (() => {
       if (T.silent >= 3) { T.held = null; T.cand = null; }
       return null;
     };
-    T.hold = (pc, rms) => { T.held = pc == null ? null : { pc, peak: rms, min: rms, armed: false }; T.cand = null; T.silent = 0; };
+    T.hold = (pc, rms) => { remember(rms); T.held = pc == null ? null : { pc, peak: rms, min: rms, armed: false }; T.cand = null; T.silent = 0; };
     T.nudge = (cents) => { T.tune = Math.max(-45, Math.min(45, T.tune + cents * 0.3)); };
     return T;
   }
@@ -187,18 +208,19 @@ const Ear = (() => {
       return;
     }
     if (S.gated) {
-      // la dernière note de la page résonne encore : on ne la compte pas
+      // l'écoute reprend un peu avant la fin de la dernière note de la page :
+      // ce qui résonne encore n'est pris que sur une vraie attaque (voir T.ring)
       S.gated = false;
-      const ln = Sound.lastConcert();
-      S.T.hold(ln == null ? null : ((ln % 12) + 12) % 12, rms);
+      S.T.hold(null, rms);
     }
+    S.T.ring = Sound.ringing ? Sound.ringing(now) : null;
     const gate = Math.max(0.0025, S.nf * 2.5);
     const res = rms > gate ? PitchKit.yin(x, S.sr) : null;
     if (!res) {
       if (rms < S.nf) S.nf = S.nf * 0.9 + rms * 0.1;
       else S.nf = Math.min(0.05, S.nf * 0.997 + rms * 0.003);
     }
-    const hit = S.T.push(res, rms, gate);
+    const hit = S.T.push(res, rms, gate, now);
     if (hit && onNote) onNote(hit);
     frame(rms, res, false);
   }

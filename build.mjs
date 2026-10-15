@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 const r = (f) => fs.readFileSync(new URL('./src/' + f, import.meta.url), 'utf8');
-const css = ['_base.css', '_scenes1.css', '_scenes2.css', '_motion.css'].map(r).join('\n');
-const js = ['songs.js', 'audio.js', 'ear.js', 'scenes.js', 'scenes2.js', 'app.js'].map(r).join('\n');
+const css = ['_base.css', '_controls.css', '_scenes1.css', '_scenes2.css', '_motion.css'].map(r).join('\n');
+const js = ['songs.js', 'audio.js', 'ear.js', 'rythme.js', 'scenes.js', 'scenes2.js', 'app.js'].map(r).join('\n');
 const shell = r('shell.html');
 const fill = (t) => t.replace('/*__CSS__*/', () => css).replace('/*__JS__*/', () => js);
 const page = fill(shell);

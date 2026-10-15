@@ -8,9 +8,12 @@ Un jeu d'oreille pour les enfants : vingt comptines traditionnelles, toutes en d
 
 - Une page par comptine, avec un décor animé qui suit la progression et tient sur un seul écran (ordinateur, tablette, téléphone).
 - On peut écouter toute la comptine, une seule phrase, ou « jusqu'à la note » à trouver, éventuellement au ralenti.
-- Avec le micro, l'enfant choisit son instrument : en do, en si♭ (clarinette, trompette, cornet, saxophones soprano et ténor), en mi♭ (saxophones alto et baryton) ou en fa (cor). Les noms de notes affichés sont ceux de sa partition, la page joue dans le ton réel de l'instrument, et la note est reconnue quelle que soit l'octave.
+- **Niveau 1, les notes** : chaque note se retrouve à l'oreille, à son rythme ; une flèche dit s'il faut aller plus aigu ou plus grave.
+- **Niveau 2, notes et rythme** : après un décompte calé sur la mesure (« 1 2 3 4 », ou « 1 2 3 4 1 2 3 » pour une phrase en levée), l'enfant joue toute la phrase d'un coup ; la page vérifie ensuite chaque note et la place de chaque attaque dans le temps (en place, un peu tôt ou tard, nettement en avance ou en retard, tempo qui accélère ou ralentit). Le décalage d'ensemble (latence du haut-parleur ou du micro) est retiré avant de juger.
+- **Ton instrument** : piano, flûte, clarinette en si♭, saxophone alto, trompette en si♭, trombone, cor en fa ou xylophone. Les noms de notes affichés sont ceux de la partition de l'enfant ; la page joue les notes à leur hauteur réelle (un ton plus bas pour les instruments en si♭, une sixte majeure plus bas pour le saxophone alto, une quinte juste plus bas pour le cor), et au micro la note est reconnue quelle que soit l'octave.
+- Le micro se coupe quand la comptine est finie et se rallume tout seul quand l'enfant rejoue ou passe à la comptine suivante. Après une écoute, il accepte une note jouée un peu avant la fin de la dernière note de la page ; sur les notes que la page fait encore résonner, seule une vraie attaque de l'instrument compte.
 - Le son du micro est analysé dans le navigateur ; rien n'est enregistré ni envoyé. Le micro demande une page en https (comme ici) ou un fichier ouvert dans Chrome, Edge ou Firefox ; il ne fonctionne pas dans l'aperçu de claude.ai.
-- Chaque visite d'une comptine repart de zéro ; seul le meilleur nombre d'étoiles reste sur l'appareil.
+- Chaque visite d'une comptine repart de zéro ; seul le meilleur nombre d'étoiles (par niveau) reste sur l'appareil.
 
 ## Modifier
 
@@ -19,7 +22,8 @@ Tout le code est dans `src/` ; `index.html` est fabriqué à partir de ces fichi
 - `src/songs.js` : les mélodies (paroles découpées en syllabes, puis notes `HAUTEUR/durée`, par exemple `E4/q` pour une noire mi).
 - `node build.mjs` : reconstruit `index.html`.
 - `node validate.mjs` : vérifie que chaque phrase a autant de syllabes que de notes et que les mesures tombent juste.
-- `node tests/ear.test.mjs` : teste la reconnaissance des notes sur des sons de synthèse (flûte, clarinette, trompette, violon, glockenspiel…).
+- `node tests/ear.test.mjs` : teste la reconnaissance des notes sur des sons de synthèse (flûte, clarinette, trompette, violon, glockenspiel…), y compris juste après une note jouée par la page.
+- `node tests/rythme.test.mjs` : teste le juge du rythme du niveau 2 (latence, note en retard, fausse note, accélération, rythme pointé…).
 
 ## Sources des mélodies
 

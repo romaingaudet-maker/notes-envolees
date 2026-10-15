@@ -121,3 +121,48 @@ function renderFn(sr, dur, fn) { const y = new Float32Array(Math.ceil(dur * sr))
   console.log(`${ok ? '✓' : '✗'} souffle et bruits → ${got.length ? names(got) : 'aucune note'}`);
 }
 console.log(fails ? `\n${fails} échec(s) au total` : '\nCas difficiles : tout passe.');
+
+// ---- la page vient de jouer : l'écoute reprend avant la fin de sa dernière note ----
+// gateUntil : fin de la coupure ; ring : hauteurs de la page qui résonnent [{ pc, until }]
+function listenAfterPage(sr, y, gateUntil, ring) {
+  const T = makeTracker();
+  const hop = Math.round(0.028 * sr), got = [];
+  let nf = 0.003, gated = true;
+  for (let s = 0; s + N <= y.length; s += hop) {
+    const x = y.subarray(s, s + N), now = (s + N) / sr;
+    let ss = 0; for (let i = 0; i < N; i++) ss += x[i] * x[i];
+    const rms = Math.sqrt(ss / N);
+    if (now < gateUntil) { T.hold(null, rms); continue; }
+    if (gated) { gated = false; T.hold(null, rms); }
+    const live = ring.filter((r) => r.until > now);
+    T.ring = live.length ? { pcs: new Set(live.map((r) => r.pc)), body: live.some((r) => now < r.end) } : null;
+    const gate = Math.max(0.0025, nf * 2.5);
+    const res = rms > gate ? yin(x, sr) : null;
+    if (!res) nf = rms < nf ? nf * 0.9 + rms * 0.1 : Math.min(0.05, nf * 0.997 + rms * 0.003);
+    const hit = T.push(res, rms, gate, now);
+    if (hit) got.push(hit);
+  }
+  return got;
+}
+function afterPage(title, events, gateUntil, ring, expect, onset) {
+  const sr = 48000;
+  const got = listenAfterPage(sr, render(sr, events, 0.8), gateUntil, ring);
+  const ok = got.map((h) => h.r).join() === expect.join() && (onset == null || (got[0] && got[0].t > onset[0] && got[0].t < onset[1]));
+  if (!ok) fails++;
+  console.log(`${ok ? '✓' : '✗'} ${title} → ${got.length ? names(got.map((h) => h.r)) : 'rien'}${got[0] ? ` (attaque vue à ${got[0].t.toFixed(2)} s)` : ''}${ok ? '' : '   (attendu ' + (expect.length ? names(expect) : 'rien') + ')'}`);
+}
+// la page finit sur un Mi de cloche qui résonne longtemps : on n'entend « rien » de l'élève
+afterPage('haut-parleur qui s\'éteint (cloche)', [{ m: 64, t: 0.1, d: 2.2, decay: 0.6, timbre: 'piano/scie' }, { m: 60, t: 0.0, d: 2.0, decay: 0.3, timbre: 'piano/scie' }], 0.45, [{ pc: 4, end: 0.6, until: 3 }, { pc: 0, end: 0.4, until: 3 }], []);
+// l'élève attaque la même note pendant que la page résonne encore
+afterPage('même note attaquée sur la résonance', [{ m: 64, t: 0.1, d: 2.0, decay: 0.6, timbre: 'piano/scie' }, { m: 64, t: 0.8, d: 0.6 }], 0.45, [{ pc: 4, end: 0.6, until: 3 }], [64], [0.78, 0.9]);
+// la page tient un Do (flûte) jusqu'à 1,0 s ; l'élève joue Ré un peu avant la fin,
+// aussi fort que le haut-parleur : pas de note fantôme pendant le mélange, Ré compté dès la fin
+afterPage('autre note jouée un peu avant la fin', [{ m: 60, t: 0.1, d: 0.9 }, { m: 62, t: 0.85, d: 0.6 }], 0.75, [{ pc: 0, end: 1.0, until: 1.4 }], [62], [0.84, 1.12]);
+// la page tient un Do jusqu'à 1,0 s ; l'élève rejoue Do un peu avant la fin (plus fort, près du micro)
+afterPage('même note jouée un peu avant la fin', [{ m: 60, t: 0.1, d: 0.9 }, { m: 60, t: 0.85, d: 0.6 }, { m: 60, t: 0.85, d: 0.6 }], 0.75, [{ pc: 0, end: 1.0, until: 1.4 }], [60], [0.84, 0.95]);
+// la page tient un Do ; rien d'autre : la fin de la note ne doit pas compter
+afterPage('fin d\'une note tenue de la page', [{ m: 60, t: 0.1, d: 0.9 }], 0.75, [{ pc: 0, end: 1.0, until: 1.4 }], []);
+// la page finit sur Mi (cloche) ; l'élève joue tout de suite Sol, la note suivante
+afterPage('note suivante jouée dès la fin (cloche qui résonne)', [{ m: 64, t: 0.1, d: 2.2, decay: 0.6, timbre: 'piano/scie' }, { m: 67, t: 0.62, d: 0.5 }], 0.45, [{ pc: 4, end: 0.6, until: 3 }], [67], [0.6, 0.85]);
+console.log(fails ? `\n${fails} échec(s) au total` : '\nAprès la page : tout passe.');
+process.exit(fails ? 1 : 0);

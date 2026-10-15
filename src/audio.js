@@ -2,12 +2,17 @@
    Moteur sonore : un timbre synthétisé par comptine (Web Audio)
    - transposition globale pour les instruments en si♭, mi♭ et fa
    - garde en mémoire quand la page se tait, pour que l'écoute du micro
-     ne confonde pas le haut-parleur avec l'instrument
+     ne confonde pas le haut-parleur avec l'instrument : l'écoute reprend
+     un peu avant la fin de la dernière note (EARLY), et les notes de la
+     page qui résonnent encore sont signalées (ringing) pour que le micro
+     n'accepte, sur ces hauteurs, qu'une vraie attaque de l'instrument
 ------------------------------------------------------------------- */
 const Sound = (() => {
   const AC = window.AudioContext || window.webkitAudioContext;
   let ctx = null, master = null, revIn = null, noise = null;
   let transpose = 0, quietUntil = 0, lastConcert = null;
+  const EARLY = 0.25;
+  let recent = []; // notes récentes de la page : { pc, start, end, until, bus }
   const ksCache = new Map();
   const waves = new Map();
   const tapBuses = new Map();
@@ -56,9 +61,23 @@ const Sound = (() => {
     if (v.kind === 'ks') return v.tail + 0.6;
     return v.release + 0.35;
   }
-  function mark(v, midi, t, dur) {
-    quietUntil = Math.max(quietUntil, t + dur + tailOf(v));
+  function mark(v, midi, t, dur, bus) {
+    quietUntil = Math.max(quietUntil, t + dur - Math.min(EARLY, dur * 0.5));
     lastConcert = midi;
+    const now = ctx ? ctx.currentTime : 0;
+    if (recent.length > 40) recent = recent.filter((r) => r.until > now);
+    recent.push({ pc: ((midi % 12) + 12) % 12, start: t, end: t + dur, until: t + dur + tailOf(v), bus });
+  }
+  /* Ce que la page fait encore entendre : pcs = hauteurs (classes de notes,
+     son réel) qui résonnent, body = une note de la page n'est pas finie */
+  function ringing(now) {
+    let pcs = null, body = false;
+    for (const r of recent) {
+      if (r.start > now + 0.02 || r.until <= now) continue;
+      (pcs || (pcs = new Set())).add(r.pc);
+      if (now < r.end) body = true;
+    }
+    return pcs ? { pcs, body } : null;
   }
 
   function ensure() {
@@ -282,7 +301,7 @@ const Sound = (() => {
   function note(voiceId, dest, midi, t, dur, vel) {
     const v = voiceOf(voiceId);
     const m = midi + transpose;
-    mark(v, m, t, dur);
+    mark(v, m, t, dur, dest);
     if (v.kind === 'add') addNote(v, dest, m, t, dur, vel);
     else if (v.kind === 'ks') ksNote(v, dest, m, t, dur, vel);
     else if (v.kind === 'wind') windNote(v, dest, m, t, dur, vel);
@@ -311,9 +330,38 @@ const Sound = (() => {
         bus.gain.setValueAtTime(bus.gain.value, now);
         bus.gain.linearRampToValueAtTime(0, now + 0.06);
         quietUntil = Math.min(quietUntil, now + 0.45);
+        recent.forEach((r) => { if (r.bus === bus) { r.until = r.start > now ? 0 : Math.min(r.until, now + 0.3); r.end = Math.min(r.end, now + 0.06); } });
         setTimeout(() => { try { bus.disconnect(); } catch (e) { /* déjà débranché */ } }, 250);
       },
     };
+  }
+
+  /* Pulsation du décompte : un « toc » de bois, bruit filtré sans hauteur
+     nette (le micro ne le prend pas pour une note, et il ne coupe pas l'écoute) */
+  let clickBuf = null;
+  function clickAt(t, accent) {
+    if (!ensure()) return null;
+    if (!clickBuf) {
+      const n = Math.floor(ctx.sampleRate * 0.05);
+      clickBuf = ctx.createBuffer(1, n, ctx.sampleRate);
+      const d = clickBuf.getChannelData(0);
+      let seed = 3;
+      for (let i = 0; i < n; i++) {
+        seed = (seed * 16807) % 2147483647;
+        d[i] = ((seed / 2147483647) * 2 - 1) * Math.pow(1 - i / n, 5);
+      }
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = clickBuf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = accent ? 2400 : 1600;
+    bp.Q.value = 1.4;
+    const g = ctx.createGain();
+    g.gain.value = accent ? 2.6 : 1.8;
+    src.connect(bp); bp.connect(g); g.connect(master);
+    src.start(Math.max(t, ctx.currentTime));
+    return src;
   }
 
   /* Petite fanfare de fin : Do Mi Sol Do */
@@ -322,9 +370,12 @@ const Sound = (() => {
   }
 
   return {
-    ensure, tap, sequence, flourish,
+    ensure, tap, sequence, flourish, clickAt,
     now: () => (ctx ? ctx.currentTime : 0),
+    // délai entre l'instant programmé et le son dans le haut-parleur
+    outLatency: () => (ctx ? (ctx.outputLatency || 0) + (ctx.baseLatency || 0) : 0),
     quietAt: () => quietUntil,
+    ringing, EARLY,
     lastConcert: () => lastConcert,
     setTranspose: (n) => { transpose = n | 0; },
     available: !!AC,
