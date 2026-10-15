@@ -3572,27 +3572,27 @@ const Scenes = (() => {
     let next = ph.notes.find((m) => m > n && !G.found.has(m));
     if (next != null) { setCursor(next, true, false); laterHint(() => { if (G && G.cursor === next) cursorHint(); }, 650); return; }
     next = nextUnfound(n);
-    // phrase terminée : on la laisse voir un instant avant de passer à la suivante
+    // phrase terminée : on enchaîne tout de suite sur la suivante,
+    // juste le temps que la dernière note se pose
     el.beads[n].classList.remove('is-cursor');
     el.syls[n].classList.remove('is-cur');
     G.cursor = next;
     G.attempts = 0;
     G.pending = true;
     expectNext();
-    laterHint(() => setHint(`Phrase ${p + 1} retrouvée !`, 'ok'), 520);
-    const go = () => settle();
-    if (settings.mode === 'xylo') {
-      later(() => { if (G && G.pending) { if (!G.playing) playPhrase(p, go); else go(); } }, 700);
-    } else {
-      later(go, 1100);
-    }
+    setHint(`Phrase ${p + 1} retrouvée !`, 'ok');
+    later(() => {
+      if (!G || !G.pending) return;
+      settle(true, false);
+      laterHint(() => { if (G && G.cursor === next) cursorHint(); }, 900);
+    }, 560);
   }
 
   /* passe à la phrase suivante si on attendait la fin d'une phrase */
-  function settle(animate = true) {
+  function settle(animate = true, hint = true) {
     if (!G || !G.pending) return;
     G.pending = false;
-    setCursor(G.cursor, animate);
+    setCursor(G.cursor, animate, hint);
   }
 
   function bad(text, up, rightTxt, leftTxt) {
