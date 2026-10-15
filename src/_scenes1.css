@@ -1,0 +1,141 @@
+/* ================================ DÉCORS ================================ */
+.sc .sc-text { font-family: var(--font-display); font-weight: 800; }
+.sc .pl { transform: translate(calc(var(--mx2, 0) * var(--d, 0) * 16px), calc(var(--my2, 0) * var(--d, 0) * 9px)); transition: transform .7s cubic-bezier(.2, .7, .2, 1); }
+.sc .fl { transition: opacity .6s; }
+.sc .fl-in { animation: fl-bob 5s ease-in-out infinite alternate; }
+.sc .fl.gone { opacity: 0; }
+@keyframes fl-bob { from { transform: translate(-12px, 10px) rotate(-10deg); } to { transform: translate(12px, -14px) rotate(10deg); } }
+@keyframes hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-34px); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes bob { from { transform: translateY(0); } to { transform: translateY(-14px); } }
+
+/* confiserie */
+.sc-bonbons .bb-fill { transform: translateY(calc((1 - var(--p, 0)) * 340px)); transition: transform .9s cubic-bezier(.3, 1.4, .5, 1); }
+.sc-bonbons .bb-lolly { transform-box: view-box; animation: sway 4s ease-in-out infinite alternate; }
+.sc-bonbons .bb-l1 { transform-origin: 230px 795px; }
+.sc-bonbons .bb-l2 { transform-origin: 790px 795px; animation-delay: -2s; }
+.sc-bonbons .bb-jar { transform-box: view-box; transform-origin: 500px 790px; }
+.react .sc-bonbons .bb-jar { animation: jiggle .5s; }
+.sc-bonbons .bb-rain { display: none; }
+.is-done .sc-bonbons .bb-rain { display: block; }
+.sc-bonbons .rain-c { animation: candy-fall 2.8s linear infinite; animation-delay: var(--d); transform: translate(var(--x), -80px); }
+@keyframes candy-fall { from { transform: translate(var(--x), -80px) rotate(var(--r)); } to { transform: translate(var(--x), 1080px) rotate(calc(var(--r) + 300deg)); } }
+@keyframes sway { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+@keyframes jiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-3deg); } 60% { transform: rotate(2.5deg); } }
+
+/* aube */
+.sc-aube .au-night { opacity: calc(1 - var(--p, 0) * 1.15); transition: opacity 1.4s; }
+.sc-aube .au-sun { transform: translateY(calc((1 - var(--p, 0)) * 270px)); transition: transform 1.4s cubic-bezier(.3, 1, .4, 1); }
+.sc-aube .au-bell { transform-box: view-box; transform-origin: 635px 372px; }
+.react .sc-aube .au-bell { animation: bell .9s ease-out; }
+.is-done .sc-aube .au-bell { animation: bell-big 1.1s ease-in-out infinite alternate; }
+.sc-aube .au-awake, .sc-aube .au-ding { opacity: 0; transition: opacity .5s; }
+.is-done .sc-aube .au-awake, .is-done .sc-aube .au-ding { opacity: 1; }
+.is-done .sc-aube .au-asleep, .is-done .sc-aube .au-zzz { opacity: 0; }
+.sc-aube .au-zzz text { animation: zzz 3s ease-in-out infinite; }
+.sc-aube .au-zzz text:nth-child(2) { animation-delay: -1s; }
+.sc-aube .au-zzz text:nth-child(3) { animation-delay: -2s; }
+.is-done .sc-aube .au-ding text { animation: ding 1.1s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+.is-done .sc-aube .au-ding text:nth-child(2) { animation-delay: -.4s; }
+.is-done .sc-aube .au-ding text:nth-child(3) { animation-delay: -.8s; }
+@keyframes bell { 0% { transform: rotate(0); } 25% { transform: rotate(14deg); } 55% { transform: rotate(-9deg); } 80% { transform: rotate(4deg); } 100% { transform: rotate(0); } }
+@keyframes bell-big { from { transform: rotate(-22deg); } to { transform: rotate(22deg); } }
+@keyframes zzz { 0%, 100% { opacity: 0; transform: translateY(10px); } 40%, 70% { opacity: 1; transform: translateY(-6px); } }
+@keyframes ding { from { transform: scale(.85) rotate(-6deg); } to { transform: scale(1.1) rotate(6deg); } }
+
+/* lune */
+.sc-lune .lu-star { opacity: .13; transition: opacity .8s; }
+.sc-lune .lu-star.on { opacity: 1; animation: twinkle 3s ease-in-out infinite; }
+.sc-lune .lu-star.on:nth-child(3n) { animation-delay: -1s; }
+.sc-lune .lu-star.on:nth-child(3n+1) { animation-delay: -2s; }
+.sc-lune .lu-smile, .sc-lune .lu-happy, .sc-lune .lu-flame, .sc-lune .lu-lit, .sc-lune .lu-door { opacity: 0; transition: opacity 1.2s; }
+.is-done .sc-lune .lu-smile, .is-done .sc-lune .lu-happy, .is-done .sc-lune .lu-flame, .is-done .sc-lune .lu-lit, .is-done .sc-lune .lu-door { opacity: 1; }
+.is-done .sc-lune .lu-sleep, .is-done .sc-lune .lu-sad { opacity: 0; }
+.sc-lune .lu-flame { animation: flicker .25s ease-in-out infinite alternate; }
+.react .sc-lune .lu-moon { animation: moon-glow .7s; }
+@keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+@keyframes flicker { from { opacity: .85; } to { opacity: 1; } }
+@keyframes moon-glow { 0%, 100% { filter: brightness(1); } 40% { filter: brightness(1.25); } }
+
+/* prairie */
+.sc-prairie .pr-sun { transform-box: view-box; transform-origin: 830px 200px; animation: spin 50s linear infinite; }
+.sc-prairie .pr-sirs { animation: bob 3.2s ease-in-out infinite alternate; }
+.sc-prairie .pr-mouse-pos { transform: translate(var(--mx, 300px), 818px); transition: transform .55s cubic-bezier(.4, 1.3, .5, 1); }
+.pr-hop .sc-prairie .pr-mouse { animation: hop .55s ease-out; }
+.sc-prairie .pr-snail, .sc-prairie .pr-puff { opacity: 0; }
+.is-done .sc-prairie .pr-mouse { opacity: 0; transition: opacity .2s .35s; }
+.is-done .sc-prairie .pr-snail { opacity: 1; transition: opacity .4s .55s; }
+.is-done .sc-prairie .pr-puff { animation: puff 1s ease-out forwards; transform-box: fill-box; transform-origin: center; }
+.sc-prairie .pr-steam path { animation: steam 2.2s ease-in-out infinite; }
+.sc-prairie .pr-steam path:nth-child(2) { animation-delay: -.7s; }
+.sc-prairie .pr-steam path:nth-child(3) { animation-delay: -1.4s; }
+@keyframes puff { 0% { opacity: 0; transform: scale(.3); } 30% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0; transform: scale(1.5); } }
+@keyframes steam { 0% { opacity: 0; transform: translateY(16px); } 50% { opacity: .9; } 100% { opacity: 0; transform: translateY(-26px); } }
+
+/* forêt */
+.sc-foret .fo-wolf-wrap { transform: translate(708px, 560px); transition: transform .8s cubic-bezier(.3, 1.4, .5, 1); }
+[data-wolf="1"] .sc-foret .fo-wolf-wrap { transform: translate(684px, 560px); }
+[data-wolf="2"] .sc-foret .fo-wolf-wrap { transform: translate(656px, 556px); }
+[data-wolf="3"] .sc-foret .fo-wolf-wrap { transform: translate(622px, 552px); }
+[data-wolf="out"] .sc-foret .fo-wolf-wrap { transform: translate(480px, 590px) scale(1.12); }
+[data-wolf="out"] .sc-foret .fo-wolf { animation: hop .7s ease-out 2; }
+.sc-foret .fo-hat, .sc-foret .fo-shirt, .sc-foret .fo-pants, .sc-foret .fo-boots, .sc-foret .fo-arms { opacity: 0; transition: opacity .4s; }
+[data-wolf="2"] .sc-foret .fo-hat, [data-wolf="3"] .sc-foret .fo-hat, [data-wolf="out"] .sc-foret .fo-hat,
+[data-wolf="out"] .sc-foret .fo-shirt, [data-wolf="out"] .sc-foret .fo-pants, [data-wolf="out"] .sc-foret .fo-boots, [data-wolf="out"] .sc-foret .fo-arms { opacity: 1; }
+.sc-foret .fo-kid { animation: walk .5s ease-in-out infinite alternate; }
+.sc-foret .fo-run { transition: transform 1.6s ease-in; }
+.is-done .sc-foret .fo-run { transform: translateX(-420px); }
+.is-done .sc-foret .fo-bubble-kids { opacity: 0; transition: opacity .3s; }
+.sc-foret .fo-bubble-wolf { transform-box: fill-box; transform-origin: 80% 100%; }
+.react .sc-foret .fo-bubble-wolf { animation: bubble .5s cubic-bezier(.3, 1.6, .5, 1); }
+.react .sc-foret .fo-rays { animation: rays .8s; }
+@keyframes walk { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+@keyframes bubble { from { transform: scale(.6); } to { transform: scale(1); } }
+@keyframes rays { 50% { opacity: .4; } }
+
+/* provence */
+.sc-provence .pv-sun { transform-box: view-box; transform-origin: 800px 220px; animation: spin 60s linear infinite; }
+.sc-provence .pv-waves { animation: waves 3s ease-in-out infinite alternate; }
+.sc-provence .pv-dancer { opacity: 0; transition: opacity .5s; }
+.sc-provence .pv-dancer.on { opacity: 1; }
+.sc-provence .pv-dancer-in { transform-box: fill-box; transform-origin: 50% 100%; }
+.react .sc-provence .pv-dancer.on .pv-dancer-in { animation: hop .5s; }
+.is-done .sc-provence .pv-dancer-in { animation: dance .9s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -.22s); }
+@keyframes waves { from { transform: translateX(-24px); } to { transform: translateX(24px); } }
+@keyframes dance { from { transform: translateY(0) rotate(-12deg); } to { transform: translateY(-22px) rotate(12deg); } }
+
+/* château */
+.sc-chateau .dg-culotte { transform-box: view-box; transform-origin: 500px 766px; transform: rotate(180deg); transition: transform 1.2s cubic-bezier(.5, 1.7, .4, 1); }
+.is-done .sc-chateau .dg-culotte { transform: rotate(0deg); }
+.sc-chateau .dg-crown { transform-box: fill-box; transform-origin: 50% 100%; }
+.react .sc-chateau .dg-crown { animation: crown .55s cubic-bezier(.3, 1.6, .5, 1); }
+.sc-chateau .dg-point { transform-box: fill-box; transform-origin: 100% 50%; animation: point 1.4s ease-in-out infinite alternate; }
+.is-done .sc-chateau .dg-point { animation: none; opacity: 0; }
+.sc-chateau .dg-ok { opacity: 0; transition: opacity .6s .9s; }
+.is-done .sc-chateau .dg-ok { opacity: 1; }
+@keyframes crown { 0% { transform: translateY(0); } 40% { transform: translateY(-26px) rotate(-8deg); } 100% { transform: translateY(0); } }
+@keyframes point { from { transform: rotate(-4deg); } to { transform: rotate(6deg); } }
+
+/* fontaine */
+.sc-fontaine .fn-jets { transform-box: view-box; transform-origin: 420px 592px; transform: scale(calc(.3 + .7 * var(--p, 0))); transition: transform 1.1s cubic-bezier(.3, 1.3, .5, 1); }
+.sc-fontaine .fn-jets path { stroke-dasharray: 22 12; animation: flow .9s linear infinite; }
+.sc-fontaine .fn-spray { transform-box: view-box; transform-origin: 420px 592px; transform: scale(calc(.3 + .7 * var(--p, 0))); transition: transform 1.1s; }
+.sc-fontaine .fn-ripples ellipse { transform-box: fill-box; transform-origin: center; animation: ripple 2.4s ease-out infinite; }
+.sc-fontaine .fn-ripples ellipse:nth-child(2) { animation-delay: -1.2s; }
+.sc-fontaine .fn-rainbow { opacity: 0; transition: opacity 1.6s; }
+.is-done .sc-fontaine .fn-rainbow { opacity: .8; }
+.sc-fontaine .fn-notes { opacity: 0; }
+.react .sc-fontaine .fn-notes { animation: notes-up 1s ease-out; }
+.is-done .sc-fontaine .fn-notes { animation: notes-up 1.5s ease-out infinite; }
+.sc-fontaine .fn-beak { transform-box: fill-box; transform-origin: 0% 50%; }
+.react .sc-fontaine .fn-beak { animation: beak .5s 2; }
+@keyframes flow { to { stroke-dashoffset: -34; } }
+@keyframes ripple { from { transform: scale(.5); opacity: 1; } to { transform: scale(1.3); opacity: 0; } }
+@keyframes notes-up { 0% { opacity: 0; transform: translateY(20px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-40px); } }
+@keyframes beak { 50% { transform: rotate(-18deg); } }
+
+/* automne */
+.sc-automne .fu-pos { transform: translate(var(--hx, 210px), var(--hy, 770px)); }
+.fu-pop .sc-automne .fu-ferret { animation: ferret .6s cubic-bezier(.3, 1.5, .5, 1); }
+@keyframes ferret { from { transform: translateY(180px); } to { transform: translateY(0); } }
+

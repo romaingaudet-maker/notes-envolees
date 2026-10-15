@@ -1,0 +1,5 @@
+# fichiers de travail
+dist/
+tools/
+node_modules/
+.DS_Store
