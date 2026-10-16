@@ -1,0 +1,11 @@
+/* ------------------------------------------------------------------
+   Version laine : le décor 3D dans la scène, et ses étiquettes
+------------------------------------------------------------------- */
+.laine-host { position: absolute; inset: 0; z-index: 0; background: var(--lc, var(--stage-bg)); overflow: hidden; }
+.laine-host::after { content: ''; position: absolute; inset: 0; background: var(--lc, var(--stage-bg)); opacity: 0; transition: opacity .5s ease; pointer-events: none; }
+.laine-host.is-loading::after { opacity: 1; transition: none; }
+.laine-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.laine-ov { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+.laine-lbl { position: absolute; left: 0; top: 0; will-change: transform; opacity: 0; transition: opacity .25s steps(3); }
+.laine-lbl.on { opacity: 1; }
+.stage:has(.laine-host).grain::before, .stage:has(.laine-host).grain::after { display: none; }

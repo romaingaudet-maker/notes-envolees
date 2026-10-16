@@ -426,7 +426,7 @@ const Sound = (() => {
     if (!SAMPLED[id] || packs.has(id) || typeof document === 'undefined') return;
     packs.set(id, { id, state: 'loading' });
     const s = document.createElement('script');
-    s.src = 'sons/' + id + '.js';
+    s.src = (window.SONS_BASE || 'sons/') + id + '.js';
     s.async = true;
     s.onerror = () => { const k = packs.get(id); if (k && k.state === 'loading') k.state = 'error'; };
     (document.head || document.documentElement).appendChild(s);

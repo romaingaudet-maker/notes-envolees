@@ -1812,7 +1812,7 @@ const Sound = (() => {
     if (!SAMPLED[id] || packs.has(id) || typeof document === 'undefined') return;
     packs.set(id, { id, state: 'loading' });
     const s = document.createElement('script');
-    s.src = 'sons/' + id + '.js';
+    s.src = (window.SONS_BASE || 'sons/') + id + '.js';
     s.async = true;
     s.onerror = () => { const k = packs.get(id); if (k && k.state === 'loading') k.state = 'error'; };
     (document.head || document.documentElement).appendChild(s);
@@ -3710,8 +3710,17 @@ const Scenes = (() => {
   const iris = document.getElementById('iris');
   const LIB = SONGS.map(buildSong).sort((a, b) => a.level - b.level);
   const BY_ID = Object.fromEntries(LIB.map((s) => [s.id, s]));
+  /* Le décor : en papier découpé (Scenes), ou un autre décor que la page apporte
+     (window.Decor, mêmes appels : la version en laine 3D). */
+  const PAPER = {
+    color: (t) => Scenes.W[t].color,
+    markup: (song, st) => Scenes.svgFor(song, st),
+    mount() {}, update: (stage, st) => Scenes.update(stage, st), react: (stage, k, st) => Scenes.react(stage, k, st), note() {}, leave() {},
+  };
+  const decorFor = (theme) => (window.Decor && window.Decor.ok() && window.Decor.has(theme) ? window.Decor : PAPER);
+  let D = PAPER;
   /* Adresse de la version en ligne, où le micro est autorisé (vide si aucune) */
-  const ONLINE_URL = 'https://romaingaudet-maker.github.io/notes-envolees/';
+  const ONLINE_URL = window.NE_ONLINE_URL || 'https://romaingaudet-maker.github.io/notes-envolees/';
   const KEY_CODES = ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote'];
   let keyLabels = ['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'Ù'];
   const RM = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -3849,12 +3858,15 @@ const Scenes = (() => {
     view = 'home';
     G = null;
     if (Ear.active()) Ear.stop();
+    D.leave();
+    D = PAPER;
     setWorld(null);
+    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, keyLabels, decorFor })) return;
     const medals = LIB.map((s, i) => {
       const best = +records[s.id] || 0, best2 = +records[s.id + '@2'] || 0;
       const badge = best ? `<span class="medal-badge" aria-label="Record : ${best} étoile${best > 1 ? 's' : ''}">${[1, 2, 3].map((k) => star(k <= best, 15)).join('')}</span>` : '';
       return `<li class="medal${best ? ' is-won' : ''}" data-i="${i}"><a class="medal-link" href="#${s.id}" style="--off:${OFFSETS[i % OFFSETS.length]}px">
-        <span class="medal-disc" style="--c:${Scenes.W[s.theme].color}">${Scenes.emblem(s.theme)}
+        <span class="medal-disc" style="--c:${PAPER.color(s.theme)}">${Scenes.emblem(s.theme)}
           <svg class="medal-ring" viewBox="0 0 100 100" aria-hidden="true"><circle class="trk" cx="50" cy="50" r="46"/></svg>
           <span class="medal-num" aria-hidden="true">${s.level}</span>${badge}
         </span>
@@ -3980,6 +3992,8 @@ const Scenes = (() => {
 
   function renderSong(song) {
     view = 'song';
+    D.leave();
+    D = decorFor(song.theme);
     setWorld(song.theme);
     const keepSlow = G && G.slow;
     const lv2 = settings.level === 2;
@@ -4011,7 +4025,7 @@ const Scenes = (() => {
     app.innerHTML = `
     <main class="song" data-mode="${settings.mode}" data-level="${G.level}">
       <section class="stage grain" aria-label="Décor : ${esc(nb(song.title))}">
-        ${Scenes.svgFor(song, info())}
+        ${D.markup(song, info())}
         <div class="stage-bar">
           <a class="back" href="#" aria-label="Les comptines">${ICON.back}<span>Les comptines</span></a>
           <label class="inst-pill" title="Ton instrument">${ICON.note}<select class="inst-sel" id="inst-sel" aria-label="Ton instrument">${instOptions()}</select>${ICON.chev}</label>
@@ -4105,7 +4119,8 @@ const Scenes = (() => {
     song.notes.forEach((_, n) => paintBead(n));
     song.phrases.forEach((_, p) => paintPill(p));
     paintCount();
-    Scenes.update(el.stage, info());
+    D.mount(el.stage, song, info());
+    D.update(el.stage, info());
     bindSong();
     if (lv2) G.cursor = null; else setCursor(0);
     applyMode(false);
@@ -4304,8 +4319,8 @@ const Scenes = (() => {
     const phraseDone = ph.notes.every((m) => G.found.has(m));
     paintPill(p);
     const st = info();
-    Scenes.update(el.stage, st);
-    Scenes.react(el.stage, phraseDone ? 'phrase' : 'correct', st);
+    D.update(el.stage, st);
+    D.react(el.stage, phraseDone ? 'phrase' : 'correct', st);
     if (st.done) { setCursor(null); later(() => finish(), 520); return; }
     let next = ph.notes.find((m) => m > n && !G.found.has(m));
     if (next != null) { setCursor(next, true, false); laterHint(() => { if (G && G.cursor === next) cursorHint(); }, 650); return; }
@@ -4450,6 +4465,7 @@ const Scenes = (() => {
   function highlight(n, on) {
     el.beads[n].classList.toggle('is-on', on);
     el.syls[n].classList.toggle('is-on', on);
+    D.note(el.stage, n, on);
   }
 
   function setPlayingUI(kind, on) {
@@ -4693,9 +4709,9 @@ const Scenes = (() => {
     paintPill(tk.p);
     paintCount();
     const st = info();
-    Scenes.update(el.stage, st);
-    if (r.pass) Scenes.react(el.stage, 'phrase', st);
-    else if (fresh) Scenes.react(el.stage, 'correct', st);
+    D.update(el.stage, st);
+    if (r.pass) D.react(el.stage, 'phrase', st);
+    else if (fresh) D.react(el.stage, 'correct', st);
     if (!r.pass) return;
     if (st.done) { later(() => { if (G && !G.take && !G.done) finish(); }, 1400); return; }
     // réussie : on passe à la phrase suivante, sans rien avoir à valider
@@ -4722,7 +4738,7 @@ const Scenes = (() => {
     else if (r.drift) text = `Toutes les notes y sont, mais tu as ${r.drift === 'faster' ? 'accéléré' : 'ralenti'} en route.`;
     else text = bad.length ? `Presque ! À revoir : ${which}.` : 'Presque ! Encore une fois ?';
     G.fullRes = { pass: r.pass, text, status };
-    if (r.pass) Scenes.react(el.stage, 'complete', info());
+    if (r.pass) D.react(el.stage, 'complete', info());
     G.keepMic = false;
     pauseMicDone();
     setGoUI(false);
@@ -4784,8 +4800,8 @@ const Scenes = (() => {
     const key = lv2 ? G.song.id + '@2' : G.song.id;
     G.lastStars = stars;
     if (stars > (+records[key] || 0)) { records[key] = stars; save(REC_KEY, records); }
-    Scenes.update(el.stage, info());
-    Scenes.react(el.stage, 'complete', info());
+    D.update(el.stage, info());
+    D.react(el.stage, 'complete', info());
     showDone();
     setHint('Comptine terminée !', 'ok');
     confetti();
@@ -5107,7 +5123,7 @@ const Scenes = (() => {
     if (!animate || RM.matches || !iris.animate) { render(); return; }
     const [x, y] = lastPointer || [window.innerWidth / 2, window.innerHeight / 2];
     const r = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y)) + 30;
-    iris.style.setProperty('--iris', song ? Scenes.W[song.theme].color : HOME_COLOR);
+    iris.style.setProperty('--iris', song ? decorFor(song.theme).color(song.theme) : (window.HomeSkin && window.HomeSkin.color) || HOME_COLOR);
     iris.hidden = false;
     const a = iris.animate([{ clipPath: `circle(0px at ${x}px ${y}px)` }, { clipPath: `circle(${r}px at ${x}px ${y}px)` }],
       { duration: 430, easing: 'cubic-bezier(.7,0,.3,1)', fill: 'forwards' });
