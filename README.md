@@ -26,6 +26,7 @@ Tout le code est dans `src/` ; `index.html` est fabriqué à partir de ces fichi
 
 - `src/songs.js` : les mélodies (paroles découpées en syllabes, puis notes `HAUTEUR/durée`, par exemple `E4/q` pour une noire mi).
 - `node build.mjs` : reconstruit `index.html` (première version), `suivi.html` (la page de suivi des élèves), `mentions-legales.html` (à partir de `src/mentions.html` et `src/mentions.js`) et `laine/index.html` (version en laine).
+- `icone-180.png`, `icone-192.png`, `icone-512.png` et les `manifest.webmanifest` : l'icône et le nom affichés quand on installe le jeu sur l'écran d'accueil d'un téléphone (la version en laine a son propre manifeste, dans `laine/`).
 - `src/suivi.js` : l'envoi des résultats (adresse du Worker dans `SUIVI_URL`) ; `src/suivi-page.js` et `src/_suivi.css` : la page de suivi ; `suivi/worker.js` : le Worker Cloudflare qui range les résultats. Les deux versions du jeu envoient les mêmes résultats.
 - `laine/` : la version en laine. `laine/src/` contient le moteur (textures de tricot, de crochet et de feutrine fabriquées à l'ouverture, duvet de la laine, marionnettes, éléments de décor, particules, développement de l'image) et l'accueil ; `laine/scenes/` un fichier par décor de comptine ; `laine/vendor/three.min.js` la bibliothèque 3D three.js (r170, licence MIT). Sans WebGL 2, la page reprend les décors en papier découpé.
 - `node outils/glyphes-titre.mjs DOSSIER/node_modules` : refait les contours des lettres du titre en feutrine (il faut `opentype.js` et `@fontsource/gluten`).

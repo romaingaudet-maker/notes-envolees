@@ -23,13 +23,14 @@ out('notes-envolees.html', page);
 // 2) document autonome : la page publiée sur GitHub Pages (index.html), qu'on peut aussi ouvrir telle quelle
 const iconOf = (bg, ink) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="${bg}"/><path d="M27 15v25.5a8 8 0 1 0 5 7.4V24l12 4v-9z" fill="${ink}"/></svg>`)}`;
 const icon = iconOf('#F6C744', '#1D2350');
-const doc = (head, body, color, ico = icon) => `<!doctype html>
+const doc = (head, body, color, ico = icon, extra = '') => `<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="${color}">
 <link rel="icon" href="${ico}">
+${extra}
 ${head}
 </head>
 <body>
@@ -37,7 +38,10 @@ ${body}
 </body>
 </html>
 `;
-const index = doc(headPart, bodyPart, '#F6C744');
+// icône d'installation sur téléphone (écran d'accueil) : icone-180/192/512.png à la racine, manifest.webmanifest
+const INSTALL_V1 = '<link rel="apple-touch-icon" href="icone-180.png">\n<link rel="manifest" href="manifest.webmanifest">\n<meta name="apple-mobile-web-app-title" content="Notes Envolées">';
+const INSTALL_V2 = '<link rel="apple-touch-icon" href="../icone-180.png">\n<link rel="manifest" href="manifest.webmanifest">\n<meta name="apple-mobile-web-app-title" content="Notes en laine">';
+const index = doc(headPart, bodyPart, '#F6C744', icon, INSTALL_V1);
 fs.writeFileSync(new URL('./index.html', import.meta.url), index);
 console.log('index.html', (index.length / 1024).toFixed(1) + ' Ko');
 
@@ -83,7 +87,20 @@ console.log('suivi.html', (prof.length / 1024).toFixed(1) + ' Ko');
   // b) document autonome, publié sur GitHub Pages dans laine/ : les sons et les mentions légales sont dans le dossier parent
   const pre = `window.NE_ONLINE_URL = ${JSON.stringify(ONLINE)}; window.SONS_BASE = '../sons/'; window.NE_LEGAL_URL = '../mentions-legales.html';`;
   const lcut = lshell.indexOf('<svg');
-  const ldoc = doc(lfill(lshell.slice(0, lcut), pre).trim(), lfill(lshell.slice(lcut), pre).trim(), '#2B2350', iconOf('#2B2350', '#F2C14E'));
+  const ldoc = doc(lfill(lshell.slice(0, lcut), pre).trim(), lfill(lshell.slice(lcut), pre).trim(), '#2B2350', iconOf('#2B2350', '#F2C14E'), INSTALL_V2);
   fs.writeFileSync(new URL('./laine/index.html', import.meta.url), ldoc);
   console.log('laine/index.html', (ldoc.length / 1024).toFixed(1) + ' Ko');
+}
+
+/* 6) manifestes d'installation : nom, nom court et icônes pour l'écran d'accueil du téléphone.
+   La version papier est à la racine, la version en laine dans laine/ (icônes dans le dossier parent). */
+{
+  const manifest = (name, short, theme, bg, prefix) => JSON.stringify({
+    name, short_name: short, lang: 'fr', start_url: './', scope: './', display: 'standalone',
+    background_color: bg, theme_color: theme,
+    icons: [192, 512].map((n) => ({ src: `${prefix}icone-${n}.png`, sizes: `${n}x${n}`, type: 'image/png' })),
+  }, null, 2) + '\n';
+  fs.writeFileSync(new URL('./manifest.webmanifest', import.meta.url), manifest('Les Notes Envolées', 'Notes Envolées', '#F6C744', '#FFFBF0', ''));
+  fs.writeFileSync(new URL('./laine/manifest.webmanifest', import.meta.url), manifest('Les Notes Envolées en laine', 'Notes en laine', '#2B2350', '#2B2350', '../'));
+  console.log('manifest.webmanifest + laine/manifest.webmanifest');
 }
