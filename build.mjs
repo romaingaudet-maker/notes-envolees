@@ -1,7 +1,13 @@
 import fs from 'node:fs';
 const r = (f) => fs.readFileSync(new URL('./src/' + f, import.meta.url), 'utf8');
 const rl = (f) => fs.readFileSync(new URL('./laine/' + f, import.meta.url), 'utf8');
-const css = ['_base.css', '_controls.css', '_scenes1.css', '_scenes2.css', '_motion.css'].map(r).join('\n');
+/* polices livrées avec la page (polices/, licence SIL OFL) : aucune visite ne contacte un serveur extérieur */
+const font = (family, weight, file) => `@font-face { font-family: '${family}'; font-style: normal; font-weight: ${weight}; font-display: swap; src: url(data:font/woff2;base64,${fs.readFileSync(new URL('./polices/' + file, import.meta.url)).toString('base64')}) format('woff2'); }`;
+const fontsCss = '/* Gluten (c) 2020 The Gluten Project Authors ; Andika (c) 2004-2022 SIL International ; SIL Open Font License 1.1 (voir polices/) */\n' + [
+  font('Gluten', 700, 'gluten-latin-700-normal.woff2'), font('Gluten', 800, 'gluten-latin-800-normal.woff2'),
+  font('Andika', 400, 'andika-latin-400-normal.woff2'), font('Andika', 700, 'andika-latin-700-normal.woff2'),
+].join('\n');
+const css = fontsCss + '\n' + ['_base.css', '_controls.css', '_scenes1.css', '_scenes2.css', '_motion.css'].map(r).join('\n');
 const js = ['songs.js', 'audio.js', 'ear.js', 'rythme.js', 'scenes.js', 'scenes2.js', 'suivi.js', 'app.js'].map(r).join('\n');
 const shell = r('shell.html');
 const fill = (t, c = css, j = js) => t.replace('/*__CSS__*/', () => c).replace('/*__JS__*/', () => j);
@@ -37,7 +43,7 @@ console.log('index.html', (index.length / 1024).toFixed(1) + ' Ko');
 
 // 3) la page de suivi des élèves, pour le professeur (suivi.html, non liée depuis le jeu)
 const pShell = r('suivi-page.html');
-const pCss = r('_suivi.css');
+const pCss = font('Gluten', 700, 'gluten-latin-700-normal.woff2') + '\n' + r('_suivi.css');
 const pJs = ['songs.js', 'suivi.js', 'suivi-page.js'].map(r).join('\n');
 const pCut = pShell.indexOf('<div id="app"');
 const prof = doc(fill(pShell.slice(0, pCut), pCss, pJs).trim(), fill(pShell.slice(pCut), pCss, pJs).trim(), '#F6C744');
