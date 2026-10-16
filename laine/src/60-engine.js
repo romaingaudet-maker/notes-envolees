@@ -154,25 +154,27 @@ const Engine = (() => {
     }
   }
 
-  /* une image fixe, à une taille donnée (portraits de l'accueil) */
-  function snapshot(v, w, h, f = 0) {
+  /* des images fixes, à une taille donnée (portraits de l'accueil), sans toucher
+     au rendu à l'écran : un second jeu de cibles, gardé pour les portraits suivants */
+  let snapPost = null;
+  function snapshot(v, w, h, frames = [0]) {
     if (!init()) return null;
-    const oldView = view;
-    view = v;
-    post.setSize(w, h);
+    snapPost = snapPost || makePost(renderer);
+    snapPost.setSize(w, h);
     if (v.resize) v.resize(w, h);
-    FUZZ_U.uFzBoil.value = hashi(f >> 1, 99) * 0.014;
-    v.tick(f / FPS, f);
-    const out = post.render(renderer, v, f, 'read');
-    view = oldView;
-    post.setSize(Math.round(W * PR), Math.round(H * PR));
-    if (oldView && oldView.resize && W) oldView.resize(W, H);
+    const out = frames.map((f) => {
+      FUZZ_U.uFzBoil.value = hashi(f >> 1, 99) * 0.014;
+      v.tick(f / FPS, f);
+      return snapPost.render(renderer, v, f, 'read');
+    });
+    renderer.setRenderTarget(null);
     return out;
   }
 
   return {
     supported, init, attach, detach, show, poke, once, snapshot, stop, start, manual,
     get renderer() { return renderer; },
+    get view() { return view; },
     get size() { return [W, H]; },
     get tier() { return tier; },
     project(v3w, cam) { const p = v3w.clone().project(cam); return [(p.x * 0.5 + 0.5) * W, (-p.y * 0.5 + 0.5) * H, p.z]; },

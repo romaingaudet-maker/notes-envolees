@@ -10,7 +10,7 @@
 <meta name="description" content="Vingt comptines dont les notes se sont envolées, dans des décors de laine animés image par image : écoute, puis retrouve chaque note sur le xylophone ou sur ton propre instrument.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Gluten:wght@500;700;800&family=Fraunces:ital,opsz,wght@0,9..144,600;1,9..144,500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Gluten:wght@500;700;800&display=swap">
 <style>
 /* Layout : couverture safran pour l'accueil, chemin de portée qui relie les comptines.
    Chaque comptine tient sur un seul écran comme une double page d'album en papier découpé :
@@ -1012,6 +1012,171 @@ a { color: inherit; }
 /* bulle de feutrine (paroles d'un personnage) */
 .laine-bubble { translate: -50% -100%; padding: 6px 12px 7px; border-radius: 16px; background: #FFF8EA; color: #3A2418; font: 700 clamp(12px, 1.6vw, 17px)/1.15 var(--font-display); white-space: nowrap; box-shadow: 0 3px 0 rgba(0,0,0,.18), 0 8px 18px rgba(0,0,0,.18); outline: 2px dashed rgba(196, 120, 80, .55); outline-offset: -5px; }
 .laine-bubble::after { content: ''; position: absolute; left: 50%; bottom: -9px; width: 16px; height: 16px; background: inherit; translate: -50% 0; rotate: 45deg; border-radius: 3px; z-index: -1; }
+
+/* ------------------------------------------------------------------
+   Accueil de la version laine : un théâtre de velours prune, une
+   poursuite chaude sur la guirlande du titre, puis le fil rouge qui
+   relie les tambours à broder (une comptine par tambour), puis l'établi.
+   Un seul univers, sombre par choix (le plateau d'un studio d'animation).
+------------------------------------------------------------------- */
+:root[data-view="home"] { --bg: #231A33; --text: #F7EBDD; --accent: #F2C14E; color-scheme: dark; }
+.lhome {
+  --lh-bg: #231A33;      /* velours prune */
+  --lh-bg2: #2C2140;
+  --lh-felt: #34264A;    /* feutrine des écussons */
+  --lh-ink: #F7EBDD;     /* fil écru */
+  --lh-soft: #CDBBD8;    /* lilas */
+  --lh-thread: #E0473F;  /* le fil rouge */
+  --lh-gold: #F2C14E;    /* fil d'or */
+  --lh-wood: #C38E57;
+  --hs: 168px;
+  position: relative;
+  min-height: 100vh;
+  overflow-x: clip;
+  background:
+    radial-gradient(60rem 36rem at 18% 120vh, rgba(242, 193, 78, .07), transparent 70%),
+    radial-gradient(50rem 40rem at 85% 190vh, rgba(224, 71, 63, .07), transparent 70%),
+    var(--lh-bg);
+  color: var(--lh-ink);
+  font-family: var(--font-text);
+}
+/* trame de feutrine, très légère */
+.lhome::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .92 0 0 0 0 .85 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.lhome > * { position: relative; z-index: 1; }
+.lh-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* --- la scène --- */
+.lh-hero { position: relative; height: clamp(460px, 78svh, 800px); isolation: isolate; }
+.lh-stage { position: absolute; inset: 0; background: radial-gradient(70% 80% at 40% 30%, #3B2852, var(--lh-bg)); }
+.lh-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.lh-hero::after { content: ""; position: absolute; inset: auto 0 0; height: 38%; background: linear-gradient(transparent, rgba(20, 12, 28, .82)); pointer-events: none; z-index: 1; }
+.lh-hero-in { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; justify-content: flex-end; padding-block: 0 clamp(20px, 4vh, 44px); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); pointer-events: none; }
+.lh-h1 { margin: 0; }
+.lh-fallback { display: none; }
+.lhome:not(.has-gl) .lh-fallback { display: block; position: absolute; top: 18%; left: 0; right: 0; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: clamp(52px, 11vw, 132px); line-height: .92; color: var(--lh-gold); text-shadow: 0 6px 0 rgba(0, 0, 0, .35); }
+.lhome:not(.has-gl) .lh-fallback span { display: block; color: var(--lh-thread); }
+.lh-intro { max-width: 36rem; pointer-events: auto; display: grid; gap: 10px; }
+.lh-eyebrow { margin: 0; font-size: 12.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--lh-gold); }
+.lh-lede { margin: 0; font-size: clamp(16px, 1.35vw, 19px); line-height: 1.5; color: var(--lh-ink); text-wrap: pretty; }
+.lh-lede strong { color: #FFF7EA; }
+.lh-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 4px; }
+.lh-cta {
+  position: relative; border: 0; cursor: pointer; padding: 13px 26px 14px; border-radius: 999px;
+  background: var(--lh-thread); color: #FFF7EA; font-family: var(--font-display); font-weight: 800; font-size: 19px; letter-spacing: .01em;
+  box-shadow: 0 5px 0 #8E2622, 0 14px 26px rgba(0, 0, 0, .35);
+  transition: transform .18s steps(2), box-shadow .18s steps(2);
+}
+.lh-cta::before { content: ""; position: absolute; inset: 5px; border-radius: 999px; border: 2px dashed rgba(255, 238, 220, .55); pointer-events: none; }
+.lh-cta:hover { transform: translateY(-2px) rotate(-1deg); }
+.lh-cta:active { transform: translateY(3px); box-shadow: 0 2px 0 #8E2622, 0 8px 16px rgba(0, 0, 0, .3); }
+.lh-hint { margin: 0; font-size: 14px; color: var(--lh-soft); font-style: italic; min-height: 1.4em; }
+
+/* --- le fil des comptines --- */
+.lh-path { padding-block: clamp(36px, 6vh, 64px) 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1240px; margin: 0 auto; scroll-margin-top: 12px; }
+.lh-path-head { display: grid; gap: 6px; max-width: 40rem; }
+.lh-path-head h2 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(30px, 3.4vw, 46px); line-height: 1; color: var(--lh-gold); text-wrap: balance; }
+.lh-path-head p { margin: 0; color: var(--lh-soft); font-size: 16px; }
+.lh-board { position: relative; margin-top: 26px; }
+.lh-thread { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 0; }
+.lh-thread path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.lh-thread .th-shadow { stroke: rgba(8, 3, 14, .55); stroke-width: 8; transform: translate(3px, 7px); }
+.lh-thread .th-base { stroke: var(--lh-thread); stroke-width: 6; }
+.lh-thread .th-twist { stroke: #FF9C8F; stroke-width: 6; stroke-dasharray: 1.5 6.5; opacity: .75; }
+.lh-thread .th-ball circle { fill: var(--lh-thread); filter: drop-shadow(2px 5px 3px rgba(0, 0, 0, .5)); }
+.lh-thread .th-ball path { stroke: #FF9C8F; stroke-width: 2.2; }
+.lh-thread .th-needle path { fill: #D9D6E2; }
+.lh-thread .th-needle ellipse { fill: var(--lh-bg); }
+.lh-hoops { list-style: none; margin: 0; padding: 26px 0 40px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 70px 18px; position: relative; z-index: 1; }
+.hoop-li { display: flex; justify-content: center; min-width: 0; }
+.hoop { display: grid; justify-items: center; align-content: start; gap: 7px; width: 100%; max-width: 230px; text-decoration: none; color: inherit; outline: none; }
+.hoop-ring {
+  position: relative; display: block; width: min(var(--hs), 100%); aspect-ratio: 1; border-radius: 50%;
+  background: conic-gradient(from 40deg, #C38E57, #E6C08C, #B07A40, #D9A86E, #C38E57, #E2B57C, #B98447, #C38E57);
+  box-shadow: 0 16px 26px rgba(6, 2, 12, .55), inset 0 0 0 2px rgba(255, 240, 210, .28), inset 0 0 0 5px rgba(90, 50, 20, .28);
+  rotate: var(--tilt, 0deg);
+  transition: rotate .36s steps(3), transform .36s steps(3);
+}
+.hoop-cloth { position: absolute; inset: 9px; border-radius: 50%; overflow: hidden; background: var(--c); }
+.hoop-cloth::after { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 0 0 3px #A97A44, inset 0 9px 18px rgba(0, 0, 0, .45); pointer-events: none; }
+.hoop-emb { position: absolute; inset: 18%; display: grid; place-items: center; transition: opacity .4s steps(3); }
+.hoop-emb svg { width: 100%; height: 100%; }
+.hoop-pic { position: absolute; inset: 0; opacity: 0; transition: opacity .5s steps(4); }
+.hoop-pic img { display: block; width: 400%; max-width: none; height: 100%; animation: hoop-boil .66s steps(4) infinite; }
+.has-pic .hoop-pic { opacity: 1; }
+.has-pic .hoop-emb { opacity: 0; }
+@keyframes hoop-boil { to { transform: translateX(-100%); } }
+.hoop-screw { position: absolute; left: 50%; top: -13px; width: 24px; height: 19px; translate: -50% 0; border-radius: 4px 4px 3px 3px; background: linear-gradient(90deg, #8E6A28, #E9CC7D 40%, #B08A3A 70%, #7C5A1E); box-shadow: 0 3px 4px rgba(0, 0, 0, .45); }
+.hoop-screw i { position: absolute; right: -9px; top: 4px; width: 11px; height: 11px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #F4DE9C, #9B7A2E 70%); box-shadow: 0 2px 3px rgba(0, 0, 0, .4); }
+.hoop-tag { position: absolute; left: -4px; top: 6%; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--lh-felt); color: var(--lh-gold); font-family: var(--font-display); font-weight: 800; font-size: 17px; box-shadow: 0 4px 8px rgba(0, 0, 0, .45); }
+.hoop-tag::before { content: ""; position: absolute; inset: 3px; border-radius: 50%; border: 1.5px dashed rgba(242, 193, 78, .55); }
+.hoop-title { margin-top: 6px; font-family: var(--font-display); font-weight: 700; font-size: 17px; line-height: 1.08; text-align: center; text-wrap: balance; color: var(--lh-ink); }
+.hoop-meta { font-size: 12.5px; color: var(--lh-soft); text-align: center; display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.hoop-r2 { display: inline-flex; align-items: center; gap: 2px; color: var(--lh-gold); }
+.hoop-r2 svg { width: 14px; height: 14px; }
+.hoop-stars { display: inline-flex; gap: 2px; color: var(--lh-soft); }
+.hoop:hover .hoop-ring, .hoop:focus-visible .hoop-ring { rotate: calc(var(--tilt, 0deg) * -1.4); transform: translateY(-7px) scale(1.035); }
+.hoop:focus-visible .hoop-ring { box-shadow: 0 0 0 4px var(--lh-gold), 0 16px 26px rgba(6, 2, 12, .55); }
+.hoop:hover .hoop-pic img { animation-duration: .4s; }
+
+/* --- l'établi --- */
+.lh-bench { max-width: 1240px; margin: 0 auto; padding-block: 28px 18px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.lh-bench .lh-how { grid-column: 1 / -1; order: 4; }
+.lh-bench .lh-how .lh-steps { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.lh-bench .lh-how .lh-steps li { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 959px) { .lh-bench { grid-template-columns: repeat(2, minmax(0, 1fr)); } .lh-bench .lh-how .lh-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 599px) { .lh-bench { grid-template-columns: minmax(0, 1fr); } .lh-bench .lh-how .lh-steps { grid-template-columns: minmax(0, 1fr); } .lh-bench .lh-how .lh-steps li { grid-template-columns: 30px minmax(0, 1fr); } }
+.lh-patch { position: relative; margin: 0; min-width: 0; padding: 24px 24px 26px; border: 0; border-radius: 24px; background: var(--lh-felt); box-shadow: 0 12px 26px rgba(6, 2, 12, .4); display: grid; gap: 12px; }
+.lh-patch::before { content: ""; position: absolute; inset: 8px; border-radius: 17px; border: 2px dashed rgba(247, 235, 221, .26); pointer-events: none; }
+.lh-patch:nth-child(odd) { rotate: -.5deg; }
+.lh-patch:nth-child(even) { rotate: .6deg; }
+.lh-patch h2, .lh-patch legend { margin: 0; padding: 0; font-family: var(--font-display); font-weight: 800; font-size: 23px; color: var(--lh-gold); }
+.lh-patch legend { float: left; width: 100%; margin-bottom: 12px; }
+.lh-patch p { margin: 0; color: var(--lh-soft); font-size: 15.5px; line-height: 1.5; }
+.lh-select { display: flex; align-items: center; gap: 10px; padding: 0 16px; height: 50px; border-radius: 999px; background: var(--lh-ink); color: #2A1E3A; font-weight: 700; box-shadow: 0 4px 0 rgba(0, 0, 0, .35); }
+.lh-select svg { width: 20px; height: 20px; flex: none; }
+.lh-select select { flex: 1; min-width: 0; appearance: none; border: 0; background: none; font-weight: 700; font-size: 16px; color: inherit; cursor: pointer; padding-block: 12px; }
+.lh-select select:focus-visible { outline: none; }
+.lh-select:focus-within { box-shadow: 0 0 0 3px var(--lh-gold), 0 4px 0 rgba(0, 0, 0, .35); }
+.lh-note { font-size: 14px !important; }
+.lh-online { color: var(--lh-ink) !important; }
+.lh-online a { color: var(--lh-gold); }
+.lh-opts { display: grid; gap: 10px; clear: both; }
+.lh-opt { position: relative; display: block; cursor: pointer; }
+.lh-opt input { position: absolute; opacity: 0; pointer-events: none; }
+.lh-optcard { display: grid; gap: 3px; padding: 12px 14px; border-radius: 14px; background: rgba(247, 235, 221, .06); border: 2px solid rgba(247, 235, 221, .12); transition: background .2s steps(2), border-color .2s steps(2); }
+.lh-optcard b { font-family: var(--font-display); font-size: 18px; color: var(--lh-ink); }
+.lh-optcard small { font-size: 14px; color: var(--lh-soft); line-height: 1.4; }
+.lh-opt input:checked + .lh-optcard { background: rgba(242, 193, 78, .12); border-color: var(--lh-gold); }
+.lh-opt input:focus-visible + .lh-optcard { box-shadow: 0 0 0 3px var(--lh-gold); }
+.lh-steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 10px; }
+.lh-steps li { counter-increment: s; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start; color: var(--lh-soft); font-size: 15px; line-height: 1.45; }
+.lh-steps li::before { content: counter(s); width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--lh-thread); color: #FFF7EA; font-family: var(--font-display); font-weight: 800; font-size: 15px; }
+.lh-foot { max-width: 1240px; margin: 0 auto; padding-block: 18px 44px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); font-size: 13px; line-height: 1.55; color: rgba(205, 187, 216, .78); }
+
+@media (min-width: 900px) and (min-aspect-ratio: 13/10) {
+  .lh-hero-in { justify-content: center; padding-block: 40px; }
+  .lh-intro { max-width: min(31rem, 40vw); }
+  .lh-hero::after { inset: 0 auto 0 0; width: 52%; height: auto; background: linear-gradient(90deg, rgba(20, 12, 28, .78), rgba(20, 12, 28, .45) 60%, transparent); }
+  .lh-hero-in::before { content: ""; display: block; height: clamp(40px, 14vh, 120px); }
+}
+@media (max-width: 1099px) { .lh-hoops { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 859px) { .lh-hoops { grid-template-columns: repeat(3, minmax(0, 1fr)); } .lhome { --hs: 158px; } }
+@media (max-width: 699px) {
+  .lh-hero { height: auto; }
+  .lh-stage { position: relative; height: clamp(320px, 58svh, 520px); }
+  .lh-hero::after { display: none; }
+  .lh-hero-in { position: relative; inset: auto; padding-block: 14px 8px; }
+  .lh-hoops { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 54px 12px; }
+  .lhome { --hs: 146px; }
+  .hoop-title { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hoop-pic img { animation: none; }
+  .hoop-ring, .lh-cta { transition: none; }
+}
 
 </style>
 </head>
@@ -7618,6 +7783,23 @@ const NOTE_ORDER = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 /* registre des décors : SCENES[thème] = { color, build(K, opts) } */
 const SCENES = {};
 
+/* Contours des lettres du titre (police Gluten, SIL Open Font License), fabriqués par
+   outils/glyphes-titre.mjs : M x,y · L x,y · Q x1,y1,x,y · C x1,y1,x2,y2,x,y · Z ; 100 unités par cadratin, y vers le haut. */
+const GLYPHES = {
+  "L":{"adv":66,"d":"M19.9,-3.2 L19.9,-3.2 Q10.7,-1.6,7.2,3.9 Q3.7,9.4,3.7,18.7 L3.7,18.7 Q3.7,20.8,3.8,23.2 Q4,25.7,4.2,28.4 Q4.5,31.1,4.9,33.7 Q5.3,36.4,5.7,38.7 Q6.1,41.1,6.5,43 L6.5,43 Q8.4,51.1,12.3,55.9 Q16.3,60.8,22.7,60.8 L22.7,60.8 Q27.2,60.8,29.4,59.1 Q31.5,57.4,32.2,54.4 Q32.9,51.4,32.9,47.4 L32.9,47.4 Q32.9,46.1,32.8,44.8 Q32.8,43.4,32.8,42 Q32.8,40.7,32.8,39.2 Q32.9,37.8,32.9,36.5 Q32.9,35.1,33,33.8 Q33.1,32.5,33.2,31.3 L33.2,31.3 Q33.4,29.4,33.9,27.8 Q34.4,26.3,35.2,25.3 Q36.1,24.2,37.4,23.7 Q38.8,23.1,40.7,23 L40.7,23 Q45,22.6,48.9,22 Q52.7,21.4,55.1,20.8 L55.1,20.8 Q56.6,20.6,58.3,20.1 Q60,19.6,61.1,18.7 L61.1,18.7 Q62.2,17.8,62.8,16.4 Q63.4,15,63.4,12.7 L63.4,12.7 Q63.4,8.7,61.4,5.9 Q59.4,3.1,56.3,1.3 Q53.1,-0.6,49.6,-1.7 L49.6,-1.7 Q46.4,-2.7,41.7,-3.3 Q37,-3.8,32.3,-3.8 L32.3,-3.8 Q30,-3.8,27.8,-3.8 Q25.5,-3.8,23.5,-3.6 Q21.5,-3.4,19.9,-3.2 Z"},
+  "e":{"adv":61.9,"d":"M31.2,-4.4 L31.2,-4.4 Q22.4,-4.4,15.7,-1.7 Q9,1.1,5.2,6.6 Q1.4,12.2,1.4,20.7 L1.4,20.7 Q1.4,27.7,3.8,33 Q6.3,38.4,10.6,42 Q14.9,45.7,20.5,47.5 Q26.1,49.3,32.5,49.3 L32.5,49.3 Q36.9,49.3,41.1,48.6 Q45.4,47.9,48.8,46.3 Q52.3,44.6,54.4,41.8 Q56.5,39,56.5,34.9 L56.5,34.9 Q56.5,31.9,55.5,29.7 Q54.6,27.5,52.8,26 Q51.1,24.6,48.9,23.5 Q46.7,22.5,44.1,21.7 L44.1,21.7 Q41.9,21,38.6,20.3 Q35.4,19.6,32.1,19.1 Q28.8,18.7,26.5,18.7 L26.5,18.7 Q24.9,18.7,24.3,18.4 Q23.7,18.1,23.7,17.2 L23.7,17.2 Q23.7,16.5,24,15.9 Q24.3,15.2,24.9,14.7 L24.9,14.7 Q25.8,13.8,27.2,13.5 Q28.5,13.2,30.3,13.2 L30.3,13.2 Q33.2,13.2,36.4,14.2 Q39.7,15.1,43.3,16.1 Q46.8,17,50.6,17 L50.6,17 Q54.6,17,57,15.6 Q59.4,14.1,59.4,9.8 L59.4,9.8 Q59.4,6.1,57.1,3.4 Q54.7,0.7,50.7,-1 Q46.7,-2.7,41.7,-3.6 Q36.6,-4.4,31.2,-4.4 Z M28.8,28 L28.8,28 Q30.5,28,32.4,28.5 Q34.4,29.1,35.7,30.2 Q37.1,31.3,37.1,33 L37.1,33 Q37.1,35.2,35.4,35.8 Q33.8,36.5,31.6,36.5 L31.6,36.5 Q30.2,36.5,28.8,36 Q27.4,35.6,26.2,34.7 Q25.1,33.9,24.4,32.8 Q23.7,31.8,23.7,30.5 L23.7,30.5 Q23.7,29.4,24.3,28.9 Q24.9,28.4,26.1,28.2 Q27.2,28,28.8,28 Z"},
+  "s":{"adv":57.5,"d":"M27.4,-2.1 L27.4,-2.1 Q23.2,-2.1,19.7,-1.8 Q16.2,-1.5,13.4,-0.9 Q10.6,-0.4,8.3,0.5 L8.3,0.5 Q5.1,1.6,3.1,3.3 Q1,5,1,8.3 L1,8.3 Q1,12,3.1,14.2 Q5.2,16.4,9.2,16.4 L9.2,16.4 Q11.4,16.4,13.5,15.9 Q15.7,15.4,18.3,14.9 Q20.8,14.4,24,14.4 L24,14.4 Q26,14.4,27.5,14.6 Q29,14.8,29.9,15.4 Q30.7,15.9,30.7,16.9 L30.7,16.9 Q30.7,17.9,30,18.5 Q29.3,19.1,27.3,19.6 Q25.3,20.2,21.3,20.8 L21.3,20.8 Q15.6,21.8,11.5,23.7 Q7.5,25.6,5.3,28.6 Q3.1,31.6,3.1,36 L3.1,36 Q3.1,40,5.4,42.8 Q7.8,45.6,11.8,47.3 Q15.8,49.1,20.8,49.9 Q25.8,50.7,31.2,50.7 L31.2,50.7 Q34.9,50.7,38.6,50.3 Q42.4,49.8,45.6,48.8 Q48.8,47.9,50.8,46.3 Q52.7,44.7,52.7,42.4 L52.7,42.4 Q52.7,39.4,51.3,37.6 Q49.9,35.8,47.8,35 Q45.7,34.2,43.5,34.2 L43.5,34.2 Q40.6,34.2,37.9,34.7 Q35.3,35.3,33.6,35.3 L33.6,35.3 Q32.4,35.3,31.5,35.1 Q30.6,34.9,30.1,34.5 Q29.6,34.1,29.6,33.3 L29.6,33.3 Q29.6,32.2,31.5,31.6 Q33.5,31,38.1,30.2 L38.1,30.2 Q42.7,29.4,46.4,27.6 Q50.1,25.9,52.3,22.8 Q54.5,19.7,54.5,14.9 L54.5,14.9 Q54.5,10.6,52.5,7.5 Q50.6,4.3,47,2.2 Q43.4,0.1,38.4,-1 Q33.4,-2.1,27.4,-2.1 Z"},
+  "N":{"adv":85.8,"d":"M18.1,-2.4 L18.1,-2.4 Q14.4,-2.4,11.9,-1.1 Q9.5,0.3,7.8,2.6 L7.8,2.6 Q7,3.8,6.3,5.7 Q5.7,7.5,5.2,9.7 Q4.8,12,4.5,14.4 Q4.2,16.9,4,19.4 Q3.8,21.9,3.7,24.1 Q3.7,26.4,3.7,28.3 L3.7,28.3 Q3.7,37.7,5,44.4 Q6.4,51.1,10,54.8 Q13.6,58.4,20.2,58.4 L20.2,58.4 Q24.1,58.4,27,57.2 Q29.8,55.9,32.7,53.3 Q35.5,50.7,39.4,46.5 L39.4,46.5 Q43.6,41.8,47,38.7 Q50.4,35.5,52.4,35.5 L52.4,35.5 Q53.2,35.5,53.7,35.7 Q54.3,35.9,54.6,36.5 Q55,37.1,55.3,38.1 L55.3,38.1 Q55.4,38.7,55.6,39.6 Q55.8,40.6,55.9,41.7 Q56.1,42.9,56.3,44.2 Q56.5,45.5,56.7,46.7 Q57,48,57.2,49 Q57.5,50,57.7,50.7 L57.7,50.7 Q59.1,54.5,61.7,56.1 Q64.4,57.7,69,57.7 L69,57.7 Q72.7,57.7,75.1,56.5 Q77.6,55.3,79.1,53 Q80.6,50.7,81.3,47.3 Q81.9,44,82,39.8 L82,39.8 Q82,37.8,81.9,35.4 Q81.8,33,81.6,30.4 Q81.4,27.8,81.1,25.1 Q80.8,22.4,80.4,19.8 Q80,17.2,79.4,14.8 Q78.9,12.4,78.2,10.5 L78.2,10.5 Q76.8,6.4,74.8,3.8 Q72.7,1.2,69.8,0 Q66.8,-1.3,62.7,-1.3 L62.7,-1.3 Q59.3,-1.3,55.9,0.5 Q52.5,2.4,49.1,5.5 Q45.8,8.6,42.4,12.6 L42.4,12.6 Q40.2,15.2,38.5,17 Q36.9,18.8,35.8,19.9 Q34.7,21,33.9,21.5 Q33.1,22,32.4,22 L32.4,22 Q30.8,22,30.1,20.4 Q29.4,18.9,29.4,14.2 L29.4,14.2 Q29.4,13.1,29.3,11.9 Q29.3,10.7,29.3,9.5 Q29.3,8.3,29.2,7.2 Q29.1,6.1,28.9,5 Q28.8,4,28.6,3.1 Q28.4,2.3,28.1,1.6 L28.1,1.6 Q26.7,-0.4,24.2,-1.4 Q21.6,-2.4,18.1,-2.4 Z"},
+  "o":{"adv":72.7,"d":"M34.8,-3 L34.8,-3 Q28.5,-3,22.5,-1.6 Q16.6,-0.3,11.9,2.6 Q7.2,5.6,4.4,10.2 Q1.7,14.8,1.7,21.4 L1.7,21.4 Q1.7,28.7,4.3,34.3 Q6.9,39.9,11.5,43.7 Q16.1,47.6,22.2,49.6 Q28.4,51.6,35.4,51.6 L35.4,51.6 Q42.2,51.6,48.2,49.9 Q54.1,48.2,58.6,44.8 Q63.1,41.4,65.6,36.2 Q68.1,31,68.1,24 L68.1,24 Q68.1,18.3,65.4,13.4 Q62.7,8.5,58,4.8 Q53.3,1.2,47.3,-0.9 Q41.4,-3,34.8,-3 Z M33.6,18.3 L33.6,18.3 Q36.1,18.3,37.8,19 Q39.6,19.7,40.7,21 Q41.9,22.2,42.4,23.8 Q43,25.3,43,26.9 L43,26.9 Q43,28.8,42.2,30.2 Q41.4,31.6,40.1,32.5 Q38.7,33.4,37.1,33.8 Q35.5,34.2,33.7,34.2 L33.7,34.2 Q31.4,34.2,29.4,33.3 Q27.4,32.3,26.2,30.5 Q25,28.7,25,26.1 L25,26.1 Q25,23.7,26,22 Q27.1,20.2,29.1,19.2 Q31,18.3,33.6,18.3 Z"},
+  "t":{"adv":62,"d":"M37.1,-1.3 L37.1,-1.3 Q32.3,-1.3,28.2,0 Q24,1.2,21.5,4 Q18.9,6.8,18.8,11.4 L18.8,11.4 Q18.8,12.5,18.8,13.7 Q18.8,14.9,18.8,16.1 Q18.9,17.4,18.9,18.6 Q18.9,19.8,18.9,20.9 Q19,22.1,19,23.2 L19,23.2 Q18.9,25.4,17.7,26 Q16.4,26.7,14.5,26.9 L14.5,26.9 Q13.4,27,12.3,27 Q11.3,27.1,10.1,27.3 Q9,27.4,7.8,27.6 L7.8,27.6 Q4.9,27.9,3.2,30 Q1.5,32.2,1.5,36 L1.5,36 Q1.5,38.7,2.5,40.1 Q3.5,41.6,5.2,42.3 Q6.9,43,8.8,43.4 L8.8,43.4 Q10.8,43.8,12.5,44.2 Q14.2,44.6,15.6,44.9 L15.6,44.9 Q16.9,45.2,17.8,45.9 Q18.8,46.6,19,48.2 L19,48.2 Q19.2,49.3,19.3,50.4 Q19.5,51.5,19.7,52.5 Q20,53.5,20.3,54.3 L20.3,54.3 Q21.4,57.4,23.3,58.6 Q25.2,59.9,29.3,59.9 L29.3,59.9 Q32.5,59.9,34.4,59.2 Q36.3,58.5,37.4,57 Q38.5,55.5,39.1,53 L39.1,53 Q39.4,51.9,39.5,51.1 Q39.7,50.3,39.8,49.5 Q40,48.8,40.1,48 Q40.3,47.3,40.4,46.3 L40.4,46.3 Q40.6,44.8,41.7,43.9 Q42.9,43.1,44.4,42.8 L44.4,42.8 Q45.6,42.6,46.7,42.4 Q47.8,42.2,48.8,42.1 Q49.9,42,51,41.8 L51,41.8 Q53.7,41.4,56,39.8 Q58.3,38.2,58.3,34.4 L58.3,34.4 Q58.3,31.1,56.4,29 Q54.6,26.9,51.8,26.6 L51.8,26.6 Q49.8,26.4,47.8,26.3 Q45.9,26.1,44.6,26 L44.6,26 Q43.6,25.8,42.6,25.2 Q41.6,24.6,41.4,22.8 L41.4,22.8 Q41.3,22.1,41.3,21.3 Q41.2,20.5,41.2,19.7 Q41.2,18.9,41.1,18.1 Q41.1,17.3,41.2,16.5 Q41.2,15.8,41.2,15.1 L41.2,15.1 Q41.3,13.6,42.1,12.8 Q42.9,12.1,45.2,12.1 L45.2,12.1 Q46.5,12.1,47.5,12.6 Q48.6,13.1,49.5,13.6 Q50.5,14.1,51.8,14.1 L51.8,14.1 Q54.1,14.1,55,12.9 Q56,11.7,56,9.4 L56,9.4 Q56,6.8,54.2,4.8 Q52.5,2.8,49.7,1.5 Q46.9,0.1,43.6,-0.6 Q40.3,-1.3,37.1,-1.3 Z"},
+  "E":{"adv":58.4,"d":"M27.5,-2.3 L27.5,-2.3 Q21.8,-2.3,16.9,-0.2 Q12,1.9,8.7,6.4 Q5.4,10.9,4.4,18.1 L4.4,18.1 Q4.2,19.5,4.1,21.1 Q3.9,22.7,3.8,24.4 Q3.7,26.1,3.7,27.8 Q3.7,29.6,3.7,31.5 L3.7,31.5 Q3.7,40.7,5.8,46.8 Q7.9,53,12,56.5 Q16.1,60,22,61.5 Q27.9,63,35.3,63 L35.3,63 Q39.1,63,42.5,62.6 Q45.9,62.2,48.4,61.3 Q51,60.4,52.4,58.8 Q53.9,57.3,53.9,55.1 L53.9,55.1 Q53.9,52.5,52.4,50.8 Q50.9,49.2,48.8,48.6 L48.8,48.6 Q47.2,48.1,44.7,47.8 Q42.3,47.6,39.8,47.4 Q37.3,47.3,35.3,47.2 L35.3,47.2 Q33.5,47.2,32.4,46.9 Q31.2,46.6,30.6,45.9 Q29.9,45.3,29.6,44.4 Q29.4,43.5,29.4,42.4 L29.4,42.4 Q29.4,41.5,29.7,40.7 Q30,40,30.8,39.6 Q31.7,39.2,33.4,39.2 L33.4,39.2 Q34.6,39.2,35.7,39.3 Q36.8,39.3,37.8,39.4 Q38.9,39.5,40,39.5 Q41.1,39.6,42.1,39.6 L42.1,39.6 Q45.8,39.6,47.6,37.7 Q49.5,35.9,49.5,32.6 L49.5,32.6 Q49.5,27.7,46.9,25.7 Q44.4,23.8,41,23.8 L41,23.8 L38.6,23.8 Q37.4,23.8,36.4,23.8 Q35.3,23.9,34.3,23.9 L34.3,23.9 L32.6,23.9 Q30.7,23.9,29.6,23.5 Q28.5,23.2,28.1,22.6 Q27.7,22.1,27.7,21.1 L27.7,21.1 Q27.7,20.2,27.9,19.4 Q28.1,18.6,28.7,18 Q29.2,17.4,30.1,17 Q31.1,16.6,32.4,16.4 Q33.7,16.2,35.6,16.2 L35.6,16.2 Q37.4,16.2,39.4,16.2 Q41.4,16.3,43.2,16.3 Q45,16.3,46.2,16.3 L46.2,16.3 Q50,16.3,51.9,14.4 Q53.7,12.5,53.7,9.1 L53.7,9.1 Q53.7,5.4,51.2,3.1 Q48.7,0.9,44.7,-0.3 Q40.8,-1.5,36.2,-1.9 Q31.6,-2.3,27.5,-2.3 Z"},
+  "n":{"adv":73.4,"d":"M13.4,-1.1 L13.4,-1.1 Q9.2,-1.1,6.4,0.4 Q3.6,1.9,2.2,5.2 L2.2,5.2 Q1.8,6.3,1.6,7.6 Q1.3,8.9,1.2,10.4 Q1.1,11.9,1.2,13.7 L1.2,13.7 Q1.3,24.1,5.5,31.5 Q9.8,38.8,17.3,42.7 Q24.8,46.7,34.5,46.7 L34.5,46.7 Q44.3,46.7,52,42.8 Q59.7,39,64.1,31.8 Q68.5,24.5,68.5,14.3 L68.5,14.3 Q68.5,12.7,68.3,11.2 Q68.1,9.8,67.8,8.5 Q67.5,7.2,67,6.1 L67,6.1 Q65.5,2.6,62.6,0.8 Q59.7,-1.1,55.8,-1.1 L55.8,-1.1 Q51,-1.1,48.4,0.1 Q45.9,1.4,44.7,3.7 Q43.6,6,43.1,9.2 L43.1,9.2 Q42.8,11.7,42.5,13.7 Q42.2,15.7,41.8,17.3 Q41.5,19,41.2,20.3 Q40.9,21.6,40.5,22.6 L40.5,22.6 Q39.7,25.1,38.4,26.2 Q37.1,27.3,35,27.3 L35,27.3 Q33.2,27.3,31.9,26.2 Q30.6,25.1,29.7,22.7 L29.7,22.7 Q29.2,21.5,28.7,20.1 Q28.3,18.6,28,16.8 Q27.6,15.1,27.3,12.9 Q27,10.7,26.6,8.1 L26.6,8.1 Q26.1,4.5,24.2,2.5 Q22.3,0.5,19.5,-0.3 Q16.7,-1.1,13.4,-1.1 Z"},
+  "v":{"adv":77.9,"d":"M38.9,-3.4 L38.9,-3.4 Q35.2,-3.4,30.7,-1.2 Q26.3,1,21.9,4.6 L21.9,4.6 Q19.8,6.3,17.7,8.4 Q15.6,10.5,13.6,12.9 Q11.6,15.3,9.8,17.8 Q8,20.3,6.5,22.7 Q5,25.2,3.8,27.4 L3.8,27.4 Q2.6,29.9,1.9,32.2 Q1.3,34.5,1.3,36.5 L1.3,36.5 Q1.3,39.5,2.9,41.8 Q4.5,44.1,7.2,45.3 Q10,46.6,13.2,46.6 L13.2,46.6 Q17.6,46.6,20.7,45 Q23.7,43.5,26,40.6 L26,40.6 Q26.8,39.5,27.7,38 Q28.5,36.6,29.4,34.9 Q30.3,33.3,31.1,31.4 Q32,29.6,32.9,27.7 Q33.7,25.9,34.5,24.1 L34.5,24.1 Q35.3,22.3,36.2,21.1 Q37.1,20,37.9,20 L37.9,20 Q38.8,20,39.8,21.2 Q40.8,22.3,41.7,24.3 L41.7,24.3 Q43.5,28.3,45.4,32.2 Q47.2,36.1,49.4,39.5 L49.4,39.5 Q51.7,42.4,54.5,43.9 Q57.4,45.5,61.7,45.5 L61.7,45.5 Q66.7,45.5,69.8,43 Q73,40.6,73,35.7 L73,35.7 Q73,33.4,72.3,30.9 Q71.6,28.3,70.3,25.7 L70.3,25.7 Q69.3,23.6,68,21.3 Q66.7,19,65.2,16.6 Q63.7,14.3,62,12.1 Q60.3,9.9,58.5,7.9 Q56.7,5.9,54.8,4.3 L54.8,4.3 Q50.9,0.8,46.7,-1.3 Q42.6,-3.4,38.9,-3.4 Z"},
+  "l":{"adv":49.8,"d":"M26.9,-2.9 L26.9,-2.9 Q20.6,-2.9,16.4,-1 Q12.2,0.9,9.7,4.7 Q7.2,8.5,5.9,14.2 L5.9,14.2 Q5.3,16.5,4.9,19.3 Q4.4,22.2,4.1,25.4 Q3.8,28.5,3.6,31.5 Q3.4,34.5,3.3,36.9 Q3.2,39.4,3.3,41 L3.3,41 Q3.3,47.9,4.2,52.8 Q5.2,57.8,7.9,60.4 Q10.7,63,15.9,63 L15.9,63 Q22.3,63,24.7,59.5 Q27.1,55.9,27.1,48.2 L27.1,48.2 Q27.1,47.1,27,45.3 Q26.9,43.5,26.8,41.2 Q26.8,39,26.7,36.6 Q26.6,34.2,26.5,31.8 Q26.4,29.5,26.3,27.4 Q26.3,25.3,26.3,23.7 L26.3,23.7 Q26.3,20.9,26.6,18.8 Q26.9,16.8,27.6,15.4 Q28.2,14,29.2,13.3 Q30.1,12.6,31.4,12.6 L31.4,12.6 Q32.9,12.6,34.4,13.2 Q35.9,13.9,37.4,14.5 Q39,15.2,40.6,15.2 L40.6,15.2 Q42.7,15.2,43.9,13.6 Q45.2,12,45.2,9.4 L45.2,9.4 Q45.2,6.5,43.4,4.2 Q41.6,1.9,38.8,0.4 Q36,-1.2,32.8,-2.1 Q29.7,-2.9,26.9,-2.9 Z"},
+  "é":{"adv":61.9,"d":"M31.2,-4.4 L31.2,-4.4 Q22.4,-4.4,15.7,-1.7 Q9,1.1,5.2,6.6 Q1.4,12.2,1.4,20.7 L1.4,20.7 Q1.4,27.7,3.8,33 Q6.3,38.4,10.6,42 Q14.9,45.7,20.5,47.5 Q26.1,49.3,32.5,49.3 L32.5,49.3 Q36.9,49.3,41.1,48.6 Q45.4,47.9,48.8,46.3 Q52.3,44.6,54.4,41.8 Q56.5,39,56.5,34.9 L56.5,34.9 Q56.5,31.9,55.5,29.7 Q54.6,27.5,52.8,26 Q51.1,24.6,48.9,23.5 Q46.7,22.5,44.1,21.7 L44.1,21.7 Q41.9,21,38.6,20.3 Q35.4,19.6,32.1,19.1 Q28.8,18.7,26.5,18.7 L26.5,18.7 Q24.9,18.7,24.3,18.4 Q23.7,18.1,23.7,17.2 L23.7,17.2 Q23.7,16.5,24,15.9 Q24.3,15.2,24.9,14.7 L24.9,14.7 Q25.8,13.8,27.2,13.5 Q28.5,13.2,30.3,13.2 L30.3,13.2 Q33.2,13.2,36.4,14.2 Q39.7,15.1,43.3,16.1 Q46.8,17,50.6,17 L50.6,17 Q54.6,17,57,15.6 Q59.4,14.1,59.4,9.8 L59.4,9.8 Q59.4,6.1,57.1,3.4 Q54.7,0.7,50.7,-1 Q46.7,-2.7,41.7,-3.6 Q36.6,-4.4,31.2,-4.4 Z M28.8,28 L28.8,28 Q30.5,28,32.4,28.5 Q34.4,29.1,35.7,30.2 Q37.1,31.3,37.1,33 L37.1,33 Q37.1,35.2,35.4,35.8 Q33.8,36.5,31.6,36.5 L31.6,36.5 Q30.2,36.5,28.8,36 Q27.4,35.6,26.2,34.7 Q25.1,33.9,24.4,32.8 Q23.7,31.8,23.7,30.5 L23.7,30.5 Q23.7,29.4,24.3,28.9 Q24.9,28.4,26.1,28.2 Q27.2,28,28.8,28 Z M30,55.3 L30,55.3 Q28.1,55.3,26.8,56.2 Q25.5,57,25.5,59 L25.5,59 Q25.5,61.4,28.4,64.2 Q31.4,67.1,35.6,69.4 L35.6,69.4 Q38.6,71.2,41.8,72.3 Q45,73.4,47.4,73.4 L47.4,73.4 Q50.1,73.4,51.5,72.2 Q53,71,53,68.3 L53,68.3 Q53,65.5,50.4,63.1 Q47.9,60.7,44,58.9 L44,58.9 Q40.6,57.3,36.8,56.3 Q33,55.3,30,55.3 Z"},
+};
+const GLYPHES_KERN = {"te":-1.2};
+
 /* ------------------------------------------------------------------
    Textures fabriquées à l'ouverture : jersey tricoté, crochet (amigurumi),
    feutrine, fil retors, toile tissée, bois ; et quelques images pour les
@@ -9880,25 +10062,27 @@ const Engine = (() => {
     }
   }
 
-  /* une image fixe, à une taille donnée (portraits de l'accueil) */
-  function snapshot(v, w, h, f = 0) {
+  /* des images fixes, à une taille donnée (portraits de l'accueil), sans toucher
+     au rendu à l'écran : un second jeu de cibles, gardé pour les portraits suivants */
+  let snapPost = null;
+  function snapshot(v, w, h, frames = [0]) {
     if (!init()) return null;
-    const oldView = view;
-    view = v;
-    post.setSize(w, h);
+    snapPost = snapPost || makePost(renderer);
+    snapPost.setSize(w, h);
     if (v.resize) v.resize(w, h);
-    FUZZ_U.uFzBoil.value = hashi(f >> 1, 99) * 0.014;
-    v.tick(f / FPS, f);
-    const out = post.render(renderer, v, f, 'read');
-    view = oldView;
-    post.setSize(Math.round(W * PR), Math.round(H * PR));
-    if (oldView && oldView.resize && W) oldView.resize(W, H);
+    const out = frames.map((f) => {
+      FUZZ_U.uFzBoil.value = hashi(f >> 1, 99) * 0.014;
+      v.tick(f / FPS, f);
+      return snapPost.render(renderer, v, f, 'read');
+    });
+    renderer.setRenderTarget(null);
     return out;
   }
 
   return {
     supported, init, attach, detach, show, poke, once, snapshot, stop, start, manual,
     get renderer() { return renderer; },
+    get view() { return view; },
     get size() { return [W, H]; },
     get tier() { return tier; },
     project(v3w, cam) { const p = v3w.clone().project(cam); return [(p.x * 0.5 + 0.5) * W, (-p.y * 0.5 + 0.5) * H, p.z]; },
@@ -20054,6 +20238,556 @@ SCENES.provence = {
     };
   },
 };
+
+/* ------------------------------------------------------------------
+   L'accueil de la version laine : un petit théâtre.
+   En haut, la scène : le titre en guirlande de lettres de feutrine
+   suspendue entre deux aiguilles à tricoter, les dernières lettres qui
+   s'envolent, des notes ailées qui chantent quand on les touche.
+   Puis le fil rouge, qui passe de tambour à broder en tambour à broder :
+   chaque tambour montre le décor de sa comptine (rendu par le même
+   moteur, quatre images qui frémissent). Enfin l'établi : instrument,
+   niveau, mode d'emploi.
+------------------------------------------------------------------- */
+const HOME_BG = '#231A33';
+
+/* contour d'une lettre → formes THREE (à l'échelle k, en cm) */
+function glyphShapes(ch, k) {
+  const G = GLYPHES[ch];
+  if (!G) return [];
+  const sp = new T.ShapePath();
+  for (const tk of G.d.split(' ')) {
+    const c = tk[0], n = tk.slice(1).split(',').map((v) => +v * k);
+    if (c === 'M') sp.moveTo(n[0], n[1]);
+    else if (c === 'L') sp.lineTo(n[0], n[1]);
+    else if (c === 'Q') sp.quadraticCurveTo(n[0], n[1], n[2], n[3]);
+    else if (c === 'C') sp.bezierCurveTo(n[0], n[1], n[2], n[3], n[4], n[5]);
+  }
+  return sp.toShapes(false);
+}
+
+/* une lettre de feutrine cousue ; l'origine est au point d'accroche (en haut, au milieu) */
+function feltLetter(ch, color, k) {
+  const shapes = glyphShapes(ch, k);
+  const g = new T.Group();
+  const body = new T.Group();
+  const depth = 0.8;
+  const mat = wool(color, 'felt', { sheen: 0.8 });
+  let box = new T.Box3();
+  shapes.forEach((s) => {
+    const m = mesh(feltGeo(s, depth, { bevel: 0.25, curve: 10 }), mat);
+    body.add(m);
+    box.expandByObject(m);
+    const st = lighten(color, 0.6).getStyle();
+    body.add(stitches(insetPoly(outline2D(s, 140), 0.55), depth / 2 + 0.02, st, { len: 0.42, gap: 0.3, r: 0.07 }));
+    s.holes.forEach((h) => {
+      const pts = h.getSpacedPoints(60);
+      if (pts.length > 2 && pts[0].distanceTo(pts[pts.length - 1]) < 1e-4) pts.pop();
+      body.add(stitches(insetPoly(pts, -0.5), depth / 2 + 0.02, st, { len: 0.38, gap: 0.28, r: 0.06 }));
+    });
+  });
+  const c = box.getCenter(v3()), sz = box.getSize(v3());
+  body.position.set(-c.x, -box.max.y - 1.2, 0);
+  g.add(body);
+  g.userData.size = sz;
+  g.userData.body = body;
+  return g;
+}
+
+/* pelote de laine : une âme tricotée et des tours de fil dans tous les sens */
+function yarnBall(r, color, seed = 1) {
+  const g = new T.Group();
+  const core = mesh(blobGeo(r * 0.97, r * 0.95, r * 0.97, { seg: 24, lump: 0.03, seed }), wool(color, 'yarn', { scale: 1 }));
+  g.add(core);
+  const R = rng(seed * 7 + 1);
+  const yc = lighten(color, 0.08).getStyle();
+  for (let i = 0; i < 9; i++) {
+    const q = new T.Quaternion().setFromEuler(new T.Euler(R() * TAU, R() * TAU, R() * TAU));
+    const pts = [];
+    for (let j = 0; j < 40; j++) { const a = (j / 40) * TAU; pts.push(v3(Math.cos(a) * r * 1.01, Math.sin(a) * r * 1.01, 0).applyQuaternion(q)); }
+    g.add(yarn(pts, r * 0.07, i % 3 ? yc : color, { closed: true, radial: 6 }));
+  }
+  return g;
+}
+function needle(len, color = '#C9965C', knob = '#E5484D') {
+  const g = new T.Group();
+  const shaft = mesh(latheGeo([[0.02, 0], [0.45, 2.5], [0.55, 4], [0.55, len], [0, len]], { seg: 12 }), woodMat(color, { rough: 0.45 }));
+  g.add(shaft);
+  const k = mesh(blobGeo(1.3, 1.1, 1.3, { seg: 16, lump: 0 }), plastic(knob, { rough: 0.3 }));
+  k.position.y = len + 0.6;
+  g.add(k);
+  return g;
+}
+function spool(color, h = 6) {
+  const g = new T.Group();
+  const w = woodMat('#D9B07A', { rough: 0.5 });
+  for (const y of [0, h]) { const d = mesh(new T.CylinderGeometry(2.4, 2.4, 0.7, 24), w); d.position.y = y + 0.35; g.add(d); }
+  const th = mesh(new T.CylinderGeometry(1.9, 1.9, h - 0.6, 28, 1), wool(color, 'yarn'));
+  scaleUV(th.geometry, 4, 1);
+  th.position.y = h / 2 + 0.35;
+  g.add(th);
+  return g;
+}
+
+/* ---------------- la scène de l'accueil ---------------- */
+function buildHero(V, o = {}) {
+  const S = V.scene;
+  // lumière de théâtre : une poursuite chaude, un contre-jour froid
+  const spot = new T.SpotLight(col('#FFE2B8'), 5.5, 0, 0.42, 0.75, 0);
+  spot.position.set(-70, 150, 120);
+  spot.target.position.set(0, 42, 0);
+  spot.castShadow = true;
+  const sz = Engine.tier === 0 ? 1024 : 2048;
+  spot.shadow.mapSize.set(sz, sz);
+  spot.shadow.camera.near = 80; spot.shadow.camera.far = 420;
+  spot.shadow.bias = -0.0003; spot.shadow.normalBias = 0.06; spot.shadow.radius = 5;
+  S.add(spot, spot.target);
+  const rim = new T.DirectionalLight(col('#A9B6FF'), 1.4);
+  rim.position.set(90, 80, -80);
+  S.add(rim);
+  S.add(new T.HemisphereLight(col('#4A3A6A'), col('#2A1A12'), 0.45));
+  S.environment = envMap('#3A2A55', '#120C10', '#FFE7C9', 3);
+  S.environmentIntensity = 0.4;
+
+  // rideau de velours (tricot) aux plis profonds
+  const cw = 340, ch = 190;
+  const cg = new T.PlaneGeometry(cw, ch, 160, 2);
+  const cp = cg.attributes.position;
+  for (let i = 0; i < cp.count; i++) { const x = cp.getX(i); cp.setZ(i, Math.sin(x * 0.21) * 3.2 + Math.sin(x * 0.53 + 1) * 1.1); }
+  cg.computeVertexNormals();
+  scaleUV(cg, cw, ch);
+  const curtain = mesh(cg, wool('#5B1F45', 'knit', { scale: 1.3, sheen: 1, sheenColor: '#C46AA2', bump: 0.8 }), { cast: false });
+  curtain.position.set(0, ch / 2 - 6, -48);
+  S.add(curtain);
+  // l'établi : un plateau de bois sombre
+  const top = mesh(new T.BoxGeometry(300, 4, 120), woodMat('#5A3826', { rough: 0.55, scale: 2 }), { cast: false });
+  scaleUV(top.geometry, 300, 120);
+  top.position.set(0, -2, 10);
+  S.add(top);
+
+  // deux pelotes, deux aiguilles plantées, la guirlande tendue entre elles
+  const k = 0.135;
+  const lines = [['Les', 'Notes'], ['Envolées']];
+  const ballL = yarnBall(13, '#E9B949', 3); ballL.position.set(-47, 12.4, -4); S.add(ballL);
+  const ballR = yarnBall(11.5, '#4E8FD8', 5); ballR.position.set(48, 11, -6); S.add(ballR);
+  V.boilable(ballL, 0.04, 0.3); V.boilable(ballR, 0.04, 0.3);
+  const nL = needle(82, '#C9965C', '#E5484D'); nL.position.set(-46, 14, -4); nL.rotation.z = -0.12; S.add(nL);
+  const nR = needle(80, '#C9965C', '#8B57C9'); nR.position.set(47, 13, -6); nR.rotation.z = 0.1; S.add(nR);
+  // fil qui pend de la pelote jaune jusqu'à la table
+  S.add(yarn([[-40, 6, 3], [-34, 1.2, 9], [-24, 0.5, 14], [-12, 0.6, 20]], 0.85, '#E9B949', { radial: 6 }));
+  // petits objets de couturière
+  const sp1 = spool('#E5484D', 6.5); sp1.position.set(-24, 0, 18); S.add(sp1);
+  const sp2 = spool('#1FA7A0', 5.5); sp2.position.set(30, 0, 16); sp2.rotation.z = Math.PI / 2; sp2.position.y = 2.4; S.add(sp2);
+  const b1 = sewnButton(2.2, '#F5C32C', { thread: '#8A5A2A' }); b1.rotation.x = -Math.PI / 2; b1.position.set(14, 0.45, 26); S.add(b1);
+  const b2 = sewnButton(1.6, '#E5484D', { holes: 2, thread: '#FFFFFF' }); b2.rotation.x = -Math.PI / 2; b2.position.set(20, 0.4, 30); S.add(b2);
+  const b3 = sewnButton(1.9, '#8B57C9', { thread: '#F5C32C' }); b3.rotation.x = -Math.PI / 2; b3.rotation.z = 0.5; b3.position.set(-8, 0.42, 30); S.add(b3);
+  // pelote à épingles (tomate)
+  const pin = new T.Group();
+  pin.add(mesh(blobGeo(6.5, 4.6, 6.5, { seg: 26, lump: 0.08, seed: 4 }), wool('#D9443A', 'crochet', { scale: 0.8 })));
+  fuzz(pin.children[0], 0.1);
+  for (let i = 0; i < 5; i++) { const lf = felt(leafShape(2.2, 4.4), '#4CAF5A', 0.25); lf.rotation.set(-Math.PI / 2 + 0.25, 0, (i / 5) * TAU); lf.position.set(Math.sin((i / 5) * TAU) * 1.6, 4.3, Math.cos((i / 5) * TAU) * 1.6); pin.add(lf); }
+  [['#F5C32C', 0.4, 0.2], ['#3E6FD8', -0.5, 0.5], ['#FFFFFF', 0.1, -0.6], ['#E5484D', 0.7, -0.2], ['#4CAF5A', -0.2, -0.3]].forEach(([c, ax, az], i) => {
+    const p = new T.Group();
+    p.add(mesh(new T.CylinderGeometry(0.08, 0.08, 6, 6), metalMat('#D9D9E0', { rough: 0.25 })));
+    const h = bead(0.55, c, { flat: 1 }); h.position.y = 3; p.add(h);
+    p.position.set(Math.sin(i * 1.3) * 2.6, 5.2, Math.cos(i * 1.3) * 2.6);
+    p.rotation.set(ax * 0.6, 0, az * 0.6);
+    pin.add(p);
+  });
+  pin.position.set(36, 4.2, 22);
+  S.add(pin);
+
+  const strings = [{ y: 66, sag: 6.5, z: 0, x0: -45.5, x1: 46 }, { y: 44, sag: 5, z: 1.5, x0: -45, x1: 45.5 }];
+  const letters = [];
+  let ci = 0;
+  lines.forEach((words, li) => {
+    const L = strings[li];
+    const str = (x) => L.y - L.sag * (1 - Math.pow((2 * (x - L.x0)) / (L.x1 - L.x0) - 1, 2));
+    const pts = [];
+    for (let i = 0; i <= 24; i++) { const x = lerp(L.x0, L.x1, i / 24); pts.push(v3(x, str(x), L.z)); }
+    S.add(yarn(pts, 0.32, '#F2E6D2', { radial: 6 }));
+    // place des lettres le long du fil
+    const chars = [];
+    words.forEach((w, wi) => { [...w].forEach((c) => chars.push(c)); if (wi < words.length - 1) chars.push(' '); });
+    let wsum = 0;
+    const adv = chars.map((c) => (c === ' ' ? 30 : GLYPHES[c].adv) * k);
+    adv.forEach((a) => (wsum += a));
+    let x = -wsum / 2;
+    chars.forEach((c, i) => {
+      const a = adv[i];
+      if (c !== ' ') {
+        const color = NOTE_COL[NOTE_ORDER[ci % 7]];
+        const letter = feltLetter(c, color, k);
+        const piv = new T.Group();
+        const px = x + a / 2;
+        piv.position.set(px, str(px), L.z);
+        piv.add(letter);
+        // pince à linge en bois
+        const peg = new T.Group();
+        const pw = woodMat('#E2C08D', { rough: 0.5 });
+        for (const s of [-1, 1]) { const b = mesh(new T.BoxGeometry(0.55, 3.2, 0.9), pw); b.position.set(s * 0.32, -0.6, 0.2); peg.add(b); }
+        const spr = mesh(new T.TorusGeometry(0.42, 0.1, 6, 12), metalMat('#C9C9D2'));
+        spr.position.set(0, -0.9, 0.7);
+        peg.add(spr);
+        piv.add(peg);
+        S.add(piv);
+        const fly = li === 1 && i >= chars.length - 3; // « ées » s'envolent
+        let wings = null;
+        if (fly) {
+          wings = [-1, 1].map((sx) => {
+            const w = new T.Group();
+            const f = felt(leafShape(4.2, 7.5), '#FFFFFF', 0.25, { fuzz: 0.06 });
+            f.position.set(sx * 2.6, 2.2, -0.4);
+            f.rotation.z = sx * -0.9;
+            w.add(f);
+            w.position.set(0, -6, -0.6);
+            letter.add(w);
+            w.visible = false;
+            return w;
+          });
+        }
+        letters.push({ piv, letter, peg, color, note: NOTE_ORDER[ci % 7], ph: hashi(ci, 4) * TAU, imp: 0, t0: -9, fly, wings, idx: letters.length, home: piv.position.clone() });
+        ci++;
+      }
+      x += a;
+    });
+  });
+
+  // notes ailées qui volent autour du titre
+  const birds = [];
+  ['C', 'E', 'G', 'A', 'D', 'F'].forEach((L, i) => {
+    const b = noteBird(NOTE_COL[L], { s: 1.25 });
+    S.add(b);
+    birds.push({ g: b, L, ph: (i / 6) * TAU, sp: 0.28 + hashi(i, 9) * 0.12, r: 52 + hashi(i, 3) * 12, y: 30 + hashi(i, 5) * 46, z: 10 + hashi(i, 7) * 18, t0: -9 });
+  });
+  // peluches dans le faisceau
+  if (!o.portrait) pointCloud(V, { n: 120, box0: [-80, 2, -40], box1: [80, 110, 50], size: 1.1, color: '#FFE9C8', opacity: 0.55, vel: [0.2, 0.45, 0.1], beam: 0.9, keyDir: [-0.45, 0.68, 0.58] });
+
+  V.anim((t, f) => {
+    letters.forEach((Lt) => {
+      const age = t - Lt.t0;
+      const kick = age >= 0 && age < 3 ? Lt.imp * Math.exp(-age * 1.6) * Math.sin(age * 9) : 0;
+      Lt.piv.rotation.z = Math.sin(t * 0.9 + Lt.ph) * 0.06 + kick;
+      Lt.piv.rotation.x = Math.sin(t * 0.7 + Lt.ph * 1.3) * 0.05;
+      if (Lt.fly) {
+        // envol périodique : la lettre quitte sa pince, fait une boucle et revient
+        // une seule lettre en l'air à la fois
+        const per = 12, dur = 3.4, start = 1.5 + (Lt.idx % 3) * 4;
+        const c = ((t - start) % per + per) % per;
+        const fl = c < dur;
+        Lt.wings.forEach((w, s) => { w.visible = fl; w.rotation.y = (s ? -1 : 1) * (f % 2 ? 0.2 : 1.1); });
+        if (fl) {
+          const u = c / dur, a = u * TAU;
+          const lift = Math.sin(Math.PI * u);
+          Lt.letter.position.set(Math.sin(a) * 9 * lift, lift * 14 + Math.sin(a * 2) * 2, Math.cos(a) * 6 * lift - 0 * lift);
+          Lt.letter.rotation.z = Math.sin(a * 2) * 0.35 * lift;
+        } else { Lt.letter.position.set(0, 0, 0); Lt.letter.rotation.z = 0; }
+      }
+    });
+    birds.forEach((B, i) => {
+      const age = t - B.t0;
+      const loop = age >= 0 && age < 1.2 ? age / 1.2 : -1;
+      const a = t * B.sp + B.ph;
+      B.g.position.set(Math.cos(a) * B.r, B.y + Math.sin(a * 2.3) * 6 + (loop >= 0 ? Math.sin(loop * TAU) * 7 : 0), B.z + Math.sin(a) * 14);
+      B.g.rotation.y = -a + Math.PI / 2;
+      B.g.rotation.z = loop >= 0 ? loop * TAU : Math.sin(a * 2) * 0.2;
+      const w = B.g.userData.wings, up = (f + i) % 2 === 0;
+      w[0].rotation.x = up ? -0.9 : 0.35; w[1].rotation.x = up ? 0.9 : -0.35;
+    });
+  });
+
+  return {
+    letters, birds,
+    // ce qu'on peut toucher : rend la note jouée (lettre C..B) ou null
+    hit(obj) {
+      for (const B of birds) { let p = obj; while (p) { if (p === B.g) { B.t0 = V.now; return B.L; } p = p.parent; } }
+      for (const Lt of letters) { let p = obj; while (p) { if (p === Lt.piv) { Lt.t0 = V.now; Lt.imp = 0.45; return Lt.note; } p = p.parent; } }
+      return null;
+    },
+    targets() { return birds.map((b) => b.g).concat(letters.map((l) => l.piv)); },
+  };
+}
+
+const HomeSkin = (() => {
+  let hero = null; // { V, H } : la scène de l'accueil, gardée d'une visite à l'autre
+  const portraits = new Map(); // thème → url d'une bande de 4 images
+  let queue = [], busy = false, root = null, io = null, heroIO = null;
+  const MIDI = { C: 60, D: 62, E: 64, F: 65, G: 67, A: 69, B: 71 };
+
+  function render(ctx) {
+    const { app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, keyLabels } = ctx;
+    const gl = Engine.supported();
+    const hoops = LIB.map((s, i) => {
+      const best = +records[s.id] || 0, best2 = +records[s.id + '@2'] || 0;
+      const c = (SCENES[s.theme] && SCENES[s.theme].color) || '#3A2A52';
+      const stars = best ? `<span class="hoop-stars" aria-label="Record : ${best} étoile${best > 1 ? 's' : ''}">${[1, 2, 3].map((k) => star(k <= best, 14)).join('')}</span>` : '';
+      const r2 = best2 ? `<span class="hoop-r2" aria-label="Niveau 2 : ${best2} étoile${best2 > 1 ? 's' : ''}">${ICON.metro}${'★'.repeat(best2)}</span>` : '';
+      const pic = portraits.get(s.theme);
+      return `<li class="hoop-li" data-i="${i}" data-theme="${s.theme}" style="--c:${c};--tilt:${((hashi(i, 3) - 0.5) * 7).toFixed(1)}deg">
+        <a class="hoop${pic ? ' has-pic' : ''}" href="#${s.id}">
+          <span class="hoop-ring">
+            <span class="hoop-cloth">
+              <span class="hoop-emb" aria-hidden="true">${typeof Scenes !== 'undefined' ? Scenes.emblem(s.theme) : ''}</span>
+              <span class="hoop-pic" aria-hidden="true">${pic ? `<img src="${pic}" alt="">` : ''}</span>
+            </span>
+            <span class="hoop-screw" aria-hidden="true"><i></i></span>
+            <span class="hoop-tag" aria-hidden="true">${s.level}</span>
+          </span>
+          <span class="hoop-title">${titleHtml(s.title)}</span>
+          <span class="hoop-meta">${LEVEL(s.level)} · ${s.notes.length} notes${r2}</span>
+          ${stars}
+        </a>
+      </li>`;
+    }).join('');
+    const chips = [['C', 'Do'], ['D', 'Ré'], ['E', 'Mi'], ['F', 'Fa'], ['G', 'Sol'], ['A', 'La'], ['B', 'Si']].map(([l, n]) => `<span class="chip" data-l="${l}">${n}</span>`).join('');
+    const levelOpts = [[1, '1 · Les notes', 'Retrouve chaque note à l’oreille, à ton rythme.'], [2, '2 · Notes et rythme', 'Après le décompte, joue toute la phrase en rythme : la page vérifie les notes et le rythme.']]
+      .map(([v, t, d]) => `<label class="lh-opt"><input type="radio" name="home-level" id="home-level-${v}" value="${v}"${settings.level === v ? ' checked' : ''}><span class="lh-optcard"><b>${t}</b><small>${d}</small></span></label>`).join('');
+    const micNote = framed && ONLINE_URL ? `<p class="lh-online">Ici, dans claude.ai, le micro n’est pas disponible. Pour jouer avec ton instrument, ouvre la <a href="${esc(ONLINE_URL)}" target="_blank" rel="noopener">version en ligne</a>.</p>` : '';
+    app.innerHTML = `
+    <main class="lhome${gl ? ' has-gl' : ''}">
+      <section class="lh-hero">
+        <div class="lh-stage" aria-hidden="true"></div>
+        <div class="lh-hero-in">
+          <h1 class="lh-h1"><span class="lh-fallback">Les Notes <span>Envolées</span></span><span class="lh-sr">Les Notes Envolées</span></h1>
+          <div class="lh-intro">
+            <p class="lh-eyebrow">Jeu d’oreille · ${LIB.length} comptines en do majeur · décors en laine</p>
+            <p class="lh-lede">Dans chaque comptine, les notes se sont envolées. <strong>Seule la première note de chaque phrase est restée.</strong> Joue-la, puis retrouve les suivantes à l’oreille, sur le xylophone ou sur ton propre instrument.</p>
+            <div class="lh-actions">
+              <button class="lh-cta" type="button" id="lh-go">Choisir une comptine</button>
+              <p class="lh-hint" id="lh-hint">${gl ? 'Touche les notes qui volent : elles chantent.' : ''}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="lh-path" id="lh-path" aria-label="Les comptines, de la plus facile à la plus difficile">
+        <header class="lh-path-head">
+          <h2>Le fil des comptines</h2>
+          <p>De la plus facile à la plus difficile. Chaque tambour est le décor de sa comptine.</p>
+        </header>
+        <div class="lh-board">
+          <svg class="lh-thread" aria-hidden="true"></svg>
+          <ol class="lh-hoops">${hoops}</ol>
+        </div>
+      </section>
+      <section class="lh-bench" aria-label="Réglages et mode d’emploi">
+        <div class="lh-patch lh-inst">
+          <h2>Ton instrument</h2>
+          <p>Les noms de notes sont ceux de ta partition. La page joue dans le ton de ton instrument, avec son vrai son.</p>
+          <label class="lh-select">${ICON.note}<select class="inst-sel" id="home-inst" aria-label="Ton instrument">${instOptions()}</select>${ICON.chev}</label>
+          <p class="lh-note" id="home-inst-note">${esc(instNote())}</p>
+          ${micNote}
+        </div>
+        <fieldset class="lh-patch lh-level">
+          <legend>Niveau</legend>
+          <div class="lh-opts">${levelOpts}</div>
+        </fieldset>
+        <div class="lh-patch lh-how">
+          <h2>Comment jouer</h2>
+          <ol class="lh-steps">
+            <li>Choisis une comptine : les plus faciles sont au début du fil.</li>
+            <li>Écoute-la en entier, ou phrase par phrase avec le bouton rond. « Jusqu’à la note » rejoue le début de la phrase et s’arrête sur la note à trouver.</li>
+            <li>La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec ton instrument, la page t’écoute au micro.</li>
+            <li>Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée rejoint la comptine et le décor s’anime.</li>
+            <li>Niveau 2 : écoute l’exemple, puis « À toi ! ». Après le décompte, joue toute la phrase en rythme.</li>
+          </ol>
+        </div>
+        <div class="lh-patch lh-colors">
+          <h2>Les couleurs des notes</h2>
+          <p>Toutes les comptines sont en do majeur : pas de dièse, pas de bémol. Les notes graves portent un point dessous, les aiguës un point dessus.</p>
+          <div class="chips">${chips}</div>
+        </div>
+      </section>
+      <p class="lh-foot">Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil. Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute. Comptines traditionnelles du domaine public. Décors en 3D faits avec three.js (licence MIT) ; titre en police Gluten (SIL OFL). Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0).</p>
+    </main>`;
+    root = app.querySelector('.lhome');
+    app.querySelector('#home-inst').addEventListener('change', (e) => setInst(e.target.value));
+    app.querySelectorAll('input[name="home-level"]').forEach((r) => r.addEventListener('change', () => { settings.level = +r.value === 2 ? 2 : 1; save(SET_KEY, settings); }));
+    app.querySelector('#lh-go').addEventListener('click', () => {
+      const p = app.querySelector('#lh-path');
+      p.scrollIntoView({ behavior: RM.matches ? 'auto' : 'smooth', block: 'start' });
+    });
+    layoutHoops();
+    if (gl) {
+      startHero(app.querySelector('.lh-stage'), () => (inst().voice || 'musicbox'));
+      queuePortraits(LIB);
+    }
+    return true;
+  }
+
+  /* le fil rouge : les tambours en serpentin, le fil passe derrière eux */
+  let ro = null;
+  function layoutHoops() {
+    const board = root.querySelector('.lh-board'), list = board.querySelector('.lh-hoops');
+    const place = () => {
+      if (!document.contains(board)) return;
+      const cols = getComputedStyle(list).gridTemplateColumns.split(' ').filter(Boolean).length || 2;
+      list.querySelectorAll('.hoop-li').forEach((li) => {
+        const i = +li.dataset.i, row = Math.floor(i / cols), k = i % cols;
+        li.style.gridRow = String(row + 1);
+        li.style.gridColumn = String(row % 2 ? cols - k : k + 1);
+      });
+      drawThread(board);
+    };
+    place();
+    if (ro) ro.disconnect();
+    if ('ResizeObserver' in window) { let raf = 0; ro = new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(place); }); ro.observe(board); }
+  }
+  function drawThread(board) {
+    const svg = board.querySelector('.lh-thread');
+    const box = board.getBoundingClientRect();
+    const pts = [...board.querySelectorAll('.hoop-li')].sort((a, b) => a.dataset.i - b.dataset.i).map((li) => {
+      const r = li.querySelector('.hoop-ring').getBoundingClientRect();
+      return [r.left + r.width / 2 - box.left, r.top + r.height / 2 - box.top];
+    });
+    if (pts.length < 2) return;
+    const W = box.width, H = box.height;
+    const first = pts[0], last = pts[pts.length - 1];
+    const P = [[first[0] - Math.min(110, W * 0.14), first[1] - 70], ...pts, [last[0] + (last[0] > W / 2 ? -1 : 1) * Math.min(90, W * 0.12), last[1] + 80]];
+    let d = `M${P[0][0].toFixed(1)} ${P[0][1].toFixed(1)}`;
+    for (let i = 0; i < P.length - 1; i++) {
+      const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || p2;
+      const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+      const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+      d += ` C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+    }
+    const [sx, sy] = P[0], [ex, ey] = P[P.length - 1];
+    svg.setAttribute('viewBox', `0 0 ${W.toFixed(0)} ${H.toFixed(0)}`);
+    svg.innerHTML = `
+      <path d="${d}" class="th-shadow"/>
+      <path d="${d}" class="th-base"/>
+      <path d="${d}" class="th-twist"/>
+      <g class="th-ball" transform="translate(${sx.toFixed(1)} ${sy.toFixed(1)})"><circle r="17"/><path d="M-15 -6 C-4 -14 8 -12 16 -3 M-16 3 C-5 -6 9 -4 15 7 M-11 11 C-2 4 9 6 12 13 M-6 -15 C-12 -2 -10 9 -2 16" /></g>
+      <g class="th-needle" transform="translate(${ex.toFixed(1)} ${ey.toFixed(1)}) rotate(${last[0] > W / 2 ? 205 : -25})"><path d="M0 0 L46 -3 L46 3 Z"/><ellipse cx="40" cy="0" rx="3.6" ry="1.4"/></g>`;
+  }
+
+  /* la scène 3D de l'accueil */
+  function startHero(host, voice) {
+    if (!Engine.init()) return;
+    if (!hero) {
+      const V = makeView({ bg: HOME_BG, fov: 25, rig: { target: [0, 40, 0], az: 0, el: 6, box: [124, 90] }, post: { exposure: 1.02, bloom: 0.55, aper: 5.5, maxBlur: 10, sat: 1.12, lift: '#0A0412', vignette: 0.55, punch: 1.28 } });
+      cueKit(V);
+      const H = buildHero(V);
+      hero = { V, H };
+      V.alwaysMove = true;
+    }
+    const { V, H } = hero;
+    // le texte d'introduction posé sur la scène (grand écran) : la guirlande se cadre au-dessus
+    const intro = root.querySelector('.lh-hero-in');
+    V.resize = (w, h) => {
+      V.size = [w, h];
+      const over = intro && getComputedStyle(intro).position === 'absolute';
+      const ib = over ? intro.querySelector('.lh-intro').getBoundingClientRect() : null;
+      const hb = host.getBoundingClientRect();
+      // grand écran : le texte à gauche, la scène cadrée à droite ; sinon le texte en bas
+      if (ib && w >= 900 && w / h > 1.3) V.safe = { t: 0, r: 0, b: 0, l: Math.min(w * 0.46, ib.right - hb.left + 20) };
+      else V.safe = { t: 0, r: 0, l: 0, b: ib ? Math.min(h * 0.42, ib.height + 26) : 0 };
+      frameCamera(V);
+    };
+    Engine.attach(host);
+    Engine.show(V);
+    // toucher une note ou une lettre : elle chante
+    const ray = new T.Raycaster(), ndc = v2();
+    const pick = (e) => {
+      const r = host.getBoundingClientRect();
+      ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, V.camera);
+      const hit = ray.intersectObjects(H.targets(), true)[0];
+      return hit ? hit.object : null;
+    };
+    host.onpointerdown = (e) => {
+      const o = pick(e);
+      if (!o) return;
+      const L = H.hit(o);
+      if (L && typeof Sound !== 'undefined' && Sound.ensure()) Sound.tap(voice(), MIDI[L], 0.6);
+      const hint = root && root.querySelector('#lh-hint');
+      if (hint && L) hint.textContent = `Do, ré, mi… celle-ci, c’est ${({ C: 'do', D: 'ré', E: 'mi', F: 'fa', G: 'sol', A: 'la', B: 'si' })[L]} !`;
+      Engine.poke();
+    };
+    let last = 0;
+    host.onpointermove = (e) => {
+      const now = performance.now();
+      if (now - last < 90) return;
+      last = now;
+      host.style.cursor = pick(e) ? 'pointer' : '';
+      const r = host.getBoundingClientRect();
+      if (!RM.matches && matchMedia('(hover: hover)').matches) {
+        V.rig.paz = (((e.clientX - r.left) / r.width) * 2 - 1) * 3;
+        V.rig.pel = (((e.clientY - r.top) / r.height) * 2 - 1) * 1.5;
+      }
+    };
+    host.onpointerleave = () => { V.rig.paz = 0; V.rig.pel = 0; };
+    // la scène s'arrête quand on la quitte des yeux
+    if (heroIO) heroIO.disconnect();
+    if ('IntersectionObserver' in window) {
+      heroIO = new IntersectionObserver((es) => {
+        es.forEach((en) => {
+          if (!document.contains(host) || Engine.view !== V) return; // on a quitté l'accueil
+          if (en.isIntersecting) Engine.start(); else Engine.stop();
+        });
+      });
+      heroIO.observe(host);
+    }
+  }
+
+  /* portraits des décors : fabriqués un par un quand la page n'a rien d'autre à faire,
+     en commençant par les tambours visibles */
+  function queuePortraits(LIB) {
+    queue = LIB.filter((s) => SCENES[s.theme] && !portraits.has(s.theme));
+    if (io) io.disconnect();
+    if ('IntersectionObserver' in window) {
+      io = new IntersectionObserver((es) => {
+        es.forEach((en) => {
+          if (!en.isIntersecting) return;
+          const th = en.target.dataset.theme;
+          const i = queue.findIndex((s) => s.theme === th);
+          if (i > 0) queue.unshift(queue.splice(i, 1)[0]);
+        });
+      }, { rootMargin: '200px' });
+      root.querySelectorAll('.hoop-li').forEach((li) => io.observe(li));
+    }
+    pump();
+  }
+  const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 600 }) : setTimeout(fn, 60));
+  function pump() {
+    if (busy || !queue.length) return;
+    busy = true;
+    idle(async () => {
+      const song = queue.shift();
+      try { if (root && document.contains(root)) await portrait(song); } catch (e) { /* ce portrait restera l'emblème */ }
+      busy = false;
+      if (root && document.contains(root)) setTimeout(pump, 40);
+    });
+  }
+  async function portrait(song) {
+    const N = 320, frames = [0, 2, 4, 6];
+    const { V, S } = Decor.build(song, true);
+    V.rig.dolly = 0.86;
+    const nph = song.phrases.length;
+    if (S.update) S.update({ world: song.theme, total: song.notes.length, found: Math.round(song.notes.length * 0.7), p: 0.7, phrasesDone: Math.round(nph * 0.6), done: false }, true);
+    try { await Engine.renderer.compileAsync(V.scene, V.camera); } catch (e) { /* compilation au rendu */ }
+    if (!root || !document.contains(root)) { disposeScene(V.scene); return; }
+    const shots = Engine.snapshot(V, N, N, frames);
+    disposeScene(V.scene);
+    const cv = document.createElement('canvas');
+    cv.width = N * frames.length; cv.height = N;
+    const g = cv.getContext('2d');
+    shots.forEach((sh, k) => {
+      const img = g.createImageData(N, N);
+      for (let y = 0; y < N; y++) img.data.set(sh.px.subarray((N - 1 - y) * N * 4, (N - y) * N * 4), y * N * 4);
+      g.putImageData(img, k * N, 0);
+    });
+    const url = await new Promise((res) => cv.toBlob((b) => res(b ? URL.createObjectURL(b) : cv.toDataURL('image/jpeg', 0.86)), 'image/webp', 0.86));
+    portraits.set(song.theme, url);
+    const li = root && root.querySelector(`.hoop-li[data-theme="${song.theme}"]`);
+    if (li) {
+      li.querySelector('.hoop-pic').innerHTML = `<img src="${url}" alt="">`;
+      requestAnimationFrame(() => li.querySelector('.hoop').classList.add('has-pic'));
+    }
+  }
+
+  return { render, color: HOME_BG };
+})();
+window.HomeSkin = HomeSkin;
 
 /* ------------------------------------------------------------------
    Ce que la page voit de la version laine
