@@ -37,7 +37,7 @@
   const INSTS = {
     none: { name: 'Sans instrument', the: '', at: '', fam: 'C', play: 0, voice: null },
     piano: { name: 'Piano', the: 'le piano', at: 'au piano', fam: 'C', play: 0, voice: 'piano' },
-    flute: { name: 'Flûte', the: 'la flûte', at: 'à la flûte', fam: 'C', play: 0, voice: 'flute' },
+    flute: { name: 'Flûte', the: 'la flûte', at: 'à la flûte', fam: 'C', play: 12, voice: 'flute' },
     clarinette: { name: 'Clarinette en si♭', the: 'la clarinette en si♭', at: 'à la clarinette', fam: 'Bb', play: -2, voice: 'clarinet' },
     saxalto: { name: 'Saxophone alto', the: 'le saxophone alto', at: 'au saxophone alto', fam: 'Eb', play: -9, voice: 'sax' },
     trompette: { name: 'Trompette en si♭', the: 'la trompette en si♭', at: 'à la trompette', fam: 'Bb', play: -2, voice: 'trumpet' },
@@ -46,7 +46,7 @@
     violon: { name: 'Violon', the: 'le violon', at: 'au violon', fam: 'C', play: 0, voice: 'violin' },
     alto: { name: 'Alto', the: 'l’alto', at: 'à l’alto', fam: 'C', play: 0, voice: 'viola' },
     violoncelle: { name: 'Violoncelle', the: 'le violoncelle', at: 'au violoncelle', fam: 'C', play: -12, voice: 'cello' },
-    xylophone: { name: 'Xylophone', the: 'le xylophone', at: 'au xylophone', fam: 'C', play: 0, voice: 'xylo' },
+    xylophone: { name: 'Xylophone', the: 'le xylophone', at: 'au xylophone', fam: 'C', play: 12, voice: 'xylo' },
   };
   const OLD_INST = { C: 'piano', Bb: 'clarinette', Eb: 'saxalto', F: 'cor' };
 
@@ -89,21 +89,24 @@
     const i = inst();
     if (!i.voice) return 'Chaque comptine garde son propre timbre ; les notes sonnent comme elles sont écrites.';
     const of = i.the.startsWith('l’') ? 'de ' + i.the : i.the.startsWith('le ') ? 'du ' + i.the.slice(3) : 'de ' + i.the;
-    const sound = ` Les phrases sont jouées avec un son proche ${of}.`;
+    const sound = ` Les phrases sont jouées avec le son enregistré ${of}.`;
     if (i.fam !== 'C') return `Instrument ${i.short} : ${i.how}.${sound}`;
-    return (i.play === -12 ? 'Instrument en do : la page joue une octave plus bas, dans son registre.' : 'Instrument en do : les notes sonnent comme elles sont écrites.') + sound;
+    if (i.voice === 'xylo') return `Le xylophone sonne une octave plus haut que ce qui est écrit : la page aussi.${sound}`;
+    const reg = i.play === -12 ? 'la page joue une octave plus bas, dans son registre.' : i.play === 12 ? 'la page joue une octave plus haut, dans son registre.' : 'les notes sonnent comme elles sont écrites.';
+    return `Instrument en do : ${reg}${sound}`;
   };
   function instrLine(song) {
     const i = inst();
     if (!i.voice) return `En do majeur, jouée ${song.instrument}.`;
     if (i.fam !== 'C') return `En do majeur (pour ${i.the}, elle sonne en ${i.key}), jouée ${i.at}.`;
-    return `En do majeur, jouée ${i.at}${i.play === -12 ? ', une octave plus bas' : ''}.`;
+    return `En do majeur, jouée ${i.at}${i.play === -12 ? ', une octave plus bas' : i.play === 12 ? ', une octave plus haut' : ''}.`;
   }
   function setInst(k) {
     if (!INSTS[k]) return;
     settings.inst = k;
     save(SET_KEY, settings);
     Sound.setTranspose(inst().play);
+    Sound.useSamples(inst().voice);
     app.querySelectorAll('select.inst-sel').forEach((sel) => { sel.value = k; });
     const note = app.querySelector('#home-inst-note');
     if (note) note.textContent = instNote();
@@ -120,6 +123,7 @@
     if (G && view === 'song') { stopAll(); renderSong(G.song); }
   }
   Sound.setTranspose(inst().play);
+  Sound.useSamples(inst().voice);
 
   let view = 'home';
   let G = null; // partie en cours
@@ -203,7 +207,7 @@
             </div>
           </div>
         </section>
-        <p class="home-foot">Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil. Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute (au niveau 2, le décompte). Comptines traditionnelles du domaine public.</p>
+        <p class="home-foot">Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil. Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute (au niveau 2, le décompte). Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0).</p>
       </div>
     </main>`;
     app.querySelector('#home-inst').addEventListener('change', (e) => setInst(e.target.value));

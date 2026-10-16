@@ -1,7 +1,8 @@
 /* ------------------------------------------------------------------
    Moteur sonore : un timbre synthétisé par comptine (Web Audio)
    - transposition globale pour les instruments en si♭, mi♭ et fa, et
-     timbre de l’instrument de l’élève quand il en a choisi un
+     son enregistré de l’instrument de l’élève quand il en a choisi un
+     (sons/, chargé à la demande ; timbre synthétisé en attendant)
    - garde en mémoire quand la page se tait, pour que l'écoute du micro
      ne confonde pas le haut-parleur avec l'instrument : l'écoute reprend
      un peu avant la fin de la dernière note (EARLY), et les notes de la
@@ -121,6 +122,7 @@ const Sound = (() => {
       noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
       const nd = noise.getChannelData(0);
       for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+      packs.forEach((k) => decode(k)); // sons arrivés avant (navigateur sans contexte hors ligne)
     }
     if (ctx.state === 'suspended') ctx.resume();
     return ctx;
@@ -143,7 +145,8 @@ const Sound = (() => {
     const g = ctx.createGain();
     g.connect(master);
     const s = ctx.createGain();
-    s.gain.value = voice.rev;
+    // les enregistrements ont déjà leur salle : moins de réverbération ajoutée
+    s.gain.value = packReady(voice.id) ? SAMPLED[voice.id].rev : voice.rev;
     g.connect(s);
     s.connect(revIn);
     return g;
@@ -385,13 +388,172 @@ const Sound = (() => {
     g.connect(dest);
   }
 
+  /* --- sons enregistrés de l'instrument choisi (dossier sons/, chargés à la demande) ---
+     Chaque fichier sons/<voix>.js apporte un MP3 où quelques notes du vrai
+     instrument sont mises bout à bout (une tous les 2 à 5 demi-tons), avec leur
+     hauteur exacte et, pour les sons tenus, une boucle pour durer autant qu'il
+     faut. Une note est jouée à partir de l'enregistrement le plus proche, un peu
+     accéléré ou ralenti. Tant que le son n'est pas prêt (ou s'il manque, page
+     ouverte seule), c'est le timbre synthétisé qui joue. */
+  const SAMPLED = {
+    piano:    { gain: 0.97, rev: 0.12, ring: 0.18, damp: 0.12 },
+    xylo:     { gain: 0.89, rev: 0.1,  ring: 0.12, damp: 0.1 },
+    flute:    { gain: 0.98, rev: 0.14, release: 0.12 },
+    clarinet: { gain: 0.91, rev: 0.12, release: 0.1 },
+    sax:      { gain: 0.97, rev: 0.1,  release: 0.1 },
+    trumpet:  { gain: 1.16, rev: 0.1,  release: 0.1 },
+    horn:     { gain: 0.97, rev: 0.12, release: 0.14 },
+    trombone: { gain: 1.05, rev: 0.1,  release: 0.12 },
+    violin:   { gain: 0.98, rev: 0.12, release: 0.16 },
+    viola:    { gain: 0.82, rev: 0.12, release: 0.16 },
+    cello:    { gain: 0.92, rev: 0.12, release: 0.18 },
+  };
+  const packs = new Map(); // voix → { state: loading | data | decoding | ready | error, zones, buffer, delay }
+  let sampledVoice = null; // seule la voix de l'instrument choisi joue ses enregistrements
+  let dctx = null;
+
+  function receive(p) {
+    if (!p || !SAMPLED[p.id]) return;
+    const k = Object.assign(packs.get(p.id) || {}, { id: p.id, state: 'data', zones: p.zones.slice().sort((a, b) => a.m - b.m), mark: p.mark, mp3: p.mp3 });
+    packs.set(p.id, k);
+    decode(k);
+  }
+  const queued = window.NotesSons;
+  window.NotesSons = { push: receive };
+  if (Array.isArray(queued)) queued.forEach(receive);
+
+  function loadPack(id) {
+    if (!SAMPLED[id] || packs.has(id) || typeof document === 'undefined') return;
+    packs.set(id, { id, state: 'loading' });
+    const s = document.createElement('script');
+    s.src = 'sons/' + id + '.js';
+    s.async = true;
+    s.onerror = () => { const k = packs.get(id); if (k && k.state === 'loading') k.state = 'error'; };
+    (document.head || document.documentElement).appendChild(s);
+  }
+
+  // décodage sans attendre le premier geste de l'élève (contexte hors ligne)
+  function decoder() {
+    if (ctx) return ctx;
+    if (!dctx) {
+      const O = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+      try { if (O) dctx = new O(1, 1, 44100); } catch (e) { dctx = null; }
+    }
+    return dctx;
+  }
+  function decode(k) {
+    const c = decoder();
+    if (!c || k.state !== 'data') return;
+    k.state = 'decoding';
+    let bytes;
+    try {
+      const bin = atob(k.mp3);
+      bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    } catch (e) { k.state = 'error'; return; }
+    k.mp3 = null;
+    const ok = (buf) => { if (k.state !== 'decoding') return; k.buffer = buf; k.delay = decoderDelay(buf, k.zones, k.mark); k.state = 'ready'; };
+    const ko = () => { if (k.state === 'decoding') k.state = 'error'; };
+    try {
+      const pr = c.decodeAudioData(bytes.buffer, ok, ko);
+      if (pr && pr.catch) pr.catch(ko);
+    } catch (e) { ko(); }
+  }
+  /* Le décodeur MP3 décale tout le fichier de quelques millisecondes (25 ms
+     environ). Un repère (une seule impulsion, dans le silence du début) donne
+     ce décalage à l'échantillon près ; à défaut, on retrouve l'attaque de chaque
+     note (même mesure qu'à la fabrication : enveloppe sur 3 ms, -38 dB sous la
+     crête) et on garde l'écart médian. */
+  function decoderDelay(buf, zones, mark) {
+    const d = buf.getChannelData(0), sr = buf.sampleRate, h = Math.max(1, Math.round(sr * 0.0015));
+    if (mark != null) {
+      let best = 0, at = -1;
+      const end = Math.min(d.length, Math.floor((mark + 0.065) * sr));
+      for (let i = 0; i < end; i++) if (Math.abs(d[i]) > best) { best = Math.abs(d[i]); at = i; }
+      if (best > 0.05) {
+        // sommet entre deux échantillons (parabole)
+        let f = 0;
+        if (at > 0 && at < d.length - 1) {
+          const a = Math.abs(d[at - 1]), b = best, c = Math.abs(d[at + 1]), den = a - 2 * b + c;
+          if (den < 0) f = 0.5 * (a - c) / den;
+        }
+        return Math.max(-0.02, Math.min(0.08, (at + f) / sr - mark));
+      }
+    }
+    const ds = [];
+    zones.forEach((z) => {
+      const a = Math.max(0, Math.floor((z.s - 0.03) * sr)), b = Math.min(d.length, Math.floor((z.s + z.n) * sr));
+      if (b - a < 4 * h) return;
+      // énergie sur une fenêtre de 3 ms centrée (sommes cumulées)
+      const lo = Math.max(0, a - h), hi = Math.min(d.length, b + h + 1);
+      const P = new Float64Array(hi - lo + 1);
+      for (let i = lo; i < hi; i++) P[i - lo + 1] = P[i - lo] + d[i] * d[i];
+      const en = (i) => P[Math.min(hi, i + h + 1) - lo] - P[Math.max(lo, i - h) - lo];
+      let mx = 0;
+      for (let i = a; i < b; i++) mx = Math.max(mx, en(i));
+      const thr = mx * Math.pow(10, -38 / 10); // -38 dB sous la crête
+      let i0 = a;
+      while (i0 < b && en(i0) <= thr) i0++;
+      if (i0 < b) ds.push(i0 / sr - (z.s + z.r));
+    });
+    if (!ds.length) return 0;
+    ds.sort((x, y) => x - y);
+    return Math.max(-0.02, Math.min(0.08, ds[ds.length >> 1]));
+  }
+  const packReady = (id) => {
+    const k = id === sampledVoice ? packs.get(id) : null;
+    return k && k.state === 'ready' ? k : null;
+  };
+
+  function smpNote(k, dest, midi, t, dur, vel) {
+    const P = SAMPLED[k.id];
+    let z = k.zones[0];
+    for (const c of k.zones) if (Math.abs(c.m - midi) < Math.abs(z.m - midi)) z = c;
+    const rate = Math.pow(2, (midi - z.m) / 12);
+    const src = ctx.createBufferSource();
+    src.buffer = k.buffer;
+    src.playbackRate.value = rate;
+    const off = Math.max(0, z.s + k.delay);
+    // attaque lente (archet, souffle) : la note part un peu avant, pour être entendue sur le temps ;
+    // si c'est déjà passé (touche frappée à l'instant), on saute le début de l'attaque
+    let ts = t - (z.a || 0) / rate, skip = 0;
+    const now = ctx.currentTime;
+    if (ts < now) { skip = (now - ts) * rate; ts = now; }
+    const g = ctx.createGain();
+    const peak = P.gain * vel;
+    g.gain.setValueAtTime(peak, ts);
+    let stop;
+    if (z.l) {
+      // son tenu : la boucle prend le relais après l'attaque, puis on relâche
+      src.loop = true;
+      src.loopStart = off + z.l[0];
+      src.loopEnd = off + z.l[1];
+      const end = t + Math.max(0.08, dur * 0.94);
+      g.gain.setValueAtTime(peak, end);
+      g.gain.setTargetAtTime(0, end, P.release / 3);
+      stop = end + P.release * 2.5 + 0.05;
+    } else {
+      // son frappé : il s'éteint tout seul, on l'étouffe un peu après la fin de la note
+      const dampAt = t + Math.max(dur, 0.1) + P.ring;
+      g.gain.setValueAtTime(peak, dampAt);
+      g.gain.setTargetAtTime(0, dampAt, P.damp);
+      stop = Math.min(ts + (z.n - skip - 0.005) / rate, dampAt + P.damp * 7); // jamais au-delà de sa note dans le MP3
+    }
+    src.connect(g);
+    g.connect(dest);
+    src.start(ts, off + skip);
+    src.stop(Math.max(ts + 0.05, stop));
+  }
+
   let lastVoice = null;
   function note(voiceId, dest, midi, t, dur, vel) {
     const v = voiceOf(voiceId);
     lastVoice = v.id;
     const m = midi + transpose;
     mark(v, m, t, dur, dest);
-    if (v.kind === 'add') addNote(v, dest, m, t, dur, vel);
+    const k = ctx && packReady(v.id);
+    if (k) smpNote(k, dest, m, t, dur, vel);
+    else if (v.kind === 'add') addNote(v, dest, m, t, dur, vel);
     else if (v.kind === 'ks') ksNote(v, dest, m, t, dur, vel);
     else if (v.kind === 'wind') windNote(v, dest, m, t, dur, vel);
     else if (v.kind === 'sust') sustNote(v, dest, m, t, dur, vel);
@@ -401,8 +563,9 @@ const Sound = (() => {
   /* Une note isolée (lame du xylophone, perle touchée) */
   function tap(voiceId, midi, dur = 0.55) {
     if (!ensure()) return;
-    let b = tapBuses.get(voiceId);
-    if (!b) { b = makeBus(voiceOf(voiceId)); tapBuses.set(voiceId, b); }
+    const key = voiceId + (packReady(voiceId) ? ':enr' : '');
+    let b = tapBuses.get(key);
+    if (!b) { b = makeBus(voiceOf(voiceId)); tapBuses.set(key, b); }
     note(voiceId, b, midi, ctx.currentTime + 0.008, dur, 1);
   }
 
@@ -470,6 +633,10 @@ const Sound = (() => {
     lastVoice: () => lastVoice,
     hasVoice: (id) => !!VOICES[id],
     setTranspose: (n) => { transpose = n | 0; },
+    // l'instrument choisi joue avec ses enregistrements (chargés à la demande) ; null : timbres synthétisés
+    useSamples: (id) => { sampledVoice = SAMPLED[id] ? id : null; if (sampledVoice) loadPack(id); },
+    samplesState: (id) => { const k = packs.get(id); return k ? k.state : 'none'; },
+    samplesInfo: (id) => { const k = packs.get(id); return k ? { state: k.state, delay: k.delay, zones: k.zones, rate: k.buffer && k.buffer.sampleRate } : null; },
     available: !!AC,
   };
 })();
