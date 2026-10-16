@@ -15,15 +15,17 @@ Un jeu d'oreille pour les enfants : vingt comptines traditionnelles, toutes en d
 - **Toute la comptine d'un coup** : quand toutes les phrases sont trouvées (niveau 1) ou réussies (niveau 2), la page propose de jouer toute la comptine en rythme, après le décompte, et donne un bilan phrase par phrase.
 - **Ton instrument** : piano, flûte, clarinette en si♭, saxophone alto, trompette en si♭, trombone, cor en fa, violon, alto, violoncelle ou xylophone. Les noms de notes affichés sont ceux de la partition de l'enfant. La page joue les phrases avec de vraies notes enregistrées de l'instrument choisi (voir [sons/LISEZMOI.md](sons/LISEZMOI.md)), à leur hauteur réelle : un ton plus bas pour les instruments en si♭, une sixte majeure plus bas pour le saxophone alto, une quinte juste plus bas pour le cor, une octave plus bas pour le trombone et le violoncelle. La flûte et le xylophone jouent une octave plus haut, dans leur registre (le xylophone sonne d'ailleurs une octave au-dessus de ce qui est écrit). Sans instrument choisi, chaque comptine garde son propre timbre. Au micro, la note est reconnue quelle que soit l'octave.
 - Le micro se coupe quand la comptine est finie et se rallume tout seul quand l'enfant rejoue ou passe à la comptine suivante. Après une écoute, il accepte une note jouée un peu avant la fin de la dernière note de la page ; sur les notes que la page fait encore résonner, seule une vraie attaque de l'instrument compte.
-- Le son du micro est analysé dans le navigateur ; rien n'est enregistré ni envoyé. Le micro demande une page en https (comme ici) ou un fichier ouvert dans Chrome, Edge ou Firefox ; il ne fonctionne pas dans l'aperçu de claude.ai (la page propose alors la version en ligne).
-- Chaque visite d'une comptine repart de zéro ; seul le meilleur nombre d'étoiles (par niveau) reste sur l'appareil.
+- Le son du micro est analysé dans le navigateur ; il n'est jamais enregistré ni envoyé. Le micro demande une page en https (comme ici) ou un fichier ouvert dans Chrome, Edge ou Firefox ; il ne fonctionne pas dans l'aperçu de claude.ai (la page propose alors la version en ligne).
+- Chaque visite d'une comptine repart de zéro ; le meilleur nombre d'étoiles (par niveau) reste sur l'appareil.
+- **Suivi des élèves** (pour le professeur) : une fois le Worker Cloudflare installé, le déroulé des parties (comptine, niveau, instrument, xylophone ou micro, étoiles, erreurs, durée) est envoyé sans nom, avec l'adresse IP de la connexion, et consulté sur la page [suivi.html](https://romaingaudet-maker.github.io/notes-envolees/suivi.html), protégée par une clé. Installation et détails : [suivi/LISEZMOI.md](suivi/LISEZMOI.md).
 
 ## Modifier
 
 Tout le code est dans `src/` ; `index.html` est fabriqué à partir de ces fichiers.
 
 - `src/songs.js` : les mélodies (paroles découpées en syllabes, puis notes `HAUTEUR/durée`, par exemple `E4/q` pour une noire mi).
-- `node build.mjs` : reconstruit `index.html` (première version) et `laine/index.html` (version en laine).
+- `node build.mjs` : reconstruit `index.html` (première version), `suivi.html` (la page de suivi des élèves) et `laine/index.html` (version en laine).
+- `src/suivi.js` : l'envoi des résultats (adresse du Worker dans `SUIVI_URL`) ; `src/suivi-page.js` et `src/_suivi.css` : la page de suivi ; `suivi/worker.js` : le Worker Cloudflare qui range les résultats. Les deux versions du jeu envoient les mêmes résultats.
 - `laine/` : la version en laine. `laine/src/` contient le moteur (textures de tricot, de crochet et de feutrine fabriquées à l'ouverture, duvet de la laine, marionnettes, éléments de décor, particules, développement de l'image) et l'accueil ; `laine/scenes/` un fichier par décor de comptine ; `laine/vendor/three.min.js` la bibliothèque 3D three.js (r170, licence MIT). Sans WebGL 2, la page reprend les décors en papier découpé.
 - `node outils/glyphes-titre.mjs DOSSIER/node_modules` : refait les contours des lettres du titre en feutrine (il faut `opentype.js` et `@fontsource/gluten`).
 - `sons/` : les sons enregistrés des instruments, chargés à la demande. `index.html` ouvert seul, sans ce dossier, marche aussi : les phrases sont alors jouées avec des timbres synthétisés.
@@ -32,6 +34,7 @@ Tout le code est dans `src/` ; `index.html` est fabriqué à partir de ces fichi
 - `node tests/ear.test.mjs` : teste la reconnaissance des notes sur des sons de synthèse (flûte, clarinette, trompette, violon, glockenspiel…), y compris juste après une note jouée par la page.
 - `node tests/sons.test.mjs` : vérifie les sons enregistrés (fichiers lisibles, boucles cohérentes, chaque note jouée à moins de 4 demi-tons d'un enregistrement).
 - `node tests/rythme.test.mjs` : teste le juge du rythme du niveau 2 (latence, note en retard, fausse note, accélération, rythme pointé, phrases longues, comptine entière…).
+- `node --no-warnings tests/suivi.test.mjs` : teste le Worker du suivi (sites autorisés, clé, nettoyage des données, effacement d'un élève) et l'envoi côté jeu.
 
 ## Sources des mélodies
 
