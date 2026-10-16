@@ -347,7 +347,7 @@ const HomeSkin = (() => {
             <li>Écoute-la en entier, ou phrase par phrase avec le bouton rond. « Jusqu’à la note » rejoue le début de la phrase et s’arrête sur la note à trouver.</li>
             <li>La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec ton instrument, la page t’écoute au micro.</li>
             <li>Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée rejoint la comptine et le décor s’anime.</li>
-            <li>Niveau 2 : écoute l’exemple, puis « À toi ! ». Après le décompte, joue toute la phrase en rythme.</li>
+            <li>Niveau 2 : écoute l’exemple, puis « À toi ! ». Après le décompte, joue toute la phrase en rythme. Une phrase réussie, la suivante démarre toute seule, avec son décompte.</li>
           </ol>
         </div>
         <div class="lh-patch lh-colors">

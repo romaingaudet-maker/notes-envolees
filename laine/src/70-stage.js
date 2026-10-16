@@ -111,15 +111,11 @@ const Decor = (() => {
     if (!cur) return;
     const st = cur.stage, r = st.getBoundingClientRect();
     const s = { t: 0, r: 0, b: 0, l: 0 };
-    const short = r.height < 300; // bandeau de téléphone : on garde toute la hauteur possible
+    // seule la barre du haut (retour, instrument, titre, suivante) couvre le décor ;
+    // sur un bandeau de téléphone, le décor passe un peu dessous pour garder de la hauteur
+    const short = r.height < 300;
     const bar = st.querySelector('.stage-bar');
-    if (bar) { const b = bar.getBoundingClientRect(); if (b.height) s.t = Math.max(0, b.bottom - r.top) * (short ? 0.45 : 0.85); }
-    const title = st.querySelector('.stage-title');
-    if (title && getComputedStyle(title).display !== 'none' && !short) {
-      const b = title.getBoundingClientRect();
-      if (b.width > r.width * 0.45) s.b = Math.max(0, r.bottom - b.top) * 0.6;
-      else s.l = Math.max(0, b.right - r.left) * 0.25;
-    }
+    if (bar) { const b = bar.getBoundingClientRect(); if (b.height) s.t = Math.max(0, b.bottom - r.top) * (short ? 0.62 : 0.9); }
     cur.V.safe = s;
   }
 

@@ -216,7 +216,7 @@
             <li><p>Écoute-la en entier, ou phrase par phrase avec le bouton rond. « Jusqu’à la note » rejoue le début de la phrase et s’arrête sur la note à trouver.</p></li>
             <li><p>La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec ton instrument, la page t’écoute au micro et te dit si la note est juste.</p></li>
             <li><p>Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée se pose à sa hauteur et le décor s’anime.</p></li>
-            <li><p>Niveau 2 : écoute l’exemple, puis « À toi ! ». Après le décompte (1, 2, 3, 4), joue toute la phrase en rythme ; la page vérifie ensuite chaque note et la place de chaque note dans le temps.</p></li>
+            <li><p>Niveau 2 : écoute l’exemple, puis « À toi ! ». Après le décompte (1, 2, 3, 4), joue toute la phrase en rythme ; la page vérifie ensuite chaque note et la place de chaque note dans le temps. Une phrase réussie, la suivante démarre toute seule, avec son décompte.</p></li>
           </ol>
           <div class="side-cards">
             <fieldset class="legend inst-set">
@@ -351,9 +351,9 @@
         <div class="stage-bar">
           <a class="back" href="#" aria-label="Les comptines">${ICON.back}<span>Les comptines</span></a>
           <label class="inst-pill" title="Ton instrument">${ICON.note}<select class="inst-sel" id="inst-sel" aria-label="Ton instrument">${instOptions()}</select>${ICON.chev}</label>
+          <div class="stage-title" aria-hidden="true"><span>Comptine ${song.level} · ${LEVEL(song.level)}${lv2 ? ' · niveau 2' : ''}</span><b>${titleHtml(song.title)}</b></div>
           <a class="next-song" href="#${next.id}" aria-label="Comptine suivante : ${esc(nb(next.title))}">${ICON.next}</a>
         </div>
-        <div class="stage-title" aria-hidden="true"><span>Comptine ${song.level} · ${LEVEL(song.level)}${lv2 ? ' · niveau 2' : ''}</span><b>${titleHtml(song.title)}</b></div>
       </section>
       <section class="play">
         <header class="play-head">
@@ -1036,10 +1036,11 @@
     else if (fresh) D.react(el.stage, 'correct', st);
     if (!r.pass) return;
     if (st.done) { later(() => { if (G && !G.take && !G.done) finish(); }, 1400); return; }
-    // réussie : on passe à la phrase suivante, sans rien avoir à valider
+    // réussie : on enchaîne tout seul sur la phrase suivante, décompte compris,
+    // sans avoir à toucher « À toi, en rythme ! » (sauf si l'élève a fait autre chose entre-temps)
     const nx = nextUnpassed(tk.p);
     G.moveTo = nx;
-    later(() => { if (G && G.moveTo === nx) moveOn(); }, 1100);
+    later(() => { if (G && G.moveTo === nx && !G.take && !G.done && !G.playing) startTake(); }, 1300);
   }
 
   // toute la comptine jouée d'un coup : bilan phrase par phrase

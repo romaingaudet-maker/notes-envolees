@@ -98,6 +98,34 @@
   .stage-bar .back span { display: none; }
   .inst-pill select { font-size: 14px; padding-right: 30px; }
 }
+/* Le titre de la comptine : dans le pupitre sur grand écran ; sur téléphone et
+   tablette, dans la barre du haut, entre l'instrument et « suivante », pour ne
+   rien cacher du décor. */
+.stage-bar .stage-title { display: none; }
+@media (max-width: 899px) {
+  .stage-bar .stage-title {
+    display: flex; position: static; flex: 1 1 auto; min-width: 0; max-width: none;
+    flex-direction: column; justify-content: center; height: 42px; padding: 0 16px;
+    border-radius: 999px; box-shadow: 0 4px 0 rgba(0, 0, 0, .16);
+  }
+  .stage-bar .stage-title span { font-size: 10px; line-height: 1.1; letter-spacing: .08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stage-bar .stage-title b { font-size: 16px; line-height: 1.12; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* les mots à trait d'union du titre (span.nw) restent dans la ligne du titre */
+  .stage-bar .stage-title b span { display: inline; font: inherit; letter-spacing: normal; text-transform: none; color: inherit; }
+  .stage-bar .next-song { margin-left: 0; }
+}
+/* téléphone : l'instrument devient un bouton rond (le menu s'ouvre toujours au toucher) */
+@media (max-width: 560px) {
+  .inst-pill { flex: none; width: 42px; padding: 0; justify-content: center; }
+  .inst-pill > svg:first-child { width: 21px; height: 21px; }
+  .inst-pill select { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; opacity: 0; font-size: 16px; }
+  .inst-pill .chev { display: none; }
+  .stage-bar .stage-title { padding: 0 14px; }
+  /* téléphone : le titre en entier (sur deux lignes s'il le faut), sans la ligne « Comptine n · niveau » */
+  .stage-bar .stage-title > span { display: none; }
+  .stage-bar .stage-title b { font-size: 15px; line-height: 1.04; white-space: normal; text-wrap: balance; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+}
+@media (max-width: 359px) { .stage-bar .stage-title b { font-size: 14px; } .stage-bar .stage-title { padding: 0 11px; } }
 .cin b.bar { margin-left: 8px; }
 
 /* petits téléphones (iPhone SE…) : on gagne quelques pixels pour garder le décor */

@@ -613,6 +613,34 @@ a { color: inherit; }
   .stage-bar .back span { display: none; }
   .inst-pill select { font-size: 14px; padding-right: 30px; }
 }
+/* Le titre de la comptine : dans le pupitre sur grand écran ; sur téléphone et
+   tablette, dans la barre du haut, entre l'instrument et « suivante », pour ne
+   rien cacher du décor. */
+.stage-bar .stage-title { display: none; }
+@media (max-width: 899px) {
+  .stage-bar .stage-title {
+    display: flex; position: static; flex: 1 1 auto; min-width: 0; max-width: none;
+    flex-direction: column; justify-content: center; height: 42px; padding: 0 16px;
+    border-radius: 999px; box-shadow: 0 4px 0 rgba(0, 0, 0, .16);
+  }
+  .stage-bar .stage-title span { font-size: 10px; line-height: 1.1; letter-spacing: .08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stage-bar .stage-title b { font-size: 16px; line-height: 1.12; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* les mots à trait d'union du titre (span.nw) restent dans la ligne du titre */
+  .stage-bar .stage-title b span { display: inline; font: inherit; letter-spacing: normal; text-transform: none; color: inherit; }
+  .stage-bar .next-song { margin-left: 0; }
+}
+/* téléphone : l'instrument devient un bouton rond (le menu s'ouvre toujours au toucher) */
+@media (max-width: 560px) {
+  .inst-pill { flex: none; width: 42px; padding: 0; justify-content: center; }
+  .inst-pill > svg:first-child { width: 21px; height: 21px; }
+  .inst-pill select { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; opacity: 0; font-size: 16px; }
+  .inst-pill .chev { display: none; }
+  .stage-bar .stage-title { padding: 0 14px; }
+  /* téléphone : le titre en entier (sur deux lignes s'il le faut), sans la ligne « Comptine n · niveau » */
+  .stage-bar .stage-title > span { display: none; }
+  .stage-bar .stage-title b { font-size: 15px; line-height: 1.04; white-space: normal; text-wrap: balance; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+}
+@media (max-width: 359px) { .stage-bar .stage-title b { font-size: 14px; } .stage-bar .stage-title { padding: 0 11px; } }
 .cin b.bar { margin-left: 8px; }
 
 /* petits téléphones (iPhone SE…) : on gagne quelques pixels pour garder le décor */
@@ -10482,15 +10510,11 @@ const Decor = (() => {
     if (!cur) return;
     const st = cur.stage, r = st.getBoundingClientRect();
     const s = { t: 0, r: 0, b: 0, l: 0 };
-    const short = r.height < 300; // bandeau de téléphone : on garde toute la hauteur possible
+    // seule la barre du haut (retour, instrument, titre, suivante) couvre le décor ;
+    // sur un bandeau de téléphone, le décor passe un peu dessous pour garder de la hauteur
+    const short = r.height < 300;
     const bar = st.querySelector('.stage-bar');
-    if (bar) { const b = bar.getBoundingClientRect(); if (b.height) s.t = Math.max(0, b.bottom - r.top) * (short ? 0.45 : 0.85); }
-    const title = st.querySelector('.stage-title');
-    if (title && getComputedStyle(title).display !== 'none' && !short) {
-      const b = title.getBoundingClientRect();
-      if (b.width > r.width * 0.45) s.b = Math.max(0, r.bottom - b.top) * 0.6;
-      else s.l = Math.max(0, b.right - r.left) * 0.25;
-    }
+    if (bar) { const b = bar.getBoundingClientRect(); if (b.height) s.t = Math.max(0, b.bottom - r.top) * (short ? 0.62 : 0.9); }
     cur.V.safe = s;
   }
 
@@ -20655,7 +20679,7 @@ const HomeSkin = (() => {
             <li>Écoute-la en entier, ou phrase par phrase avec le bouton rond. « Jusqu’à la note » rejoue le début de la phrase et s’arrête sur la note à trouver.</li>
             <li>La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec ton instrument, la page t’écoute au micro.</li>
             <li>Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée rejoint la comptine et le décor s’anime.</li>
-            <li>Niveau 2 : écoute l’exemple, puis « À toi ! ». Après le décompte, joue toute la phrase en rythme.</li>
+            <li>Niveau 2 : écoute l’exemple, puis « À toi ! ». Après le décompte, joue toute la phrase en rythme. Une phrase réussie, la suivante démarre toute seule, avec son décompte.</li>
           </ol>
         </div>
         <div class="lh-patch lh-colors">
@@ -21094,7 +21118,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
             <li><p>Écoute-la en entier, ou phrase par phrase avec le bouton rond. « Jusqu’à la note » rejoue le début de la phrase et s’arrête sur la note à trouver.</p></li>
             <li><p>La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec ton instrument, la page t’écoute au micro et te dit si la note est juste.</p></li>
             <li><p>Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée se pose à sa hauteur et le décor s’anime.</p></li>
-            <li><p>Niveau 2 : écoute l’exemple, puis « À toi ! ». Après le décompte (1, 2, 3, 4), joue toute la phrase en rythme ; la page vérifie ensuite chaque note et la place de chaque note dans le temps.</p></li>
+            <li><p>Niveau 2 : écoute l’exemple, puis « À toi ! ». Après le décompte (1, 2, 3, 4), joue toute la phrase en rythme ; la page vérifie ensuite chaque note et la place de chaque note dans le temps. Une phrase réussie, la suivante démarre toute seule, avec son décompte.</p></li>
           </ol>
           <div class="side-cards">
             <fieldset class="legend inst-set">
@@ -21229,9 +21253,9 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
         <div class="stage-bar">
           <a class="back" href="#" aria-label="Les comptines">${ICON.back}<span>Les comptines</span></a>
           <label class="inst-pill" title="Ton instrument">${ICON.note}<select class="inst-sel" id="inst-sel" aria-label="Ton instrument">${instOptions()}</select>${ICON.chev}</label>
+          <div class="stage-title" aria-hidden="true"><span>Comptine ${song.level} · ${LEVEL(song.level)}${lv2 ? ' · niveau 2' : ''}</span><b>${titleHtml(song.title)}</b></div>
           <a class="next-song" href="#${next.id}" aria-label="Comptine suivante : ${esc(nb(next.title))}">${ICON.next}</a>
         </div>
-        <div class="stage-title" aria-hidden="true"><span>Comptine ${song.level} · ${LEVEL(song.level)}${lv2 ? ' · niveau 2' : ''}</span><b>${titleHtml(song.title)}</b></div>
       </section>
       <section class="play">
         <header class="play-head">
@@ -21914,10 +21938,11 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     else if (fresh) D.react(el.stage, 'correct', st);
     if (!r.pass) return;
     if (st.done) { later(() => { if (G && !G.take && !G.done) finish(); }, 1400); return; }
-    // réussie : on passe à la phrase suivante, sans rien avoir à valider
+    // réussie : on enchaîne tout seul sur la phrase suivante, décompte compris,
+    // sans avoir à toucher « À toi, en rythme ! » (sauf si l'élève a fait autre chose entre-temps)
     const nx = nextUnpassed(tk.p);
     G.moveTo = nx;
-    later(() => { if (G && G.moveTo === nx) moveOn(); }, 1100);
+    later(() => { if (G && G.moveTo === nx && !G.take && !G.done && !G.playing) startTake(); }, 1300);
   }
 
   // toute la comptine jouée d'un coup : bilan phrase par phrase
