@@ -122,6 +122,23 @@
     save(SET_KEY, settings);
     if (G && view === 'song') { stopAll(); renderSong(G.song); }
   }
+
+  /* ---------------- suivi des parties, pour le professeur (src/suivi.js) ---------------- */
+  const track = (type, data) => Suivi.send(type, Object.assign({ inst: settings.inst, mode: settings.mode }, data));
+  const secsSince = (t0) => Math.round((Suivi.clock() - t0) / 1000);
+  // comptine quittée avant la fin : on dit où l'élève en était (s'il a commencé à jouer)
+  function trackLeave(why) {
+    if (!G || G.done || G.tracked) return;
+    G.tracked = true;
+    const lv2 = G.level === 2;
+    const played = G.found.size + G.errors + G.fails + G.passed.size + G.tries.reduce((a, b) => a + b, 0);
+    if (!played) return;
+    track('sortie', {
+      c: G.song.id, niveau: G.level, fait: lv2 ? G.passed.size : G.found.size, sur: lv2 ? G.song.phrases.length : G.song.notes.length,
+      erreurs: lv2 ? G.fails : G.errors, montrees: G.revealed.size, lent: !!G.usedSlow, duree: secsSince(G.t0), motif: why,
+    });
+  }
+  const micErrs = new Set();
   Sound.setTranspose(inst().play);
   Sound.useSamples(inst().voice);
 
@@ -144,6 +161,7 @@
   const OFFSETS = [0, -26, 18, 28, -14, 26, -22, 12, -26, 20, -8, 24, -20, 10, -24, 18, -10, 26, -18, 8];
 
   function renderHome() {
+    trackLeave('accueil');
     view = 'home';
     G = null;
     if (Ear.active()) Ear.stop();
@@ -207,7 +225,9 @@
             </div>
           </div>
         </section>
-        <p class="home-foot">Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil. Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute (au niveau 2, le décompte). Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0).</p>
+        <p class="home-foot">${Suivi.configured
+          ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré sans nom, avec l’adresse IP de la connexion, et effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
+          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute (au niveau 2, le décompte). Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0).</p>
       </div>
     </main>`;
     app.querySelector('#home-inst').addEventListener('change', (e) => setInst(e.target.value));
@@ -277,6 +297,7 @@
   }
 
   function renderSong(song) {
+    trackLeave(G && G.song === song ? 'recommence' : 'autre');
     view = 'song';
     setWorld(song.theme);
     const keepSlow = G && G.slow;
@@ -286,7 +307,10 @@
       slow: !!keepSlow, playing: null, done: false, keys: keysFor(song), lastStars: 0,
       // niveau 2
       passed: new Set(), fails: 0, tries: song.phrases.map(() => 0), take: null, results: [], moveTo: null, keepMic: false, fullRes: null,
+      // suivi : début de la partie (temps page visible), « lentement » utilisé, résultat déjà envoyé
+      t0: Suivi.clock(), usedSlow: !!keepSlow, tracked: false,
     };
+    track('debut', { c: song.id, niveau: G.level });
     const idx = LIB.indexOf(song);
     const next = LIB[(idx + 1) % LIB.length];
     const span = song.maxStep - song.minStep;
@@ -1020,6 +1044,12 @@
     else if (r.drift) text = `Toutes les notes y sont, mais tu as ${r.drift === 'faster' ? 'accéléré' : 'ralenti'} en route.`;
     else text = bad.length ? `Presque ! À revoir : ${which}.` : 'Presque ! Encore une fois ?';
     G.fullRes = { pass: r.pass, text, status };
+    if (r.played) {
+      track('bilan', {
+        c: song.id, niveau: G.level, reussi: !!r.pass, parfait: !!r.perfect, justes: r.right, enPlace: r.inPlace, sur: r.total,
+        phrases: status.map((st) => (st === 'ok' ? 2 : st === 'near' ? 1 : 0)), derive: r.drift || '',
+      });
+    }
     if (r.pass) Scenes.react(el.stage, 'complete', info());
     G.keepMic = false;
     pauseMicDone();
@@ -1082,6 +1112,11 @@
     const key = lv2 ? G.song.id + '@2' : G.song.id;
     G.lastStars = stars;
     if (stars > (+records[key] || 0)) { records[key] = stars; save(REC_KEY, records); }
+    track('fin', {
+      c: G.song.id, niveau: G.level, etoiles: stars, erreurs: lv2 ? G.fails : G.errors, sur: lv2 ? G.song.phrases.length : G.song.notes.length,
+      montrees: G.revealed.size, lent: !!G.usedSlow, duree: secsSince(G.t0),
+    });
+    G.tracked = true;
     Scenes.update(el.stage, info());
     Scenes.react(el.stage, 'complete', info());
     showDone();
@@ -1237,6 +1272,7 @@
       if (settings.mode === 'mic' && el.ear && document.contains(el.ear)) { showEar(true); expectNext(); cursorHint(); }
     } catch (e) {
       const code = (e && e.code) || 'other';
+      if (!micErrs.has(code)) { micErrs.add(code); track('micro', { code }); }
       showEar(false, micMsgHtml(code), FATAL(code));
     } finally {
       micBusy = false;
@@ -1276,6 +1312,7 @@
     if (el.bGo) el.bGo.addEventListener('click', () => startTake());
     el.bSlow.addEventListener('click', () => {
       G.slow = !G.slow;
+      if (G.slow) G.usedSlow = true;
       el.bSlow.setAttribute('aria-pressed', String(G.slow));
     });
     app.querySelector('#b-reset').addEventListener('click', reset);
@@ -1417,7 +1454,10 @@
   }
 
   window.addEventListener('hashchange', () => route(true));
+  // page fermée (ou quittée) au milieu d'une comptine
+  window.addEventListener('pagehide', () => { if (view === 'song') trackLeave('fermeture'); });
 
+  track('visite', { niveau: settings.level, ecran: Suivi.device(), etoiles: Object.assign({}, records) });
   const start = () => route(false);
   if (window.claude && window.claude.hot && window.claude.hot.snapshot) {
     try { window.claude.hot.snapshot(() => ({ hash: location.hash })); } catch (e) { /* facultatif */ }
