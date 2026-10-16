@@ -4,6 +4,8 @@ Un jeu d'oreille pour les enfants : vingt comptines traditionnelles, toutes en d
 
 **Jouer : https://romaingaudet-maker.github.io/notes-envolees/**
 
+**Seconde version, en laine : https://romaingaudet-maker.github.io/notes-envolees/laine/** : le même jeu, mais chaque décor est une petite animation 3D en volume, image par image (12 images par seconde, comme un film d'animation tourné en stop-motion) : personnages au crochet, décors tricotés et pièces de feutrine cousues, éclairage de studio, profondeur de champ de maquette et particules (peluches dans la lumière, feuilles, pluie, confettis de feutrine). L'accueil est un petit théâtre : le titre en guirlande de lettres de feutrine, puis un fil rouge qui relie les vingt comptines, chacune dans un tambour à broder qui montre son décor.
+
 ## Ce que fait la page
 
 - Une page par comptine, avec un décor animé qui suit la progression et tient sur un seul écran (ordinateur, tablette, téléphone).
@@ -21,7 +23,9 @@ Un jeu d'oreille pour les enfants : vingt comptines traditionnelles, toutes en d
 Tout le code est dans `src/` ; `index.html` est fabriqué à partir de ces fichiers.
 
 - `src/songs.js` : les mélodies (paroles découpées en syllabes, puis notes `HAUTEUR/durée`, par exemple `E4/q` pour une noire mi).
-- `node build.mjs` : reconstruit `index.html`.
+- `node build.mjs` : reconstruit `index.html` (première version) et `laine/index.html` (version en laine).
+- `laine/` : la version en laine. `laine/src/` contient le moteur (textures de tricot, de crochet et de feutrine fabriquées à l'ouverture, duvet de la laine, marionnettes, éléments de décor, particules, développement de l'image) et l'accueil ; `laine/scenes/` un fichier par décor de comptine ; `laine/vendor/three.min.js` la bibliothèque 3D three.js (r170, licence MIT). Sans WebGL 2, la page reprend les décors en papier découpé.
+- `node outils/glyphes-titre.mjs DOSSIER/node_modules` : refait les contours des lettres du titre en feutrine (il faut `opentype.js` et `@fontsource/gluten`).
 - `sons/` : les sons enregistrés des instruments, chargés à la demande. `index.html` ouvert seul, sans ce dossier, marche aussi : les phrases sont alors jouées avec des timbres synthétisés.
 - `python3 outils/fabriquer-sons.py DOSSIER` : refait les sons à partir des bibliothèques d'origine (clonées dans `DOSSIER`, voir l'en-tête du script ; il faut numpy et ffmpeg).
 - `node validate.mjs` : vérifie que chaque phrase a autant de syllabes que de notes et que les mesures tombent juste.
@@ -37,4 +41,4 @@ Tout le code est dans `src/` ; `index.html` est fabriqué à partir de ces fichi
 - [KalimbaTabs](https://www.kalimbatabs.net/kalimba-tabs-tutorials/) : Dans la forêt lointaine, Pomme de reinette, Savez-vous planter les choux, recoupées avec [veillette/chansons](https://github.com/veillette/chansons), qui donne aussi Dodo, l'enfant do et Ainsi font, font, font.
 - Une souris verte : [fiche d'éducation musicale de l'académie de Versailles](https://ac-versailles.fr/media/25987/download), recoupée avec une tablature de guitare et veillette/chansons.
 
-Comptines traditionnelles du domaine public. Sons d'instruments : VSCO 2 Community Edition, VCSL et Weresax (CC0), Sonatina Symphonic Orchestra (CC Sampling Plus 1.0) ; détails dans [sons/LISEZMOI.md](sons/LISEZMOI.md).
+Comptines traditionnelles du domaine public. Sons d'instruments : VSCO 2 Community Edition, VCSL et Weresax (CC0), Sonatina Symphonic Orchestra (CC Sampling Plus 1.0) ; détails dans [sons/LISEZMOI.md](sons/LISEZMOI.md). Version en laine : three.js (licence MIT), lettres du titre d'après la police Gluten (SIL Open Font License).
