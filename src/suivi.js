@@ -10,7 +10,7 @@
 ------------------------------------------------------------------- */
 const Suivi = (() => {
   // adresse du Worker Cloudflare, sans « / » à la fin (vide : suivi coupé)
-  const SUIVI_URL = '';
+  const SUIVI_URL = 'https://notes-envolees-suivi.romain-gaudet.workers.dev';
   const ID_KEY = 'notes-envolees-id';       // identifiant de ce navigateur
   const OFF_KEY = 'notes-envolees-suivi-off'; // '1' : appareil du professeur, à ne pas suivre
 
