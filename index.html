@@ -4519,12 +4519,14 @@ const Suivi = (() => {
 
   /* ---------------- écoute ---------------- */
   function playEvents(evs, kind, onEnd, opts = {}) {
-    stopPlayback(true);
-    if (!Sound.ensure()) { setHint('Le son n’est pas disponible dans ce navigateur.', ''); return; }
+    // à la fin de l'écoute, on revient à la phrase où l'on en était (même quand cette écoute en remplace une autre)
+    const home = G.playing ? G.playing.home : G.view;
+    stopPlayback(true, true);
+    if (!Sound.ensure()) { setHint('Le son n’est pas disponible dans ce navigateur.', ''); goBack(home); return; }
     let a = 0;
     while (a < evs.length && evs[a].rest) a++;
     evs = evs.slice(a);
-    if (!evs.length) return;
+    if (!evs.length) { goBack(home); return; }
     const spb = 60 / (G.song.bpm * (G.slow ? 0.68 : 1));
     const base = evs[0].t;
     const items = evs.filter((e) => !e.rest).map((e) => ({
@@ -4534,9 +4536,9 @@ const Suivi = (() => {
     const lastEv = evs[evs.length - 1];
     const total = (lastEv.t + lastEv.dur - base) * spb;
     const h = Sound.sequence(voiceNow(), items, opts.at ? Math.max(0.05, opts.at - Sound.now()) : undefined);
-    if (!h) return;
+    if (!h) { goBack(home); return; }
     const noteEnd = h.t0 + items.reduce((m, it) => Math.max(m, it.start + it.dur), 0);
-    const P = { h, items, kind, t0: h.t0, end: h.t0 + total, noteEnd, cur: -1, raf: 0, onEnd, home: G.view, srcs: opts.srcs || [], ci: opts.ci || null, k: -1 };
+    const P = { h, items, kind, t0: h.t0, end: h.t0 + total, noteEnd, cur: -1, raf: 0, onEnd, home, srcs: opts.srcs || [], ci: opts.ci || null, k: -1 };
     G.playing = P;
     setPlayingUI(kind, true);
     const tick = () => {
@@ -4569,7 +4571,8 @@ const Suivi = (() => {
     P.raf = requestAnimationFrame(tick);
   }
 
-  function stopPlayback(fade) {
+  // handOver : une autre écoute prend la suite (c'est elle qui reviendra à la bonne phrase)
+  function stopPlayback(fade, handOver) {
     const P = G && G.playing;
     if (!P) return;
     cancelAnimationFrame(P.raf);
@@ -4581,8 +4584,16 @@ const Suivi = (() => {
     G.playing = null;
     setPlayingUI(P.kind, false);
     if (P.onEnd) P.onEnd();
-    // revenir à la phrase où l'on joue
-    if (G && G.cursor != null && !G.pending) showPhrase(G.song.notes[G.cursor].phrase, true);
+    if (!handOver) goBack(P.home);
+  }
+
+  /* Après une écoute (toute la comptine passe d'une phrase à l'autre), revenir où
+     l'on en était : niveau 1, la phrase de la note cherchée ; niveau 2, la phrase
+     travaillée avant d'écouter, ou la suivante si elle vient d'être réussie. */
+  function goBack(home) {
+    if (!G || G.take || G.done) return;
+    if (G.level === 2) { if (G.moveTo != null) moveOn(); else showPhrase(home, true); return; }
+    if (G.cursor != null && !G.pending) showPhrase(G.song.notes[G.cursor].phrase, true);
   }
 
   function highlight(n, on) {
@@ -4700,8 +4711,8 @@ const Suivi = (() => {
     const full = !!opts.full || G.done;
     if (!full && G.level !== 2) return;
     if (G.take) { cancelTake(); return; }
+    stopPlayback(true); // une écoute en cours : on revient d'abord à la phrase où l'on en était
     if (!full && G.moveTo != null) moveOn(); // phrase réussie à l'instant : on part sur la suivante
-    stopPlayback(true);
     if (settings.mode === 'mic' && !Ear.active()) {
       G.keepMic = full;
       startMic().then(() => { if (G && Ear.active() && !G.take) startTake(opts); });
