@@ -86,7 +86,7 @@ function loadClient(url, store = {}) {
   };
   sandbox.window.matchMedia = sandbox.matchMedia;
   let src = fs.readFileSync(new URL('../src/suivi.js', import.meta.url), 'utf8');
-  src = src.replace("const SUIVI_URL = '';", `const SUIVI_URL = '${url}';`);
+  src = src.replace(/const SUIVI_URL = '[^']*';/, `const SUIVI_URL = '${url}';`);
   vm.runInNewContext(src + '\nthis.Suivi = Suivi;', sandbox);
   return { Suivi: sandbox.Suivi, beacons, store };
 }
