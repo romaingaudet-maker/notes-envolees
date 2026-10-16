@@ -50,7 +50,18 @@ const prof = doc(fill(pShell.slice(0, pCut), pCss, pJs).trim(), fill(pShell.slic
 fs.writeFileSync(new URL('./suivi.html', import.meta.url), prof);
 console.log('suivi.html', (prof.length / 1024).toFixed(1) + ' Ko');
 
-/* 4) seconde version : décors en laine, en 3D image par image.
+// 4) mentions légales et confidentialité (mentions-legales.html, liée depuis l'accueil des deux versions)
+{
+  const mShell = r('mentions.html');
+  const mCss = fontsCss.split('\n')[0] + '\n' + [font('Gluten', 800, 'gluten-latin-800-normal.woff2'), font('Andika', 400, 'andika-latin-400-normal.woff2'), font('Andika', 700, 'andika-latin-700-normal.woff2')].join('\n');
+  const mJs = ['suivi.js', 'mentions.js'].map(r).join('\n');
+  const mCut = mShell.indexOf('<header');
+  const legal = doc(fill(mShell.slice(0, mCut), mCss, mJs).trim(), fill(mShell.slice(mCut), mCss, mJs).trim(), '#F6C744');
+  fs.writeFileSync(new URL('./mentions-legales.html', import.meta.url), legal);
+  console.log('mentions-legales.html', (legal.length / 1024).toFixed(1) + ' Ko');
+}
+
+/* 5) seconde version : décors en laine, en 3D image par image.
    laine/src et laine/scenes sont mis bout à bout dans une seule fonction
    (les fichiers de laine/src dont le nom commence par 80 ou plus passent après les décors). */
 {
@@ -69,8 +80,8 @@ console.log('suivi.html', (prof.length / 1024).toFixed(1) + ' Ko');
   const lfill = (t, pre) => t.replace('/*__CSS__*/', () => css2).replace('/*__PRE__*/', () => pre).replace('/*__THREE__*/', () => three).replace('/*__JS__*/', () => js2);
   // a) fragment publié comme artifact : les sons sont à côté (sons/)
   out('laine.html', lfill(lshell, `window.NE_ONLINE_URL = ${JSON.stringify(ONLINE)};`));
-  // b) document autonome, publié sur GitHub Pages dans laine/ : les sons sont dans le dossier parent
-  const pre = `window.NE_ONLINE_URL = ${JSON.stringify(ONLINE)}; window.SONS_BASE = '../sons/';`;
+  // b) document autonome, publié sur GitHub Pages dans laine/ : les sons et les mentions légales sont dans le dossier parent
+  const pre = `window.NE_ONLINE_URL = ${JSON.stringify(ONLINE)}; window.SONS_BASE = '../sons/'; window.NE_LEGAL_URL = '../mentions-legales.html';`;
   const lcut = lshell.indexOf('<svg');
   const ldoc = doc(lfill(lshell.slice(0, lcut), pre).trim(), lfill(lshell.slice(lcut), pre).trim(), '#2B2350', iconOf('#2B2350', '#F2C14E'));
   fs.writeFileSync(new URL('./laine/index.html', import.meta.url), ldoc);

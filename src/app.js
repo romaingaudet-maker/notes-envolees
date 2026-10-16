@@ -19,6 +19,7 @@
   let D = PAPER;
   /* Adresse de la version en ligne, où le micro est autorisé (vide si aucune) */
   const ONLINE_URL = window.NE_ONLINE_URL || 'https://romaingaudet-maker.github.io/notes-envolees/';
+  const LEGAL_URL = window.NE_LEGAL_URL || 'mentions-legales.html'; // mentions légales et confidentialité
   const KEY_CODES = ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote'];
   let keyLabels = ['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'Ù'];
   const RM = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -177,7 +178,7 @@
     D.leave();
     D = PAPER;
     setWorld(null);
-    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, keyLabels, decorFor })) return;
+    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, keyLabels, decorFor })) return;
     const medals = LIB.map((s, i) => {
       const best = +records[s.id] || 0, best2 = +records[s.id + '@2'] || 0;
       const badge = best ? `<span class="medal-badge" aria-label="Record : ${best} étoile${best > 1 ? 's' : ''}">${[1, 2, 3].map((k) => star(k <= best, 15)).join('')}</span>` : '';
@@ -239,7 +240,7 @@
         </section>
         <p class="home-foot">${Suivi.configured
           ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré sans nom, avec l’adresse IP de la connexion, et effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
-          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute (au niveau 2, le décompte). Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0).</p>
+          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute (au niveau 2, le décompte). Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
       </div>
     </main>`;
     app.querySelector('#home-inst').addEventListener('change', (e) => setInst(e.target.value));

@@ -1,0 +1,118 @@
+<title>Mentions légales · Les Notes Envolées</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Mentions légales et confidentialité du jeu d'oreille Les Notes Envolées : éditeur, hébergeur, micro, suivi des parties, droits.">
+<style>
+/*__CSS__*/
+/* Une page de texte, dans l'univers du jeu : bandeau safran, encre bleu nuit sur papier. */
+:root {
+  --cover: #F6C744; --ink: #1D2350; --ink-soft: #4B507E; --paper: #FFFBF0; --card: #FFF1D6; --line: rgba(29, 35, 80, .16); --red: #D93D43;
+  --font-display: 'Gluten', 'Trebuchet MS', 'Comic Sans MS', cursive;
+  --font-text: 'Andika', 'Verdana', 'Segoe UI', sans-serif;
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-text); font-size: 17px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:hover { color: var(--red); }
+:focus-visible { outline: 3px solid var(--red); outline-offset: 3px; }
+.band { background: var(--cover); padding-block: 22px 30px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.band-in { max-width: 46rem; margin: 0 auto; }
+.back { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; text-decoration: none; padding: 8px 14px 8px 10px; border-radius: 999px; background: var(--paper); box-shadow: 0 3px 0 rgba(0, 0, 0, .14); }
+.back svg { width: 18px; height: 18px; }
+h1 { margin: 22px 0 4px; font-family: var(--font-display); font-weight: 800; font-size: clamp(34px, 6vw, 52px); line-height: 1; text-wrap: balance; }
+.updated { margin: 6px 0 0; font-size: 14px; color: var(--ink-soft); }
+.wrap { padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: minmax(0, 46rem); justify-content: center; gap: 30px; }
+section { display: grid; gap: 10px; }
+h2 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 26px; line-height: 1.1; }
+h3 { margin: 8px 0 0; font-size: 18px; }
+p, ul { margin: 0; }
+ul { padding-left: 1.2em; display: grid; gap: 6px; }
+.brief { background: var(--card); border-radius: 18px; padding: 18px 20px; position: relative; }
+.brief::before { content: ""; position: absolute; inset: 6px; border-radius: 13px; border: 2px dashed var(--line); pointer-events: none; }
+.brief h2 { font-size: 22px; }
+dl { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; }
+dt { font-weight: 700; }
+dd { margin: 0; min-width: 0; }
+.toggle { display: grid; gap: 8px; padding: 16px 18px; border-radius: 16px; border: 2px solid var(--ink); background: #FFFFFF; }
+.toggle label { display: flex; gap: 12px; align-items: flex-start; font-weight: 700; cursor: pointer; }
+.toggle input { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--red); flex: none; }
+.toggle p { font-size: 15px; color: var(--ink-soft); }
+.toggle p[hidden] { display: none; }
+.code { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-weight: 700; color: var(--ink); background: var(--card); padding: 1px 7px; border-radius: 6px; }
+@media (max-width: 520px) { dl { grid-template-columns: minmax(0, 1fr); gap: 2px 0; } dd { margin-bottom: 8px; } }
+</style>
+<header class="band">
+  <div class="band-in">
+    <a class="back" id="back" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Retour au jeu</a>
+    <h1>Mentions légales et confidentialité</h1>
+    <p class="updated">Les Notes Envolées · mise à jour le 16 octobre 2026</p>
+  </div>
+</header>
+<main class="wrap">
+  <section class="brief" aria-labelledby="t-bref">
+    <h2 id="t-bref">En bref</h2>
+    <ul>
+      <li>Le son du micro reste sur l’appareil : il sert seulement à reconnaître les notes. Il n’est ni enregistré ni envoyé.</li>
+      <li>Pas de compte, pas de publicité, pas de cookie.</li>
+      <li>Le déroulé des parties (comptine, étoiles, erreurs…) est envoyé au professeur avec un identifiant tiré au hasard, sans nom, pour qu’il suive les progrès. Il est effacé au bout de 13 mois, et on peut le couper sur cet appareil (plus bas).</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="t-editeur">
+    <h2 id="t-editeur">Éditeur</h2>
+    <p>Les Notes Envolées est un outil pédagogique libre et gratuit, sans but commercial, créé et publié à titre personnel par Romain Gaudet, professeur de musique, directeur de la publication.</p>
+    <p>Contact : directement auprès du professeur, ou sur le dépôt du projet : <a href="https://github.com/romaingaudet-maker/notes-envolees" target="_blank" rel="noopener">github.com/romaingaudet-maker/notes-envolees</a>.</p>
+  </section>
+
+  <section aria-labelledby="t-hebergeur">
+    <h2 id="t-hebergeur">Hébergement</h2>
+    <p>Le site est hébergé par GitHub Pages : GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis · +1 877 448 4820 · <a href="https://github.com" target="_blank" rel="noopener">github.com</a>. Comme tout hébergeur, GitHub reçoit l’adresse IP des visiteurs pour leur envoyer les pages.</p>
+  </section>
+
+  <section aria-labelledby="t-donnees">
+    <h2 id="t-donnees">Données personnelles</h2>
+    <h3>Ce qui reste sur l’appareil</h3>
+    <ul>
+      <li><strong>Le son du micro</strong>, si l’élève choisit de jouer avec le micro : le navigateur demande d’abord l’autorisation, puis le son est analysé dans la page pour reconnaître la hauteur des notes, et aussitôt oublié. Il n’est jamais enregistré ni envoyé. Le micro s’éteint quand l’élève l’arrête, à la fin de la comptine, au retour à l’accueil et dès que la page passe en arrière-plan (il se rallume au retour si l’élève jouait avec).</li>
+      <li><strong>Les réglages</strong> (instrument, niveau, xylophone ou micro) et <strong>le meilleur nombre d’étoiles</strong> de chaque comptine, gardés dans le navigateur (stockage local). Le site n’utilise aucun cookie.</li>
+    </ul>
+    <h3>Le suivi des parties, pour le professeur</h3>
+    <dl>
+      <dt>Responsable</dt>
+      <dd>Romain Gaudet, le professeur.</dd>
+      <dt>Ce qui est envoyé</dt>
+      <dd>Un identifiant tiré au hasard et gardé dans le navigateur (ni nom, ni adresse, ni photo), le type d’écran (téléphone, tablette ou ordinateur), l’instrument choisi, xylophone ou micro, le niveau, les étoiles déjà gagnées et, pour chaque comptine jouée : le résultat (étoiles, erreurs, notes justes et en place au niveau 2), les notes montrées, l’usage du mode lent, la durée, l’endroit où l’élève s’est arrêté s’il quitte avant la fin, et les éventuels problèmes de micro. Le serveur y ajoute la date et l’adresse IP de la connexion.</dd>
+      <dt>Pourquoi</dt>
+      <dd>Permettre au professeur de suivre les progrès de ses élèves et d’améliorer le jeu. L’adresse IP l’aide à reconnaître quel appareil est celui de quel élève.</dd>
+      <dt>Sur quelle base</dt>
+      <dd>L’accord des parents, recueilli par le professeur.</dd>
+      <dt>Qui y a accès</dt>
+      <dd>Le professeur seul, sur une page protégée par une clé. Rien n’est vendu ni partagé, rien ne sert à de la publicité.</dd>
+      <dt>Où</dt>
+      <dd>Chez Cloudflare, Inc. (101 Townsend Street, San Francisco, CA 94107, États-Unis), sous-traitant qui stocke ces données pour le professeur. Elles peuvent être traitées hors de l’Union européenne, notamment aux États-Unis.</dd>
+      <dt>Combien de temps</dt>
+      <dd>13 mois : les résultats plus anciens sont effacés automatiquement.</dd>
+    </dl>
+    <div class="toggle" id="toggle">
+      <label for="no-track"><input type="checkbox" id="no-track"><span>Ne pas envoyer le suivi depuis cet appareil</span></label>
+      <p id="track-state">Le choix est gardé dans ce navigateur.</p>
+      <p id="device-code" hidden></p>
+    </div>
+    <h3>Vos droits</h3>
+    <p>Vous pouvez demander à voir ou effacer les données de votre enfant, ou retirer votre accord, auprès du professeur. Donnez-lui le code affiché dans l’encadré ci-dessus, en ouvrant cette page sur l’appareil où joue l’enfant : il lui permet de retrouver ses données. Vous pouvez aussi adresser une réclamation à la CNIL (<a href="https://www.cnil.fr" target="_blank" rel="noopener">cnil.fr</a>).</p>
+  </section>
+
+  <section aria-labelledby="t-credits">
+    <h2 id="t-credits">Crédits et licences</h2>
+    <ul>
+      <li>Comptines traditionnelles du domaine public.</li>
+      <li>Sons d’instruments enregistrés : VSCO 2 Community Edition, VCSL et Weresax (Karoryfer), licence CC0 ; Sonatina Symphonic Orchestra, licence CC Sampling Plus 1.0.</li>
+      <li>Polices Gluten et Andika, licence SIL Open Font License 1.1, livrées avec la page.</li>
+      <li>Décors 3D de la version en laine : bibliothèque three.js, licence MIT.</li>
+      <li>Le code du site est consultable sur <a href="https://github.com/romaingaudet-maker/notes-envolees" target="_blank" rel="noopener">GitHub</a>.</li>
+    </ul>
+  </section>
+</main>
+<script>
+/*__JS__*/
+</script>

@@ -275,6 +275,7 @@ const HomeSkin = (() => {
 
   function render(ctx) {
     const { app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, keyLabels } = ctx;
+    const LEGAL_URL = ctx.LEGAL_URL || 'mentions-legales.html';
     const gl = Engine.supported();
     const hoops = LIB.map((s, i) => {
       const best = +records[s.id] || 0, best2 = +records[s.id + '@2'] || 0;
@@ -358,7 +359,7 @@ const HomeSkin = (() => {
       </section>
       <p class="lh-foot">${typeof Suivi !== 'undefined' && Suivi.configured
         ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré sans nom, avec l’adresse IP de la connexion, et effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
-        : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute. Comptines traditionnelles du domaine public. Décors en 3D faits avec three.js (licence MIT) ; titre en police Gluten (SIL OFL). Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0).</p>
+        : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute. Comptines traditionnelles du domaine public. Décors en 3D faits avec three.js (licence MIT) ; titre en police Gluten (SIL OFL). Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
     </main>`;
     root = app.querySelector('.lhome');
     app.querySelector('#home-inst').addEventListener('change', (e) => setInst(e.target.value));

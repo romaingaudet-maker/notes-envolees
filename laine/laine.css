@@ -155,6 +155,8 @@
 .lh-steps li { counter-increment: s; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start; color: var(--lh-soft); font-size: 15px; line-height: 1.45; }
 .lh-steps li::before { content: counter(s); width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--lh-thread); color: #FFF7EA; font-family: var(--font-display); font-weight: 800; font-size: 15px; }
 .lh-foot { max-width: 1240px; margin: 0 auto; padding-block: 18px 44px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); font-size: 13px; line-height: 1.55; color: rgba(205, 187, 216, .78); }
+.lh-foot .legal-link { display: block; width: fit-content; margin-top: 10px; color: var(--lh-ink); font-weight: 700; text-decoration-color: var(--lh-gold); text-underline-offset: 3px; }
+.lh-foot .legal-link:hover { color: var(--lh-gold); }
 
 @media (min-width: 900px) and (min-aspect-ratio: 13/10) {
   .lh-hero-in { justify-content: center; padding-block: 40px; }

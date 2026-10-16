@@ -168,6 +168,7 @@ a { color: inherit; }
 .inst-online { margin: 12px 0 0; padding: 10px 14px; border-radius: 14px; background: #FFF3C9; color: var(--ink); font-size: 15px; }
 .inst-online a { color: var(--ink); font-weight: 700; }
 .home-foot { margin-top: 36px; font-size: 14px; color: var(--ink-soft); max-width: 62em; }
+.home-foot .legal-link { display: block; width: fit-content; margin-top: 10px; color: var(--ink); font-weight: 700; text-underline-offset: 3px; }
 
 /* ================================ COMPTINE ================================ */
 :root[data-view="song"], :root[data-view="song"] body, :root[data-view="song"] #app { height: 100%; }

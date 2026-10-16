@@ -184,6 +184,7 @@ a { color: inherit; }
 .inst-online { margin: 12px 0 0; padding: 10px 14px; border-radius: 14px; background: #FFF3C9; color: var(--ink); font-size: 15px; }
 .inst-online a { color: var(--ink); font-weight: 700; }
 .home-foot { margin-top: 36px; font-size: 14px; color: var(--ink-soft); max-width: 62em; }
+.home-foot .legal-link { display: block; width: fit-content; margin-top: 10px; color: var(--ink); font-weight: 700; text-underline-offset: 3px; }
 
 /* ================================ COMPTINE ================================ */
 :root[data-view="song"], :root[data-view="song"] body, :root[data-view="song"] #app { height: 100%; }
@@ -1185,6 +1186,8 @@ a { color: inherit; }
 .lh-steps li { counter-increment: s; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start; color: var(--lh-soft); font-size: 15px; line-height: 1.45; }
 .lh-steps li::before { content: counter(s); width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--lh-thread); color: #FFF7EA; font-family: var(--font-display); font-weight: 800; font-size: 15px; }
 .lh-foot { max-width: 1240px; margin: 0 auto; padding-block: 18px 44px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); font-size: 13px; line-height: 1.55; color: rgba(205, 187, 216, .78); }
+.lh-foot .legal-link { display: block; width: fit-content; margin-top: 10px; color: var(--lh-ink); font-weight: 700; text-decoration-color: var(--lh-gold); text-underline-offset: 3px; }
+.lh-foot .legal-link:hover { color: var(--lh-gold); }
 
 @media (min-width: 900px) and (min-aspect-ratio: 13/10) {
   .lh-hero-in { justify-content: center; padding-block: 40px; }
@@ -1217,7 +1220,7 @@ a { color: inherit; }
 </defs></svg>
 <div id="app"></div>
 <div id="iris" class="iris" hidden></div>
-<script>window.NE_ONLINE_URL = "https://romaingaudet-maker.github.io/notes-envolees/laine/"; window.SONS_BASE = '../sons/';</script>
+<script>window.NE_ONLINE_URL = "https://romaingaudet-maker.github.io/notes-envolees/laine/"; window.SONS_BASE = '../sons/'; window.NE_LEGAL_URL = '../mentions-legales.html';</script>
 <script>/**
  * three.js r170 (https://threejs.org), version réduite (esbuild --minify) qui expose window.THREE.
  *
@@ -20629,6 +20632,7 @@ const HomeSkin = (() => {
 
   function render(ctx) {
     const { app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, keyLabels } = ctx;
+    const LEGAL_URL = ctx.LEGAL_URL || 'mentions-legales.html';
     const gl = Engine.supported();
     const hoops = LIB.map((s, i) => {
       const best = +records[s.id] || 0, best2 = +records[s.id + '@2'] || 0;
@@ -20712,7 +20716,7 @@ const HomeSkin = (() => {
       </section>
       <p class="lh-foot">${typeof Suivi !== 'undefined' && Suivi.configured
         ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré sans nom, avec l’adresse IP de la connexion, et effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
-        : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute. Comptines traditionnelles du domaine public. Décors en 3D faits avec three.js (licence MIT) ; titre en police Gluten (SIL OFL). Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0).</p>
+        : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute. Comptines traditionnelles du domaine public. Décors en 3D faits avec three.js (licence MIT) ; titre en police Gluten (SIL OFL). Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
     </main>`;
     root = app.querySelector('.lhome');
     app.querySelector('#home-inst').addEventListener('change', (e) => setInst(e.target.value));
@@ -20943,6 +20947,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   let D = PAPER;
   /* Adresse de la version en ligne, où le micro est autorisé (vide si aucune) */
   const ONLINE_URL = window.NE_ONLINE_URL || 'https://romaingaudet-maker.github.io/notes-envolees/';
+  const LEGAL_URL = window.NE_LEGAL_URL || 'mentions-legales.html'; // mentions légales et confidentialité
   const KEY_CODES = ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote'];
   let keyLabels = ['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'Ù'];
   const RM = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -21101,7 +21106,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     D.leave();
     D = PAPER;
     setWorld(null);
-    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, keyLabels, decorFor })) return;
+    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, keyLabels, decorFor })) return;
     const medals = LIB.map((s, i) => {
       const best = +records[s.id] || 0, best2 = +records[s.id + '@2'] || 0;
       const badge = best ? `<span class="medal-badge" aria-label="Record : ${best} étoile${best > 1 ? 's' : ''}">${[1, 2, 3].map((k) => star(k <= best, 15)).join('')}</span>` : '';
@@ -21163,7 +21168,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
         </section>
         <p class="home-foot">${Suivi.configured
           ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré sans nom, avec l’adresse IP de la connexion, et effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
-          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute (au niveau 2, le décompte). Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0).</p>
+          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute (au niveau 2, le décompte). Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
       </div>
     </main>`;
     app.querySelector('#home-inst').addEventListener('change', (e) => setInst(e.target.value));

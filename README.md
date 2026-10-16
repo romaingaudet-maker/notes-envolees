@@ -18,13 +18,14 @@ Un jeu d'oreille pour les enfants : vingt comptines traditionnelles, toutes en d
 - Le son du micro est analysé dans le navigateur ; il n'est jamais enregistré ni envoyé. Le micro demande une page en https (comme ici) ou un fichier ouvert dans Chrome, Edge ou Firefox ; il ne fonctionne pas dans l'aperçu de claude.ai (la page propose alors la version en ligne).
 - Chaque visite d'une comptine repart de zéro ; le meilleur nombre d'étoiles (par niveau) reste sur l'appareil.
 - **Suivi des élèves** (pour le professeur) : une fois le Worker Cloudflare installé, le déroulé des parties (comptine, niveau, instrument, xylophone ou micro, étoiles, erreurs, durée) est envoyé sans nom, avec l'adresse IP de la connexion, et consulté sur la page [suivi.html](https://romaingaudet-maker.github.io/notes-envolees/suivi.html), protégée par une clé. Installation et détails : [suivi/LISEZMOI.md](suivi/LISEZMOI.md).
+- **Mentions légales et confidentialité** : [mentions-legales.html](https://romaingaudet-maker.github.io/notes-envolees/mentions-legales.html), liée en bas de l'accueil des deux versions (éditeur, hébergeur, micro, suivi, droits des familles, crédits). Les familles peuvent y couper le suivi sur leur appareil et y lire le code que montre la page de suivi.
 
 ## Modifier
 
 Tout le code est dans `src/` ; `index.html` est fabriqué à partir de ces fichiers.
 
 - `src/songs.js` : les mélodies (paroles découpées en syllabes, puis notes `HAUTEUR/durée`, par exemple `E4/q` pour une noire mi).
-- `node build.mjs` : reconstruit `index.html` (première version), `suivi.html` (la page de suivi des élèves) et `laine/index.html` (version en laine).
+- `node build.mjs` : reconstruit `index.html` (première version), `suivi.html` (la page de suivi des élèves), `mentions-legales.html` (à partir de `src/mentions.html` et `src/mentions.js`) et `laine/index.html` (version en laine).
 - `src/suivi.js` : l'envoi des résultats (adresse du Worker dans `SUIVI_URL`) ; `src/suivi-page.js` et `src/_suivi.css` : la page de suivi ; `suivi/worker.js` : le Worker Cloudflare qui range les résultats. Les deux versions du jeu envoient les mêmes résultats.
 - `laine/` : la version en laine. `laine/src/` contient le moteur (textures de tricot, de crochet et de feutrine fabriquées à l'ouverture, duvet de la laine, marionnettes, éléments de décor, particules, développement de l'image) et l'accueil ; `laine/scenes/` un fichier par décor de comptine ; `laine/vendor/three.min.js` la bibliothèque 3D three.js (r170, licence MIT). Sans WebGL 2, la page reprend les décors en papier découpé.
 - `node outils/glyphes-titre.mjs DOSSIER/node_modules` : refait les contours des lettres du titre en feutrine (il faut `opentype.js` et `@fontsource/gluten`).
