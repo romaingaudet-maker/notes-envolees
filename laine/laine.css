@@ -9,3 +9,6 @@
 .laine-lbl { position: absolute; left: 0; top: 0; will-change: transform; opacity: 0; transition: opacity .25s steps(3); }
 .laine-lbl.on { opacity: 1; }
 .stage:has(.laine-host).grain::before, .stage:has(.laine-host).grain::after { display: none; }
+/* bulle de feutrine (paroles d'un personnage) */
+.laine-bubble { translate: -50% -100%; padding: 6px 12px 7px; border-radius: 16px; background: #FFF8EA; color: #3A2418; font: 700 clamp(12px, 1.6vw, 17px)/1.15 var(--font-display); white-space: nowrap; box-shadow: 0 3px 0 rgba(0,0,0,.18), 0 8px 18px rgba(0,0,0,.18); outline: 2px dashed rgba(196, 120, 80, .55); outline-offset: -5px; }
+.laine-bubble::after { content: ''; position: absolute; left: 50%; bottom: -9px; width: 16px; height: 16px; background: inherit; translate: -50% 0; rotate: 45deg; border-radius: 3px; z-index: -1; }

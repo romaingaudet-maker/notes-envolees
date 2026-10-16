@@ -99,7 +99,7 @@ const Engine = (() => {
     start();
   }
   function start() {
-    if (!view || raf || document.hidden) return;
+    if (!view || raf || document.hidden || manualF != null) return;
     paused = false;
     raf = requestAnimationFrame(loop);
   }
@@ -113,7 +113,10 @@ const Engine = (() => {
     view = null;
   }
 
-  function frameNow() { return Math.floor(performance.now() / 1000 * FPS) - frame0; }
+  // horloge manuelle (bancs d'essai) : Engine.manual(f) dessine l'image f et arrête la boucle
+  let manualF = null;
+  function frameNow() { return manualF != null ? manualF : Math.floor(performance.now() / 1000 * FPS) - frame0; }
+  function manual(f) { manualF = f; stop(); if (f != null && view && renderer) step(f); }
 
   function step(f) {
     const t = f / FPS;
@@ -168,7 +171,7 @@ const Engine = (() => {
   }
 
   return {
-    supported, init, attach, detach, show, poke, once, snapshot, stop, start,
+    supported, init, attach, detach, show, poke, once, snapshot, stop, start, manual,
     get renderer() { return renderer; },
     get size() { return [W, H]; },
     get tier() { return tier; },

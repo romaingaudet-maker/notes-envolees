@@ -56,6 +56,8 @@ function makeView(o = {}) {
     },
     resize(w, h) { V.size = [w, h]; frameCamera(V); },
     add(...objs) { objs.forEach((x) => scene.add(x)); return objs[0]; },
+    // la marionnette frémit d'une image à l'autre (amp en cm, rot en degrés)
+    boilable(obj, amp = 0.05, rot = 0.6) { boilable(obj, amp, rot); V.boil.push(obj); return obj; },
     anim(fn) { V.anims.push(fn); return fn; },
   };
   if (o.rig && o.rig.target && !o.rig.target.isVector3) V.rig.target = v3(...o.rig.target);

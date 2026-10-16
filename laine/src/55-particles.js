@@ -19,8 +19,11 @@ void main(){
   float sz = uSize * (0.45 + aSeed.w * 0.9);
   gl_PointSize = max(1.0, sz * uScale / -mv.z);
   float tw = mix(1.0, 0.5 + 0.5 * sin(uTime * (2.0 + aSeed.x * 3.0) + ph), uTwinkle);
-  // plus lumineux dans le faisceau de la lampe
-  float beam = mix(1.0, 0.25 + 0.75 * smoothstep(0.2, 0.9, dot(normalize(p - uBox0 * 0.0), uKeyDir) * 0.5 + 0.5), uBeam);
+  // plus lumineux dans le faisceau de la lampe (uBeam > 0 : faisceau venant de uKeyDir, passant par le centre de la boîte)
+  vec3 cen = (uBox0 + uBox1) * 0.5;
+  vec3 rel = p - cen;
+  float off = length(rel - uKeyDir * dot(rel, uKeyDir)) / (length(span) * 0.25);
+  float beam = mix(1.0, 0.15 + 0.85 * smoothstep(1.0, 0.2, off), uBeam);
   vec3 q = (p - uBox0) / span;
   float edge = smoothstep(0.0, 0.08, q.y) * smoothstep(1.0, 0.92, q.y) * smoothstep(0.0, 0.06, q.x) * smoothstep(1.0, 0.94, q.x);
   vA = tw * beam * edge;
