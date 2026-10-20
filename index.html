@@ -770,6 +770,8 @@ a { color: inherit; }
   .seg button, .seg-level button, .seg-slow button, .seg-mode button { padding: 0 8px; }
   .dock-bar { gap: 6px; }
 }
+/* diagnostic du micro (?diag) */
+.ear-diag { position: fixed; right: 8px; bottom: 8px; z-index: 2147483646; max-width: 70vw; padding: 6px 9px; border-radius: 10px; background: rgba(0, 0, 0, .78); color: #fff; font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace; pointer-events: none; }
 
 /* ================================ DÉCORS ================================ */
 .sc .sc-text { font-family: var(--font-display); font-weight: 800; }
@@ -2118,7 +2120,13 @@ const Sound = (() => {
      ~90 ms ; une note répétée est reconnue à sa nouvelle attaque
      (creux puis remontée du volume) ou après un court silence.
    - pendant que la page joue elle-même de la musique, l'écoute est coupée
-     pour ne pas confondre le haut-parleur avec l'instrument.
+     pour ne pas confondre le haut-parleur avec l'instrument (en tenant
+     compte du retard du haut-parleur, grand sur les téléphones).
+   - le son du micro est recueilli dans le fil audio (AudioWorklet), morceau
+     par morceau, avec l'instant exact de chaque morceau : même quand la page
+     est occupée (décor 3D, téléphone lent), aucune trame n'est perdue et
+     l'instant de chaque note reste juste. Sans AudioWorklet, on lit le son
+     toutes les 28 ms (AnalyserNode), comme avant.
 ------------------------------------------------------------------- */
 const PitchKit = (() => {
   const FMIN = 50, FMAX = 2800, TH = 0.15;
@@ -2204,7 +2212,9 @@ const PitchKit = (() => {
         const m = 69 + 12 * Math.log2(res.f / 440) - T.tune / 100;
         const r = Math.round(m), cents = (m - r) * 100;
         T.silent = 0;
-        if (T.cand && T.cand.r === r) {
+        // même nom de note, même à l'octave près : le micro d'un téléphone rend mal les graves,
+        // et la hauteur saute parfois d'une octave d'une trame à l'autre (seul le nom compte)
+        if (T.cand && (((T.cand.r - r) % 12) + 12) % 12 === 0) {
           T.cand.n++; T.cand.c = T.cand.c * 0.6 + cents * 0.4;
           if (rise) T.cand.atk = true;
         } else T.cand = { r, n: 1, c: cents, t: now, atk: rise };
@@ -2252,9 +2262,51 @@ const PitchKit = (() => {
 })();
 
 const Ear = (() => {
-  const FRAME_MS = 28;
-  const S = { on: false, stream: null, nodes: [], an: null, buf: null, timer: 0, sr: 48000, nf: 0.003, gated: false, lastUi: 0, T: PitchKit.makeTracker() };
+  const FRAME_MS = 28, N = 2048;
+  const S = {
+    on: false, stream: null, nodes: [], an: null, buf: null, timer: 0, sr: 48000, nf: 0.003, gated: false, lastUi: 0, T: PitchKit.makeTracker(),
+    mode: '', ring: null, fill: 0, tok: 0,
+    // pour le diagnostic (?diag) : traitements du micro, trames par seconde, retard du traitement
+    dg: { proc: null, frames: 0, since: 0, fps: 0, lag: 0, lagMax: 0, rms: 0, f: 0 },
+  };
   let onNote = null, onFrame = null, onEnded = null;
+
+  /* Le morceau de code qui tourne dans le fil audio : il découpe le son du micro
+     en morceaux d'environ 28 ms et les envoie avec l'instant de leur dernier échantillon. */
+  const WORKLET = `class NeEar extends AudioWorkletProcessor {
+  constructor(o) { super(); this.hop = o.processorOptions.hop; this.b = new Float32Array(this.hop); this.n = 0; }
+  process(inputs) {
+    const ch = inputs[0] && inputs[0][0];
+    if (!ch) return true;
+    for (let i = 0; i < ch.length;) {
+      const k = Math.min(ch.length - i, this.hop - this.n);
+      this.b.set(ch.subarray(i, i + k), this.n);
+      this.n += k; i += k;
+      if (this.n === this.hop) {
+        this.port.postMessage({ x: this.b, t: currentTime + i / sampleRate }, [this.b.buffer]);
+        this.b = new Float32Array(this.hop); this.n = 0;
+      }
+    }
+    return true;
+  }
+}
+registerProcessor('ne-ear', NeEar);`;
+  let mod = null; // { ctx, p } : le module chargé une fois par contexte audio
+  async function workletNode(ctx) {
+    if (!ctx.audioWorklet || typeof AudioWorkletNode === 'undefined') return null;
+    try {
+      if (!mod || mod.ctx !== ctx) {
+        const url = URL.createObjectURL(new Blob([WORKLET], { type: 'application/javascript' }));
+        mod = { ctx, p: ctx.audioWorklet.addModule(url) };
+      }
+      await mod.p;
+      const hop = 128 * Math.max(1, Math.round((FRAME_MS / 1000) * ctx.sampleRate / 128));
+      return new AudioWorkletNode(ctx, 'ne-ear', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1], channelCount: 1, channelCountMode: 'explicit', processorOptions: { hop } });
+    } catch (e) {
+      mod = null;
+      return null; // page sans droit aux modules (bac à sable…) : on lit le son autrement
+    }
+  }
 
   const fail = (code, e) => Object.assign(new Error(code), { code, cause: e });
   function classify(e) {
@@ -2266,6 +2318,10 @@ const Ear = (() => {
   }
   function session(type) { try { if (navigator.audioSession) navigator.audioSession.type = type; } catch (e) { /* facultatif */ } }
 
+  // le son brut de l'instrument : sans annulation d'écho, réduction de bruit ni gain automatique
+  // (ces traitements, faits pour la voix, écrasent les notes tenues et les attaques)
+  const RAW = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, voiceIsolation: false };
+
   async function start(handlers) {
     onNote = handlers.onNote; onFrame = handlers.onFrame; onEnded = handlers.onEnded;
     if (S.on) return;
@@ -2273,48 +2329,91 @@ const Ear = (() => {
     if (!md || !md.getUserMedia) throw fail('unsupported');
     const ctx = Sound.ensure();
     if (!ctx) throw fail('noaudio');
+    const tok = ++S.tok;
     session('play-and-record');
     let stream;
     try {
-      stream = await md.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      stream = await md.getUserMedia({ audio: Object.assign({ channelCount: { ideal: 1 } }, RAW) });
     } catch (e) {
       session('playback');
       throw fail(classify(e), e);
     }
+    const track = stream.getAudioTracks()[0];
+    const settingsOf = () => { try { return track.getSettings ? track.getSettings() : {}; } catch (e) { return {}; } };
+    let st = settingsOf();
+    // un navigateur qui a gardé un traitement : on redemande
+    if (st.echoCancellation || st.noiseSuppression || st.autoGainControl) {
+      try { await track.applyConstraints(RAW); st = settingsOf(); } catch (e) { /* il le garde */ }
+    }
+    S.dg.proc = { ec: st.echoCancellation, ns: st.noiseSuppression, agc: st.autoGainControl, sr: st.sampleRate, label: track.label || '' };
     try { if (ctx.state !== 'running') await ctx.resume(); } catch (e) { /* reprise plus tard */ }
     const src = ctx.createMediaStreamSource(stream);
-    const an = ctx.createAnalyser();
-    an.fftSize = 2048;
-    an.smoothingTimeConstant = 0;
     const mute = ctx.createGain();
     mute.gain.value = 0;
-    src.connect(an);
-    an.connect(mute);
+    const node = await workletNode(ctx);
+    if (tok !== S.tok) { stream.getTracks().forEach((t) => t.stop()); return; } // arrêté pendant la mise en route
+    if (node) {
+      node.port.onmessage = (ev) => feed(ev.data.x, ev.data.t);
+      src.connect(node);
+      node.connect(mute);
+      Object.assign(S, { mode: 'worklet', nodes: [src, node, mute], an: null, ring: new Float32Array(N), fill: 0 });
+    } else {
+      const an = ctx.createAnalyser();
+      an.fftSize = N;
+      an.smoothingTimeConstant = 0;
+      src.connect(an);
+      an.connect(mute);
+      Object.assign(S, { mode: 'analyser', nodes: [src, an, mute], an, buf: new Float32Array(N) });
+      S.timer = setInterval(analyze, FRAME_MS);
+    }
     mute.connect(ctx.destination);
-    Object.assign(S, { on: true, stream, nodes: [src, an, mute], an, buf: new Float32Array(an.fftSize), sr: ctx.sampleRate, nf: 0.003, gated: false });
+    Object.assign(S, { on: true, stream, sr: ctx.sampleRate, nf: 0.003, gated: false });
+    Object.assign(S.dg, { frames: 0, since: performance.now(), fps: 0, lag: 0, lagMax: 0 });
     S.T.hold(null, 0);
     stream.getAudioTracks().forEach((t) => t.addEventListener('ended', () => { stop(); if (onEnded) onEnded(); }));
-    S.timer = setInterval(analyze, FRAME_MS);
   }
 
   function stop() {
+    S.tok++;
     if (!S.on) return;
     clearInterval(S.timer);
     S.nodes.forEach((n) => { try { n.disconnect(); } catch (e) { /* déjà débranché */ } });
+    if (S.mode === 'worklet' && S.nodes[1]) S.nodes[1].port.onmessage = null;
     S.stream.getTracks().forEach((t) => t.stop());
-    Object.assign(S, { on: false, stream: null, nodes: [], an: null });
+    Object.assign(S, { on: false, stream: null, nodes: [], an: null, ring: null });
     session('playback');
+  }
+
+  // un morceau de son arrive du fil audio (t : instant de son dernier échantillon)
+  function feed(x, t) {
+    if (!S.on || !S.ring) return;
+    const r = S.ring, hop = x.length;
+    if (hop >= N) r.set(x.subarray(hop - N));
+    else { r.copyWithin(0, hop); r.set(x, N - hop); }
+    S.fill += hop;
+    if (S.fill < N) return;
+    const lag = Sound.now() - t;
+    S.dg.lag = lag;
+    if (lag > S.dg.lagMax) S.dg.lagMax = lag;
+    analyzeFrame(r, t);
   }
 
   function analyze() {
     if (!S.on) return;
     S.an.getFloatTimeDomainData(S.buf);
-    const x = S.buf;
+    analyzeFrame(S.buf, Sound.now());
+  }
+
+  function analyzeFrame(x, now) {
     let ss = 0;
     for (let i = 0; i < x.length; i++) ss += x[i] * x[i];
     const rms = Math.sqrt(ss / x.length);
-    const now = Sound.now();
-    if (now < Sound.quietAt()) {
+    S.dg.frames++;
+    S.dg.rms = rms;
+    // ce que le micro entend à cet instant, la page l'a programmé un peu plus tôt :
+    // le son met outLatency à sortir du haut-parleur (jusqu'à 0,2 s sur certains téléphones)
+    const heard = now - Math.min(0.3, Sound.outLatency ? Sound.outLatency() : 0);
+    if (heard < Sound.quietAt()) {
       S.gated = true;
       S.T.hold(null, rms);
       frame(rms, null, true);
@@ -2326,9 +2425,10 @@ const Ear = (() => {
       S.gated = false;
       S.T.hold(null, rms);
     }
-    S.T.ring = Sound.ringing ? Sound.ringing(now) : null;
+    S.T.ring = Sound.ringing ? Sound.ringing(heard) : null;
     const gate = Math.max(0.0025, S.nf * 2.5);
     const res = rms > gate ? PitchKit.yin(x, S.sr) : null;
+    S.dg.f = res ? res.f : 0;
     if (!res) {
       if (rms < S.nf) S.nf = S.nf * 0.9 + rms * 0.1;
       else S.nf = Math.min(0.05, S.nf * 0.997 + rms * 0.003);
@@ -2352,8 +2452,14 @@ const Ear = (() => {
     });
   }
 
+  function diag() {
+    const d = S.dg, t = performance.now();
+    if (t - d.since > 1000) { d.fps = (d.frames * 1000) / (t - d.since); d.frames = 0; d.since = t; d.lagMax = d.lag; }
+    return { on: S.on, mode: S.mode, sr: S.sr, fps: d.fps, lag: d.lag, lagMax: d.lagMax, proc: d.proc, db: 20 * Math.log10(d.rms + 1e-9), nf: 20 * Math.log10(S.nf + 1e-9), f: d.f, out: Sound.outLatency ? Sound.outLatency() : 0 };
+  }
+
   return {
-    start, stop,
+    start, stop, diag,
     active: () => S.on,
     expect: (pc) => { S.T.expectPc = pc; },
     nudge: (c) => S.T.nudge(c),
@@ -5298,6 +5404,26 @@ const Suivi = (() => {
       document.body.appendChild(c);
       setTimeout(() => c.remove(), 4400);
     }
+  }
+
+  /* ---------------- diagnostic du micro (adresse avec ?diag) ----------------
+     Un petit cadre en bas à droite : façon d'écouter, traitements du micro,
+     analyses par seconde, retard, niveau. Pour comprendre ce qui se passe sur un appareil. */
+  if (/[?&]diag\b/.test(location.search)) {
+    const box = document.createElement('div');
+    box.className = 'ear-diag';
+    document.body.appendChild(box);
+    const yn = (v) => (v == null ? '?' : v ? 'OUI' : 'non');
+    setInterval(() => {
+      const d = Ear.diag();
+      if (!d.on) { box.textContent = 'micro éteint'; return; }
+      const p = d.proc || {};
+      const f = d.f ? `${d.f.toFixed(1)} Hz` : '–';
+      box.innerHTML = `${d.mode === 'worklet' ? 'fil audio' : 'minuterie'} · ${Math.round(d.sr / 100) / 10} kHz · ${d.fps.toFixed(0)} analyses/s<br>`
+        + `retard ${Math.round(d.lag * 1000)} ms (max ${Math.round(d.lagMax * 1000)}) · haut-parleur ${Math.round(d.out * 1000)} ms<br>`
+        + `écho ${yn(p.ec)} · bruit ${yn(p.ns)} · gain auto ${yn(p.agc)}<br>`
+        + `niveau ${d.db.toFixed(0)} dB (fond ${d.nf.toFixed(0)}) · ${f}`;
+    }, 400);
   }
 
   /* ---------------- micro ---------------- */

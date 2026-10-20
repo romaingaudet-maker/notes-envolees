@@ -1444,6 +1444,26 @@
     }
   }
 
+  /* ---------------- diagnostic du micro (adresse avec ?diag) ----------------
+     Un petit cadre en bas à droite : façon d'écouter, traitements du micro,
+     analyses par seconde, retard, niveau. Pour comprendre ce qui se passe sur un appareil. */
+  if (/[?&]diag\b/.test(location.search)) {
+    const box = document.createElement('div');
+    box.className = 'ear-diag';
+    document.body.appendChild(box);
+    const yn = (v) => (v == null ? '?' : v ? 'OUI' : 'non');
+    setInterval(() => {
+      const d = Ear.diag();
+      if (!d.on) { box.textContent = 'micro éteint'; return; }
+      const p = d.proc || {};
+      const f = d.f ? `${d.f.toFixed(1)} Hz` : '–';
+      box.innerHTML = `${d.mode === 'worklet' ? 'fil audio' : 'minuterie'} · ${Math.round(d.sr / 100) / 10} kHz · ${d.fps.toFixed(0)} analyses/s<br>`
+        + `retard ${Math.round(d.lag * 1000)} ms (max ${Math.round(d.lagMax * 1000)}) · haut-parleur ${Math.round(d.out * 1000)} ms<br>`
+        + `écho ${yn(p.ec)} · bruit ${yn(p.ns)} · gain auto ${yn(p.agc)}<br>`
+        + `niveau ${d.db.toFixed(0)} dB (fond ${d.nf.toFixed(0)}) · ${f}`;
+    }, 400);
+  }
+
   /* ---------------- micro ---------------- */
   let micBusy = false;
   // micWanted : l'élève a allumé le micro ; on le coupe quand la comptine est finie

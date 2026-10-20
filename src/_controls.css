@@ -234,3 +234,5 @@
   .seg button, .seg-level button, .seg-slow button, .seg-mode button { padding: 0 8px; }
   .dock-bar { gap: 6px; }
 }
+/* diagnostic du micro (?diag) */
+.ear-diag { position: fixed; right: 8px; bottom: 8px; z-index: 2147483646; max-width: 70vw; padding: 6px 9px; border-radius: 10px; background: rgba(0, 0, 0, .78); color: #fff; font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace; pointer-events: none; }

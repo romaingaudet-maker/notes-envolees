@@ -120,6 +120,20 @@ function renderFn(sr, dur, fn) { const y = new Float32Array(Math.ceil(dur * sr))
   const got = listen(sr, y); const ok = got.length === 0; if (!ok) fails++;
   console.log(`${ok ? '✓' : '✗'} souffle et bruits → ${got.length ? names(got) : 'aucune note'}`);
 }
+// micro de téléphone : fondamentale presque absente, la hauteur trouvée saute d'une octave d'une trame à l'autre
+{
+  const T = makeTracker(); const got = [];
+  for (let k = 0; k < 14; k++) { const hit = T.push({ f: hz(k % 2 ? 60 : 48), clarity: 0.9 }, 0.05, 0.003, k * 0.028); if (hit) got.push(hit.r % 12); }
+  const ok = got.join() === '0'; if (!ok) fails++;
+  console.log(`${ok ? '✓' : '✗'} hauteur qui saute d'une octave (micro de téléphone) → ${got.length} note(s)`);
+}
+{
+  // même chose sur un vrai signal : Do3 dont la fondamentale est très faible (2e harmonique dominante)
+  const sr = 48000;
+  const y = renderFn(sr, 1.2, (t) => (t < 0.2 || t > 1.0 ? 0 : 0.25 * Math.min(1, (t - 0.2) / 0.03) * (0.04 * Math.sin(2 * Math.PI * hz(48) * t) + Math.sin(4 * Math.PI * hz(48) * t) + 0.5 * Math.sin(6 * Math.PI * hz(48) * t) + 0.4 * Math.sin(8 * Math.PI * hz(48) * t))));
+  const got = listen(sr, y, 0); const ok = got.length === 1 && got[0] % 12 === 0; if (!ok) fails++;
+  console.log(`${ok ? '✓' : '✗'} grave sans fondamentale (Do3) → ${names(got)}`);
+}
 console.log(fails ? `\n${fails} échec(s) au total` : '\nCas difficiles : tout passe.');
 
 // ---- la page vient de jouer : l'écoute reprend avant la fin de sa dernière note ----
