@@ -30,12 +30,10 @@ Pas de compte : chaque navigateur reçoit un identifiant tiré au hasard, gardé
 
 ## La page de suivi
 
-- **En bref** : élèves, comptines terminées, temps de jeu, part des parties jouées au micro, abandons.
-- **Par instrument** : élèves, part jouée au micro, comptines terminées, erreurs par note (niveau 1), essais ratés par phrase (niveau 2), abandons.
-- **Difficulté des comptines selon l'instrument** : pour chaque comptine du chemin (de 1, la plus facile, à 20) et chaque instrument, les erreurs par note sur les parties terminées ; les comptines commencées mais jamais terminées et les abandons sont signalés.
-- **Élèves** : un élève par navigateur, avec son adresse IP, son instrument (et s'il joue au micro ou au xylophone de l'écran), sa progression sur le chemin aux deux niveaux, puis le détail de chaque épreuve (étoiles, nombre de fois, erreurs, durée, abandons, « toute la comptine »), ses adresses IP et son activité récente.
-- Filtres : période, instrument, parties au micro seulement.
-- Sur chaque appareil où tu testes toi-même le jeu, ouvre la page de suivi et coche **Ne pas suivre mes propres parties sur cet appareil**.
+- **En haut** : élèves actifs cette semaine, comptines terminées, temps de jeu, part des parties jouées au micro.
+- **Élèves** : une fiche courte par élève (un navigateur), la plus récente en premier : instrument, au micro ou au xylophone de l'écran, dernière activité, chemin des 20 comptines à chaque niveau (une case par comptine, plus foncée avec plus d'étoiles), ce qui coince (comptine quittée plusieurs fois sans être terminée, micro qui n'a pas marché), adresse IP et code. **Détail** ouvre ses épreuves : étoiles, erreurs, durée, abandons, « toute la comptine en rythme ».
+- **Par instrument** (niveau 1 ou 2) : élèves, part jouée au micro, comptines terminées, difficulté (facile, moyen, difficile : erreurs par note au niveau 1, essais ratés par phrase au niveau 2, avec les mêmes seuils que les étoiles), abandons ; puis la difficulté de chaque comptine selon l'instrument (toucher ou survoler une case pour les chiffres).
+- **Tes appareils ne sont pas comptés** : ouvrir la page de suivi sur un appareil (téléphone, ordinateur) le reconnaît comme le tien. Le jeu n'y envoie plus rien, et ses parties passées sont masquées partout (sans être effacées). Pour un autre navigateur où tu as joué, ouvre sa fiche : **C'est moi : ne plus afficher**. **Réafficher**, en bas de la page, annule.
 
 ## Bon à savoir
 

@@ -67,7 +67,10 @@ const pShell = r('suivi-page.html');
 const pCss = font('Gluten', 700, 'gluten-latin-700-normal.woff2') + '\n' + r('_suivi.css');
 const pJs = ['songs.js', 'suivi.js', 'suivi-page.js'].map(r).join('\n');
 const pCut = pShell.indexOf('<div id="app"');
-const prof = doc(fill(pShell.slice(0, pCut), pCss, pJs).trim(), fill(pShell.slice(pCut), pCss, pJs).trim(), '#F6C744');
+// en qualification, le jeu n'envoie rien, mais la page de suivi lit les vrais résultats (Worker de production)
+const PROD_SUIVI = (r('suivi.js').match(/'(https:\/\/[^']+\.workers\.dev)'/) || [])[1] || '';
+const pExtra = QUALIF && PROD_SUIVI ? `<script>window.NE_SUIVI_LECTURE = ${JSON.stringify(PROD_SUIVI)};</script>` : '';
+const prof = doc(fill(pShell.slice(0, pCut), pCss, pJs).trim(), fill(pShell.slice(pCut), pCss, pJs).trim(), '#F6C744', icon, pExtra);
 write('suivi.html', prof);
 
 // 4) mentions légales et confidentialité (mentions-legales.html, liée depuis l'accueil des deux versions)

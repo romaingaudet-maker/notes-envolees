@@ -54,6 +54,13 @@ await check('valeurs nettoyées (imbrication, longueur, clés)', async () => {
   const d = j.evenements.find((r) => r[2] === 'zzzzzz234567')[5];
   return d.etoiles['frere-jacques@2'] === 1 && JSON.stringify(d.profond) === '{}' && d.long.length === 60 && !('<b>' in d);
 });
+await check('marque d’un appareil du professeur rangée telle quelle', async () => {
+  const ok = (await post({ e: 'prof12345678', y: 'visite', v: 1, prof: 1 })).status === 204;
+  const j = await (await read()).json();
+  const m = j.evenements.find((r) => r[2] === 'prof12345678');
+  await call('/eleve?id=prof12345678', { method: 'DELETE', headers: { Authorization: 'Bearer ' + KEY } });
+  return ok && m && m[4] === 'visite' && m[5].prof === 1;
+});
 await check('lecture sans clé : 401', async () => (await call('/donnees', { headers: { Origin: SITE } })).status === 401);
 await check('lecture avec une mauvaise clé : 401', async () => (await read('', 'mauvaise-cle-123')).status === 401);
 await check('lecture : événements, heure et IP du serveur', async () => {

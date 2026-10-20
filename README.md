@@ -48,7 +48,7 @@ Deux versions du site sont publiées sur GitHub Pages, par les GitHub Actions du
 | **Qualification** (les essais) | `qualif` | https://romaingaudet-maker.github.io/notes-envolees/qualif/ |
 
 - Les essais se font sur la branche `qualif`. À chaque envoi, `Verification` lance les tests ; s'ils passent, `Publication` met la qualification à jour (en une à deux minutes). La production n'est pas touchée.
-- La qualification est construite par `node build.mjs --qualif` (dans `_qualif/`, non suivi par git) : un bandeau rouge « Qualification » avec la version testée, **aucun envoi au suivi des élèves**, des réglages et des étoiles gardés à part de la production, pas d'indexation par les moteurs de recherche. La page de suivi de la qualification n'est donc pas reliée au Worker.
+- La qualification est construite par `node build.mjs --qualif` (dans `_qualif/`, non suivi par git) : un bandeau rouge « Qualification » avec la version testée, **aucun envoi au suivi des élèves**, des réglages et des étoiles gardés à part de la production, pas d'indexation par les moteurs de recherche. La page de suivi de la qualification lit, elle, les vrais résultats (le Worker de production), pour juger une nouvelle présentation sur de vraies données.
 - Pour passer en production ce qui est validé : fusionner `qualif` dans `main` (`git checkout main && git merge qualif && git push`).
 - Réglage à faire une fois sur GitHub : *Settings → Pages → Build and deployment → Source : GitHub Actions*.
 
