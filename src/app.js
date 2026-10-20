@@ -46,6 +46,8 @@
      qui joue les phrases (null : chaque comptine garde le sien). */
   const INSTS = {
     none: { name: 'Sans instrument', the: '', at: '', fam: 'C', play: 0, voice: null },
+    // la voix : on chante les notes en disant leur nom ; la page vérifie la hauteur et le nom (src/ear.js)
+    voix: { name: 'Voix', the: 'la voix', at: 'à la voix', fam: 'C', play: 0, voice: null, sing: true },
     piano: { name: 'Piano', the: 'le piano', at: 'au piano', fam: 'C', play: 0, voice: 'piano' },
     flute: { name: 'Flûte', the: 'la flûte', at: 'à la flûte', fam: 'C', play: 12, voice: 'flute' },
     clarinette: { name: 'Clarinette en si♭', the: 'la clarinette en si♭', at: 'à la clarinette', fam: 'Bb', play: -2, voice: 'clarinet' },
@@ -100,6 +102,7 @@
   const voiceNow = () => inst().voice || (G && G.song.voice);
   const instNote = () => {
     const i = inst();
+    if (i.sing) return 'Chante chaque note en disant son nom (do, ré, mi…) : la page écoute au micro la hauteur et le nom. Une voix grave peut chanter une octave plus bas. Les phrases gardent le timbre de chaque comptine.';
     if (!i.voice) return 'Chaque comptine garde son propre timbre ; les notes sonnent comme elles sont écrites.';
     const of = i.the.startsWith('l’') ? 'de ' + i.the : i.the.startsWith('le ') ? 'du ' + i.the.slice(3) : 'de ' + i.the;
     const sound = ` Les phrases sont jouées avec le son enregistré ${of}.`;
@@ -110,13 +113,17 @@
   };
   function instrLine(song) {
     const i = inst();
+    if (i.sing) return `En do majeur, jouée ${song.instrument} : chante-la en disant le nom des notes.`;
     if (!i.voice) return `En do majeur, jouée ${song.instrument}.`;
     if (i.fam !== 'C') return `En do majeur (pour ${i.the}, elle sonne en ${i.key}), jouée ${i.at}.`;
     return `En do majeur, jouée ${i.at}${i.play === -12 ? ', une octave plus bas' : i.play === 12 ? ', une octave plus haut' : ''}.`;
   }
   function setInst(k) {
     if (!INSTS[k]) return;
+    const was = settings.inst;
     settings.inst = k;
+    const toMic = k === 'voix' && was !== 'voix' && settings.mode !== 'mic'; // on chante : la page écoute au micro
+    if (toMic) settings.mode = 'mic';
     save(SET_KEY, settings);
     Sound.setTranspose(inst().play);
     Sound.useSamples(inst().voice);
@@ -128,12 +135,104 @@
       expectNext();
       if (el.instr) el.instr.textContent = instrLine(G.song);
       if (el.instChip) el.instChip.textContent = inst().voice ? inst().name : 'en do';
+      voiceUI();
+      if (toMic) applyMode(true);
     }
+    applyVoice();
   }
   function setLevel(v) {
     settings.level = v === 2 ? 2 : 1;
     save(SET_KEY, settings);
     if (G && view === 'song') { stopAll(); renderSong(G.song); }
+  }
+
+  /* ---------------- la voix : chanter les notes en disant leur nom ----------------
+     L'oreille (src/ear.js) reconnaît la syllabe chantée au début de chaque note, sur cet appareil :
+     des modèles par défaut (src/voix-modeles.js) et, si l'élève a « réglé sa voix », les siens en plus,
+     rangés ici (le timbre de chaque syllabe, jamais le son). Une note n'est juste que si la hauteur ET
+     le nom le sont ; quand la reconnaissance hésite, on ne pénalise pas. */
+  const SYL_FR = { do: 'do', re: 'ré', mi: 'mi', fa: 'fa', sol: 'sol', la: 'la', si: 'si' };
+  const VOICE_KEY = (window.NE_NS || '') + 'notes-envolees-voix';
+  const singing = () => !!inst().sing && settings.mode === 'mic';
+  const sylOf = (midi) => PitchKit.SYL_PC[mod12(midi)];
+  // 'oui', 'non' (un autre nom, nettement) ou null (pas de syllabe, ou la reconnaissance hésite)
+  const nameSaid = (syl, midi) => (syl ? PitchKit.sayMatch(syl, sylOf(midi), syl.user) : null);
+  let defVoice = null;
+  function myVoice() {
+    try { const v = JSON.parse(localStorage.getItem(VOICE_KEY) || 'null'); return v && v.m ? PitchKit.unpackModels(v) : null; } catch (e) { return null; }
+  }
+  function applyVoice() {
+    if (!singing() || typeof VOIX_MODELES === 'undefined') { Ear.setVoice(null); return; }
+    if (!defVoice) defVoice = PitchKit.unpackModels(VOIX_MODELES);
+    const mine = G && G.cal ? null : myVoice();
+    Ear.setVoice(mine ? Object.fromEntries(PitchKit.SYL.map((s) => [s, [...(mine[s] || []), ...defVoice[s]]])) : defVoice, !!mine);
+  }
+  const earText = () => (inst().sing
+    ? (G && G.level === 2 ? 'La page écoute ta voix avec le micro : chante chaque note en disant son nom, puis elle vérifie les notes et le rythme.' : 'La page écoute ta voix avec le micro : chante chaque note en disant son nom (do, ré, mi…).')
+    : (G && G.level === 2 ? 'La page écoute ton instrument avec le micro, puis vérifie les notes et le rythme.' : 'La page écoute ton instrument avec le micro et te dit si la note est juste.'));
+  const micLabel = () => (inst().sing ? 'Ma voix' : 'Mon instrument');
+  // les libellés qui changent avec la voix
+  function voiceUI() {
+    if (!el.main || !document.contains(el.main)) return;
+    const v = !!inst().sing, mb = app.querySelector('.seg-mode [data-mode="mic"]');
+    if (mb) { mb.setAttribute('aria-label', micLabel()); mb.title = micLabel(); mb.lastElementChild.textContent = micLabel(); }
+    if (el.earText) el.earText.textContent = earText();
+    el.instChip.hidden = v;
+    el.bCal.hidden = !v || (Ear.active() && !Ear.voiceOk());
+  }
+
+  /* « Régler ma voix » : la page joue do, ré, mi… jusqu'à si ; l'élève chante chaque note en disant son nom */
+  const CAL_PCS = [0, 2, 4, 5, 7, 9, 11];
+  const calStopBtn = '<button class="mini hint-btn" type="button" data-act="cal-stop">Arrêter</button>';
+  function calStart() {
+    if (!G || !singing()) return;
+    if (!Ear.active()) { startMic().then(() => { if (G && Ear.active() && !G.cal) calStart(); }); return; }
+    if (!Ear.voiceOk()) { setHint('Ce navigateur ne me laisse pas reconnaître les noms chantés : je vérifie seulement la hauteur.', ''); return; }
+    G.acts++;
+    cancelAttempt(true);
+    stopPlayback(true);
+    G.cal = { i: 0, seqs: {} };
+    applyVoice();
+    calStep();
+  }
+  function calStep() {
+    const c = G && G.cal;
+    if (!c) return;
+    const pc = CAL_PCS[c.i], L = PC_LETTER[pc];
+    Ear.expect(pc);
+    Sound.tap(voiceNow(), 60 + pc, 0.9);
+    setHint(`Réglage ${c.i + 1}/7${NB}: chante ${chip(L, NOTE_FR[L])} en disant «${NB}${SYL_FR[PitchKit.SYL[c.i]]}${NB}» ${calStopBtn}`, '');
+  }
+  function calHit(hit) {
+    const c = G.cal, pc = CAL_PCS[c.i], L = PC_LETTER[pc];
+    if (!hit.seq || !hit.seq.length) return;
+    const d = Math.abs(mod12(hit.r) - pc), want = PitchKit.SYL[c.i];
+    const again = '<button class="mini hint-btn" type="button" data-act="cal-again">Réécouter</button>';
+    if (Math.min(d, 12 - d) > 1) { // le timbre compte, pas la justesse : un demi-ton près suffit
+      retrigger(el.heard, 'is-wrong');
+      setHint(`J’entends ${PC_FR[mod12(hit.r)]}, pas ${chip(L, NOTE_FR[L])} ${again} ${calStopBtn}`, 'down');
+      return;
+    }
+    if (PitchKit.sayMatch(hit.syl, want, false) === 'non') { // nettement un autre nom : on ne l'apprend pas
+      retrigger(el.heard, 'is-wrong');
+      setHint(`J’entends «${NB}${SYL_FR[hit.syl.best]}${NB}»${NB}: dis «${NB}${SYL_FR[want]}${NB}» ${again} ${calStopBtn}`, 'down');
+      return;
+    }
+    retrigger(el.heard, 'is-good');
+    c.seqs[PitchKit.SYL[c.i]] = hit.seq;
+    if (++c.i < CAL_PCS.length) { later(() => { if (G && G.cal === c) calStep(); }, 650); return; }
+    try { localStorage.setItem(VOICE_KEY, JSON.stringify(PitchKit.packModels(Object.fromEntries(PitchKit.SYL.map((s) => [s, [c.seqs[s]]]))))); } catch (e) { /* stockage indisponible : réglage pour cette visite seulement */ }
+    G.cal = null;
+    applyVoice();
+    expectNext();
+    setHint('Ta voix est réglée : la page reconnaît mieux les noms que tu chantes.', 'ok');
+  }
+  function calStop() {
+    if (!G || !G.cal) return;
+    G.cal = null;
+    applyVoice();
+    expectNext();
+    idleHint();
   }
 
   /* ---------------- suivi des parties, pour le professeur (src/suivi.js) ---------------- */
@@ -157,6 +256,7 @@
 
   let view = 'home';
   let G = null; // partie en cours
+  applyVoice();
   const timers = new Set();
   const later = (fn, ms) => { const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); return id; };
   function stopAll() {
@@ -218,7 +318,7 @@
           <ol class="steps">
             <li><p>Choisis une comptine. Les plus faciles sont au début du chemin.</p></li>
             <li><p>Écoute-la en entier, ou phrase par phrase avec le bouton rond. « Jusqu’à la note » rejoue le début de la phrase et s’arrête sur la note à trouver.</p></li>
-            <li><p>Touche « À toi de jouer ! » : la page joue la phrase, compte « 1, 2, 3, 4 », puis c’est à toi. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec ton instrument, la page t’écoute au micro et te dit si la note est juste.</p></li>
+            <li><p>Touche « À toi de jouer ! » : la page joue la phrase, compte « 1, 2, 3, 4 », puis c’est à toi. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec ton instrument, la page t’écoute au micro et te dit si la note est juste. Avec la voix, chante chaque note en disant son nom : la page vérifie la hauteur et le nom.</p></li>
             <li><p>Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée se pose à sa hauteur et le décor s’anime.</p></li>
             <li><p>« Phrase par phrase » pour t’entraîner avec de l’aide, ou « Toute la comptine » d’un coup, sans aide : à la fin, la page te ramène sur les phrases à revoir. Tu peux rejouer autant de fois que tu veux.</p></li>
             <li><p>Niveau 2 : après le décompte, joue toute la phrase en rythme ; la page vérifie chaque note et sa place dans le temps. Une phrase réussie, la suivante démarre toute seule.</p></li>
@@ -244,7 +344,7 @@
         </section>
         <p class="home-foot">${Suivi.configured
           ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré sans nom, avec l’adresse IP de la connexion, et effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
-          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute (au niveau 2, le décompte). Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
+          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute (au niveau 2, le décompte). Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0). Reconnaissance des noms chantés : modèles tirés des voix de synthèse eSpeak NG.<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
       </div>
     </main>`;
     app.querySelector('#home-inst').addEventListener('change', (e) => setInst(e.target.value));
@@ -393,7 +493,7 @@
         <div class="xylo" role="group" aria-label="Xylophone : choisis la note">${keys}</div>
         <div class="ear" id="ear" hidden>
           <div class="ear-off" id="ear-off">
-            <p class="ear-text">${lv2 ? 'La page écoute ton instrument avec le micro, puis vérifie les notes et le rythme.' : 'La page écoute ton instrument avec le micro et te dit si la note est juste.'}</p>
+            <p class="ear-text" id="ear-text">${earText()}</p>
             <div class="ear-row"><button class="btn-big" id="mic-on" type="button"><span class="ic">${ICON.mic}</span><span>Allumer le micro</span></button></div>
             <div class="ear-msg" id="ear-msg" hidden></div>
           </div>
@@ -404,7 +504,8 @@
               <div class="tuner" aria-hidden="true"><i class="tz"></i><b class="needle" id="needle"></b><span class="t-lo">bas</span><span class="t-mid">juste</span><span class="t-hi">haut</span></div>
             </div>
             <div class="ear-side">
-              <button class="mini" id="inst-chip" type="button" title="Changer d’instrument">${esc(inst().voice ? inst().name : 'en do')}</button>
+              <button class="mini" id="inst-chip" type="button" title="Changer d’instrument"${inst().sing ? ' hidden' : ''}>${esc(inst().voice ? inst().name : 'en do')}</button>
+              <button class="mini" id="b-cal" type="button" title="La page apprend comment tu chantes do, ré, mi…"${inst().sing ? '' : ' hidden'}>Régler<span class="lbl-l"> ma voix</span></button>
               <button class="mini" id="mic-off" type="button" aria-label="Couper le micro">Couper<span class="lbl-l"> le micro</span></button>
             </div>
           </div>
@@ -416,7 +517,7 @@
           </div>
           <div class="seg seg-mode" role="radiogroup" aria-label="Jouer avec">
             <button type="button" role="radio" data-mode="xylo" aria-checked="${settings.mode === 'xylo'}" aria-label="Xylophone" title="Xylophone">${ICON.xylo}<span>Xylophone</span></button>
-            <button type="button" role="radio" data-mode="mic" aria-checked="${settings.mode === 'mic'}" aria-label="Mon instrument" title="Mon instrument">${ICON.mic}<span>Mon instrument</span></button>
+            <button type="button" role="radio" data-mode="mic" aria-checked="${settings.mode === 'mic'}" aria-label="${micLabel()}" title="${micLabel()}">${ICON.mic}<span>${micLabel()}</span></button>
           </div>
           <div class="seg seg-slow"><button type="button" id="b-slow" aria-pressed="${G.slow}" aria-label="Lentement" title="Lentement">${ICON.turtle}</button></div>
         </div>
@@ -451,6 +552,8 @@
       needle: app.querySelector('#needle'),
       instSel: app.querySelector('#inst-sel'),
       instChip: app.querySelector('#inst-chip'),
+      bCal: app.querySelector('#b-cal'),
+      earText: app.querySelector('#ear-text'),
     };
     song.notes.forEach((_, n) => paintBead(n));
     song.phrases.forEach((_, p) => paintPill(p));
@@ -534,9 +637,10 @@
     const mic = settings.mode === 'mic';
     if (G.song.given.has(G.cursor) || G.revealed.has(G.cursor)) {
       const first = G.song.phrases[note.phrase].notes[0] === G.cursor && !G.revealed.has(G.cursor);
-      setHint(`${first ? 'Note donnée : joue' : 'Joue'} ${chip(note.letter, note.fr)}${mic ? ' sur ton instrument' : ''}`, '');
+      const verb = singing() ? 'chante' : 'joue';
+      setHint(`${first ? 'Note donnée : ' + verb : verb[0].toUpperCase() + verb.slice(1)} ${chip(note.letter, note.fr)}${mic && !singing() ? ' sur ton instrument' : ''}`, '');
     } else {
-      setHint(mic ? 'À toi : joue la note suivante' : 'À toi : trouve la note suivante', '');
+      setHint(singing() ? 'À toi : chante la note suivante' : mic ? 'À toi : joue la note suivante' : 'À toi : trouve la note suivante', '');
     }
   }
 
@@ -649,6 +753,7 @@
 
   function goAttempt(sc) {
     if (!G || G.done) return;
+    if (G.cal) { G.cal = null; applyVoice(); }
     cancelAttempt(true);
     stopPlayback(true); // une écoute en cours : on revient d'abord où l'on en était
     if (settings.mode === 'mic' && !Ear.active()) {
@@ -853,9 +958,12 @@
     }
   }
 
+  let heardSyl = null; // la dernière syllabe reconnue, montrée un instant sous la note entendue
   function heardNote(hit) {
     if (!G || settings.mode !== 'mic') return;
-    if (G.take) { recordNote({ t: (hit.t != null ? hit.t : Sound.now()) - Sound.outLatency() - 0.03, written: hit.r - inst().off }); return; }
+    if (hit.syl) heardSyl = { s: hit.syl.best, pc: mod12(hit.r), t: performance.now() };
+    if (G.cal) { calHit(hit); return; }
+    if (G.take) { recordNote({ t: (hit.t != null ? hit.t : Sound.now()) - Sound.outLatency() - 0.03, written: hit.r - inst().off, syl: hit.syl }); return; }
     if (G.done || G.level === 2 || !G.live || G.cnt) return;
     if (G.cursor == null) return;
     if (G.playing) {
@@ -865,13 +973,19 @@
     }
     const written = hit.r - inst().off;
     const target = G.song.notes[G.cursor];
+    const pitchOk = mod12(written) === mod12(target.midi);
+    const said = singing() ? nameSaid(hit.syl, target.midi) : null;
     if (G.stage === 'whole') {
-      const ok = mod12(written) === mod12(target.midi);
-      if (ok) Ear.nudge(hit.cents);
-      wholeNote(ok, el.heard);
+      if (pitchOk) Ear.nudge(hit.cents);
+      wholeNote(pitchOk && said !== 'non', el.heard);
       return;
     }
-    if (mod12(written) === mod12(target.midi)) {
+    if (pitchOk && said === 'non') {
+      // la bonne hauteur, mais un autre nom
+      Ear.nudge(hit.cents);
+      retrigger(el.heard, 'is-wrong');
+      bad(`Bonne hauteur${NB}! Mais j’entends «${NB}${SYL_FR[hit.syl.best]}${NB}»${NB}: chante «${NB}${SYL_FR[sylOf(target.midi)]}${NB}»`, null);
+    } else if (pitchOk) {
       Ear.nudge(hit.cents);
       good(el.heard, target);
     } else {
@@ -926,8 +1040,9 @@
   function bad(text, up, rightTxt, leftTxt) {
     G.errors++;
     G.attempts++;
-    const html = up ? `${text} ${ICON.right}${rightTxt ? `<small>${rightTxt}</small>` : ''}` : `${ICON.left} ${text}${leftTxt ? ` <small>${leftTxt}</small>` : ''}`;
-    setHint(html, up ? 'up' : 'down');
+    // up : la flèche (plus aigu, plus grave) ; null : pas de flèche (la voix : bonne hauteur, mauvais nom)
+    const html = up == null ? text : up ? `${text} ${ICON.right}${rightTxt ? `<small>${rightTxt}</small>` : ''}` : `${ICON.left} ${text}${leftTxt ? ` <small>${leftTxt}</small>` : ''}`;
+    setHint(html, up == null ? 'down' : up ? 'up' : 'down');
     if (G.attempts >= 3 && G.cursor != null) {
       const target = G.song.notes[G.cursor];
       const t = G.keys.findIndex((k) => k.midi === target.midi);
@@ -1158,7 +1273,7 @@
     const exp = idx.map((n) => { const nt = song.notes[n]; return { n, t: (nt.t - t0) * ci.spb, midi: nt.midi, ph: nt.phrase }; });
     const starts = song.phrases.map((ph) => (song.notes[ph.notes[0]].t - t0) * ci.spb);
     const tk = Object.assign({}, ci, {
-      p, full, exp, starts, got: [], phase: 'count', k: -1, raf: 0, mic: settings.mode === 'mic',
+      p, full, exp, starts, got: [], phase: 'count', k: -1, raf: 0, mic: settings.mode === 'mic', sing: singing() && Ear.voiceOk(),
       Tend: ci.T0 + exp[exp.length - 1].t + Math.max(0.9, 1.6 * ci.beatSec),
       srcs: ci.clicks.map((t, i) => Sound.clickAt(t, ci.labels[i] === 1)),
     });
@@ -1194,7 +1309,7 @@
     if (!tk) return;
     const t = n.t - tk.T0;
     if (t < -0.6 * tk.beatSec) return; // joué pendant le décompte : pas compté
-    tk.got.push({ t, midi: n.midi, written: n.written });
+    tk.got.push({ t, midi: n.midi, written: n.written, syl: n.syl });
     if (tk.mic) Ear.expect(mod12(tk.exp[Math.min(tk.got.length, tk.exp.length - 1)].midi + inst().off));
   }
 
@@ -1245,7 +1360,8 @@
     G.take = null;
     el.main.classList.remove('is-taking');
     if (tk.mic) Ear.expect(null);
-    const same = tk.mic ? (e, g) => mod12(g.written) === mod12(e.midi) : (e, g) => g.midi === e.midi;
+    // la voix : la bonne hauteur ET le bon nom (sauf si la reconnaissance hésite)
+    const same = tk.mic ? (e, g) => mod12(g.written) === mod12(e.midi) && !(tk.sing && nameSaid(g.syl, e.midi) === 'non') : (e, g) => g.midi === e.midi;
     const r = Rhythm.evaluate({ exp: tk.exp, got: tk.got, beat: tk.beatSec, same, mic: tk.mic });
     if (tk.full) { endFullTake(tk, r); return; }
     setGoUI(false);
@@ -1260,7 +1376,15 @@
     ph.notes.forEach((n) => paintBead(n));
     G.results[tk.p] = phraseResult(tk, r, tk.p);
     showResult(tk.p);
-    const v = Rhythm.verdict(r, (i) => `La ${i ? i + 1 + 'e' : '1re'} note`);
+    let v = Rhythm.verdict(r, (i) => `La ${i ? i + 1 + 'e' : '1re'} note`);
+    if (tk.sing && !r.pass && r.wrong && !r.missed) {
+      // les seules fausses notes sont à la bonne hauteur : c'est le nom qui n'allait pas
+      const slips = r.notes.filter((x) => x.kind === 'wrong').map((x) => [tk.exp[x.i], tk.got[x.j]]).filter(([e2, g]) => mod12(g.written) === mod12(e2.midi));
+      if (slips.length === r.wrong) {
+        const [e2, g] = slips[0];
+        v = { mood: 'down', text: slips.length === 1 ? `Bonne hauteur, mais j’entends «${NB}${SYL_FR[g.syl.best]}${NB}» au lieu de «${NB}${SYL_FR[sylOf(e2.midi)]}${NB}».` : `${slips.length} notes à la bonne hauteur, mais pas avec le bon nom.` };
+      }
+    }
     setHint(v.text, v.mood);
     if (r.pass) G.passed.add(tk.p); else G.fails++;
     paintPill(tk.p);
@@ -1476,6 +1600,8 @@
   }
   function applyMode(userAction) {
     const mic = settings.mode === 'mic';
+    if (!mic && G.cal) G.cal = null;
+    applyVoice();
     el.main.dataset.mode = settings.mode;
     app.querySelectorAll('.seg-mode [role="radio"]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.mode === settings.mode)));
     el.ear.hidden = !mic;
@@ -1516,6 +1642,7 @@
     el.earMsg.hidden = !msgHtml;
     el.earMsg.innerHTML = msgHtml || '';
     if (on) el.instChip.textContent = inst().voice ? inst().name : 'en do';
+    voiceUI();
   }
   const FATAL = (code) => (code === 'denied' && framed) || code === 'unsupported' || code === 'noaudio';
 
@@ -1533,11 +1660,15 @@
   async function startMic() {
     if (micBusy) return;
     micBusy = true;
+    applyVoice();
     try {
       await Ear.start({ onNote: heardNote, onFrame: heardFrame, onEnded: () => { if (el.ear) showEar(false, MIC_MSG.ended); } });
       micWanted = true;
       if (G && G.done && !G.keepMic) { pauseMicDone(); return; }
-      if (settings.mode === 'mic' && el.ear && document.contains(el.ear)) { showEar(true); expectNext(); cursorHint(); }
+      if (settings.mode === 'mic' && el.ear && document.contains(el.ear)) {
+        showEar(true); expectNext(); cursorHint();
+        if (singing() && !Ear.voiceOk()) setHint('Ce navigateur ne me laisse pas reconnaître les noms chantés : je vérifie seulement la hauteur.', '');
+      }
     } catch (e) {
       const code = (e && e.code) || 'other';
       if (!micErrs.has(code)) { micErrs.add(code); track('micro', { code }); }
@@ -1568,7 +1699,8 @@
     const pc = mod12(written), L = PC_LETTER[pc];
     el.heardN.textContent = PC_FR[pc];
     if (L) el.heard.dataset.l = L; else delete el.heard.dataset.l;
-    el.earCap.textContent = `J’entends ${PC_FR[pc]}`;
+    const sy = heardSyl && heardSyl.pc === mod12(fr.note) && performance.now() - heardSyl.t < 2500 ? heardSyl.s : null;
+    el.earCap.textContent = sy ? `J’entends «${NB}${SYL_FR[sy]}${NB}» sur ${PC_FR[pc]}` : `J’entends ${PC_FR[pc]}`;
     el.needle.classList.remove('off');
     el.needle.style.setProperty('--c', Math.max(-50, Math.min(50, fr.cents)).toFixed(1));
   }
@@ -1636,6 +1768,11 @@
       fitDone();
     }));
     app.querySelector('#mic-on').addEventListener('click', startMic);
+    el.bCal.addEventListener('click', calStart);
+    el.hint.addEventListener('click', (ev) => {
+      if (ev.target.closest('[data-act="cal-stop"]')) calStop();
+      else if (ev.target.closest('[data-act="cal-again"]') && G && G.cal) calStep();
+    });
     app.querySelector('#mic-off').addEventListener('click', () => { micWanted = false; Ear.stop(); showEar(false); });
     el.instSel.addEventListener('change', () => setInst(el.instSel.value));
     el.instChip.addEventListener('click', () => { try { el.instSel.showPicker(); } catch (e) { el.instSel.focus(); } });

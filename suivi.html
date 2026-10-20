@@ -728,7 +728,7 @@ const Suivi = (() => {
   const LIB = SONGS.map(buildSong).sort((a, b) => a.level - b.level);
   const BY_ID = Object.fromEntries(LIB.map((s) => [s.id, s]));
   const INST = {
-    none: 'Sans instrument', piano: 'Piano', flute: 'Flûte', clarinette: 'Clarinette', saxalto: 'Saxophone alto',
+    none: 'Sans instrument', voix: 'Voix', piano: 'Piano', flute: 'Flûte', clarinette: 'Clarinette', saxalto: 'Saxophone alto',
     trompette: 'Trompette', trombone: 'Trombone', cor: 'Cor', violon: 'Violon', alto: 'Alto', violoncelle: 'Violoncelle', xylophone: 'Xylophone',
   };
   const INST_SHORT = { none: 'Sans', clarinette: 'Clar.', saxalto: 'Sax.', trompette: 'Tromp.', trombone: 'Tromb.', violoncelle: 'Vlc.', xylophone: 'Xylo.' };

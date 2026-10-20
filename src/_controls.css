@@ -236,3 +236,6 @@
 }
 /* diagnostic du micro (?diag) */
 .ear-diag { position: fixed; right: 8px; top: calc(76px + env(safe-area-inset-top, 0px)); z-index: 2147483646; max-width: 70vw; padding: 6px 9px; border-radius: 10px; background: rgba(0, 0, 0, .78); color: #fff; font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace; pointer-events: none; }
+
+/* boutons dans la consigne (« Régler ma voix » : Arrêter, Réécouter) */
+.hint .hint-btn { height: 30px; padding: 0 10px; margin-left: 6px; font-size: 13px; vertical-align: middle; }

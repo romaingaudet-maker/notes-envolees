@@ -2,7 +2,8 @@
    Les Notes Envolées — page des mentions légales (mentions-legales.html)
    - « Retour au jeu » ramène à la version d'où l'on vient (papier ou laine) ;
    - la case coupe ou rétablit le suivi sur cet appareil (Suivi.exclude) ;
-   - le code de l'appareil est celui que montre la page de suivi du professeur.
+   - le code de l'appareil est celui que montre la page de suivi du professeur ;
+   - le réglage de la voix, s'il y en a un, peut être effacé.
    Cette page n'envoie rien.
 ------------------------------------------------------------------- */
 (() => {
@@ -32,4 +33,17 @@
   }
   box.addEventListener('change', () => { Suivi.exclude(box.checked); paint(box.checked); });
   paint();
+
+  // le réglage de la voix (« Régler ma voix »), gardé dans ce navigateur : on peut l'effacer
+  const VK = (window.NE_NS || '') + 'notes-envolees-voix';
+  const has = () => { try { return !!localStorage.getItem(VK); } catch (e) { return false; } };
+  const wipe = $('voice-wipe'), vstate = $('voice-state');
+  if (wipe && has()) {
+    wipe.hidden = false;
+    $('voice-forget').addEventListener('click', () => {
+      try { localStorage.removeItem(VK); } catch (e) { /* stockage indisponible */ }
+      $('voice-forget').hidden = true;
+      vstate.textContent = has() ? 'Ce navigateur n’a pas pu l’effacer.' : 'Réglage de la voix effacé.';
+    });
+  }
 })();

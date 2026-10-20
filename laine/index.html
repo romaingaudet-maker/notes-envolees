@@ -773,6 +773,9 @@ a { color: inherit; }
 /* diagnostic du micro (?diag) */
 .ear-diag { position: fixed; right: 8px; top: calc(76px + env(safe-area-inset-top, 0px)); z-index: 2147483646; max-width: 70vw; padding: 6px 9px; border-radius: 10px; background: rgba(0, 0, 0, .78); color: #fff; font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace; pointer-events: none; }
 
+/* boutons dans la consigne (« Régler ma voix » : Arrêter, Réécouter) */
+.hint .hint-btn { height: 30px; padding: 0 10px; margin-left: 6px; font-size: 13px; vertical-align: middle; }
+
 /* ================================ DÉCORS ================================ */
 .sc .sc-text { font-family: var(--font-display); font-weight: 800; }
 .sc .pl { transform: translate(calc(var(--mx2, 0) * var(--d, 0) * 16px), calc(var(--my2, 0) * var(--d, 0) * 9px)); transition: transform .7s cubic-bezier(.2, .7, .2, 1); }
@@ -6146,6 +6149,11 @@ const Sound = (() => {
   };
 })();
 
+/* Modèles par défaut des noms de notes chantés (la voix) : le timbre (MFCC) des syllabes
+   do ré mi fa sol la si, dites par des voix de synthèse espeak-ng (fr, fr-m3, fr-f2, fr-klatt).
+   Fabriqué par outils/voix-modeles.mjs ; l'élève peut les remplacer par les siens (« Régler ma voix »). */
+const VOIX_MODELES = {"s":2.9711,"m":{"do":["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"],"re":["DgoHySAS8AMPAfgBDQoGyh0S8gIOAvkBDQkHzBwT8gQLAvoADwkGyh0T8AMOAvkBDgkHzBsU8QQNAvkBDgsFyh4U7gUNAfkBDgkHyh4S8QQMAvkADgoHyxwT8gMNAvkBDQwFyh4U8AMOA/gBDgkHyx0R8wMOAPoBDgsGxyIR7wUOAfkBDwgIyR8Q8wULAvoBDgoGyh0S8wINAvkADgcJyhwS8QQNAvoB","Cw4A1CQK9QcL+foACw7/1iIM9AgK+voACw4B0yIO9QQM+/kACwwD0iQJ+AUK+voACw0A1iII+gYH/PsADA0B0yML9QYK+voACgsE0yEK+gMK+/oACg4A1SEM9gUL+/kADAsD0yMM9AcK+voACwwB1h4N9wQL+voADAsC1h4M9wUK+/oACg0B1CEL+AYI/PkACg0C1CAN9wYJ/PoACgwB1x8M+AcJ/PoA","D7wIwPoQ6wECBf//DcADxvMV5wUAB///DL8Bw/EX5AYACP//DMEByPAZ5Af+CP8ADb4FxfUU6AT/B/4ADr4DwvQV5wQCB///Db4DwvQW5wMCBwD/CcT/yvEX6AMBBgD/DMADx/EX5Qf+CP4ADL8Cw/EY5QYACf8ADrwHwPcS6wEDBQD/DMEEyvMW5AgACP8AC8AEzPIS4AoBCv8ACMAGz/IN3AsECf7/","BcX/wwIP5gv/B/wABcP/wQIN5Qn+B/sABcMAwAIM5gj/Bvz/BsIBvgQL5wcABvz/B8YDwwcN6wcDBf3/BcMBvwQL6QYCBfz/BsECvgUK6QYCBfz/BcMAwAIM5wYBBfz/BMT/wQEN5wcBBfz/BMT/wQEO5gcABvz/A8X+wv8P5QgABvz/BMUAw/8O5gkABvz/A8sGzgMK5wwDB/3/AMUFzf4A3w4BBvsA","Hvcmxe9F6vkJFf/8HfUlyuxB6P0HE//9IfEpye1A6P8GEgD9H/Unxu9D6voKEgH8H/Unxe1G6fsIFAD8HvImzew77P4HEQD9HPYmyu497foHEgD9IPYow+5J5vsIFf/8IPQoxO5G5/sIFAD8HfMmy/A67P0KDwH9GPghzvQ16/YNEgD8GO4k2PYs3PwSFP78FOon4PYc2P8UE/38Duou6/IH0QUcEPz8","G/oiugc23/4PEPb9HPojuAc53P4NEvX9HPwhtwg72f4OFPT+GvgjvQU13wELEvb+GfoivQUz5P0NEPj9GfchwwQy3AAQEPf9F+8lzgQj0wgVEPb9EO4p2QIN0Q8bDfX+Dusy3v78zRkfCvT/DOk/4/HtzyYcB/T/B+pH6uDk2isTAvcABelM69Xj5CkHAvwBA+tY6src7Cn+Av8BAPBg6MDc8iT2AgMA","HvglvQM06/wNE/n+H/glvgE65/8KFvf+H/kkvQA/5f4LF/f+Hvkjwf075f4LFvj+H/Umw/435gMIFPj+H/okvgA+5v4MFfj9HfojvgE46fsOFPn9GfUiygMo5f0TEfn9FfAm1/4Z1gcYE/b9E+wp3f0K1g4bD/b+Eeky4ff81BYbDfb+C+056Ozp2R4bBPb/C+lI6t3d2ysWA/b/B+xN7dLX4y0RAPgA","HPofuBMx2woPD/H/HPgguhIt3wsNDvL/GvggvhAp5AkNDfT/HfkhtRUx2wkPEfD/HfsftRUy2ggQEPD/G/kfuxIt3gsNDvL/GvggvREp5QgNDPT+HPsftxQw3AkPDvL/HvsftBcz1woQEPD/GvoevhAs4QkNDfT/Gvggvw4q5AoMDfT+G/wduRQw3AgSDfL+F/YfxRIe2Q0YC/H/E/Al0QsL2xUYCvL/"],"mi":["BxEL9TgC7OTyE///Bw4M9DsE6+H2E///Bg0M8T0G7OD0FP7/BwwM9DsJ6eL1FP7/CA0J8z8G6uP0FP3/Bg8J9D0J5+P1FP7/Bg4J9D0K6OP1Ef4ABhAI8j8H6uH0FP7/Bg4L8D0I6uH2E/7/Bw0J9D8F6OT1E/7/Bg0K9j0F7OLzFf7/BgAS/DD98u7wDwAA/vIt7QTi/wP4DAEB9gBK6eDOERD6CP0C","AxMKCDXx5OD8FP0BBA8KCDvw5978EP4BBA8FCDn16tv9EvsBBBAHBD335tkBEvoBAxAFBzv26t78EfsBBA4GCzf46d76EfwBBBAFBzv65N79EfwBBREEBjz64uD9EfwBBREFBD/5497+EfwBAw8JBD745t3/D/wBAw8JCTr35978EP0BAgkMCTLx7eP9D/4B/voo9griAfL6Df8C9Q1K5+DWF/35Cv0C","GN8L6A379wXpBwD/GeAM6Q36+ATpBgD/GeAM6Q/79wPlBwD/GOAK6gz89wXnBwD/Gd4M6Qz79wboCP8AGeEM6w77+ATnBwD/GeAL6Q769wPnBgH/GN8K6gz7+AXoBgD/GN8L6gz79wXoBwD/Btom4QAK9P3wAAAA99k76PT98QXx/v4A9+A86PH88gjvAf4A9uE/6PT78wTt//4A894+4vf78wHv//4A","EuUE6Azx+/vtDf4AE+QF5wzx+/vtDv4AEuQF5wvw+/rtDf4AE+MG5wvw/PrtDv8AE+QG5wvw/PrtDf4AFOMG5Qzv/PrtDv4AE+QG5g3v/PruDf8AE+QG5gzu/PnuDf8AE+MG5gzu/fnvDP8AAuEb2QP/8vv1BgEA7+My3fb28/3uAP4A7OYz3fj59wHwAf4A6+o13vn59v7vAf7/6uoz2/r39f3wAv7/","E/4i5xdT6+3VAwj/Efki6iBL7u/YAQf/EvYi6x1O7vPZ/wf/FPcj6Rdb6/PTAQj/Evkh5xdZ7vDUAgn/FPUi7BZY5/XXAQj/E/Yj7RtV6fTWAAf/Fvck6BRf6PHUAgr+Ffck5hhZ6/HUAgj/De4a/Rws7v3n/QQBAuU+Du/w4gv3+QYB+e9XE+Li4Av4/QQA+u1aCuHr5Ajw/gMB+fZh/9/z6AXnAAEB","DwAj6TVE3ePSDQT+Efci7jM/3u3SCgT+EPgg7jNC3u3RCwT/Efoi6TVL3enODQP+EPcj7TdD3uzQCwP/D/gg7jY94O3TCgT/Evgj5jdF3+vQDgL+Evgk6jZL2evMDwL+Evci6zVD3u7PDQP/DOwd/Rce6PvqAAYBAeE5/fX44ATyAgYC8/dkAtHU7BL2AgIB9fxh+tbm7gfpBAMB8Qht89fo7QLmAwMB","EQIb6yo95OzXDQf/FPsi6jE/4e3SDgb/FP4h5zBF4enQEAb/Ff0i5C9G4erREQb/Ffwf6SpE3/LSDwb/FP8g6SxH4O3QEAb/Ff4h5ixK4OvNEQf/Ffwh5y5E4O7REQb/FPsf7Ss/4PTSDgb/DvoOAx8i5f/lAAkACO0aCAUP6/7wAgkB+/JdC9na5Bb1AwQB+fdhA9zg7AbrBwQB9/pi/trh7QPrBQMB9AVm9tvo7P3qAwQB8Q1n8N7y7PvpBgEA","DwUi8T020d3bF///Dv8h9j8z0+PZFf//Efsh8jox1OvaF/7/Ev0m60A60eLYG/z/EAAk7UI6097ZGv3/EP0i80Az0+bZF/0AEP0g8T4y1efcFv7/EP8j7UA70eLYGv3/EP8k70E60eLXGv3/EPwj8T8v1+bbFv7/DfAeASQM4/nqDgIBAuk3+Pjp6wTxCgYB+vdf9tTT+RPtCwIB+fdU7uDm+AHqCwMB"],"fa":["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"],"sol":["1xzz9w4K//P//AAC0BD1+wgFA/gA/AECzwnzAQ4FB/sC/gICzgrq+QwDCvcA/v8BzwztAAb2//oEAQECzQ3v+g/1BQAFAgECzA/v/gf/Bfb+AQEByxHuBAkABPcE/wABzBPu/wgCBvj+/wIByxXuAQ8CAP0FAgEBzRT0/QX7Af4IAf8B7hTj7f4C8fMOB///C/z30gsT4fQRCfz/D/f+xhAZ3/UNDPsADvr8wQ8f4PMKDP0ADvz8uhAg5+8IC/0ADv/8tA8k6u0ICv4ADgH9rQ0n7fAECP4BDgT9qwkl9PIABv8BDgX+qAcl9vEBBf8BDgQAqQgj9/P/Bf8BDQX+qQkj9vMBBP8BDQb9qQYn8/b/BP8BDQj8qAkl9fICBP8BDQX9qgoh9vQBBP4BDgb+pwgn8/MABf4BDwIBqAgl8/b9B/4BDwMApwol8vUAB/0B","1xzz9w4K//P//AAC0BD1+wgFA/gA/AECzwnzAQ4FB/sC/gICzgrq+QwDCvcA/v8BzwztAAb2//oEAQECzQ3v+g/1BQAFAgECzA/v/gf/Bfb+AQEByxHuBAkABPcE/wABzBPu/wgCBvj+/wIByxXuAQ8CAP0FAgEBzxTx+AH2/f4KAv8B7xLk7wH/7vsSA/3/B/j40xIF4gASBPsACPn2yxgM3/4QBfwACfv1wxwR4PwOB/wACfz1vBwW5PkMBv4ACQLysx4d5fYKBf8BCQXzrRog6/YFBQABCgP1rhYd7/oDAgEBCwP1qxYe7vsCAQACCgT1qxca8/oDAAECCgb0qxUe8fkDAAEBCQT1rhAg8foBAgEBCQX0rhEg8PoCAAEBCgb0qhUf8PkDAAEBCgT3qhMe8voBAQIBCwP6qBMf9PkAAwIBCgT2qxMf8/kBAwEB","1xzz9w4K//P//AAC0BD1+wgFA/gA/AECzwnzAQ4FB/sC/gICzgrq+QwDCvcA/v8BzwztAAb2//oEAQECzQ3v+g/1BQAFAgECzA/v/gf/Bfb+AQEByxHuBAkABPcE/wABzBPu/wgCBvj+/wIByxXuAQ8CAP0FAgEBzBP0/gb4/PoIBAAB4g7h7vX37OkLDwUACeH55uAK8fMEAQT/GcwL0eIP5f36CQEBFsYFyOEQ5Pv3CAABGscNwuoM8Pj6AgEBGc8IxuIT7f/4BP8BGtEIwt8V7wH5BQABGtMIwN4S7QX3BP0BHc4OvOYM8gH6A/4BHNELvOEO8QH6A/8BGdQHvd4Q8QD7Av8BGtQIw94U7gX4BP4BHNAMv+IQ7wP4Bf0BG9IJvN4Q8QH6A/8BF9cFwOEO9P7+AAABGdQHw98S7gT5A/4BG9MIwN8R7gT4BP4B","1xzz9w4K//P//AAC0BD1+wgFA/gA/AECzwnzAQ4FB/sC/gICzgrq+QwDCvcA/v8BzwztAAb2//oEAQECzQ3v+g/1BQAFAgECzA/v/gf/Bfb+AQEByxHuBAkABPcE/wABzBPu/wgCBvj+/wIByxXuAQ8CAP0FAgEBzBT0/gX3+/sKBQAB4wLa6/P78/AKBwIAAtT01uwL6PcFAwL/DcwCyvIK5Pv9B/8AEc8FxvQP5v76CP8BEM8DxPQS6P34B/8BEdIEwPES6wL4Bv4BFd0Fv+wR8gP5A/8BFdkDuusO7gT4A/4BEtcCuuwP7QT3A/0BE9YCuOwO7QT4BP0BE9YEuu4P7gT4BP4BE9UDt+wO7QP3BP0BFNQEt+0O7QP3BP0BEtcCue0N7wH6Av4BFdUGuPAO8AT5BP0BFNQEtfAL7wL4A/0BFtIHtPEK8AH5A/4B","1xzz9w4K//P//AAC0BD1+wgFA/gA/AECzwnzAQ4FB/sC/gICzgrq+QwDCvcA/v8BzwztAAb2//oEAQECzQ3v+g/1BQAFAgECzA/v/gf/Bfb+AQEByxHuBAkABPcE/wABzBPu/wgCBvj+/wIByxXuAQ8CAP0FAgEByRP3AQf6//0JAgAB6hTr8/YI/eL/DAUADPcA4eMp+Nv8Dgf/E/EK1dw39ebwEQUAGe8Sx9JC9+3tDwQAGPIQwc1E/vLtCwIAFvUSwcZD/vbtCQIAGfQavrs+/QTvBv8AGvUYu7tH+gHuCP8AGfYXuL5E/v/tCf8AF/YYucI7AP7yB/4AGvMbvL88/gLyBf4AGfcat7pI/v/sCAAAGfcZt7pGAADrCf8BFvoYur0+Av7uCP8AGPIYwr86/APyBv4AGfcYt79DAPzwB/8AGvUat7xG/P/uCf8A","+A3t7PQZ7toQEgH/F+sJ1O072uv+FwAAF+wLye0/3+35Fv8BFvEMvutB6e73Ev8BFfMMuOg/7/X2Dv0CE/cOteA99Pz1CvsDFvkSrNxB8wD0C/kDF/gUq9lD8gPyDPkDFfoSrdpB8wH0DPkCFPYSsdw69gL0CfoDFfoSqt1A9f/0DPkDFvcVqtxB8wLyDfkDFPoTqtw++P30C/oCFPgTrdw99gD0CvoDFfsTqNxC8/70DfkCFfoSq91A9P/1C/oCFvcVrNtA8gTyC/kDF/YVq9pB8QTyDPkDFvgUrNlC8wH0C/oDFfgSr9k/8wL0CvoDFPcSsds59wH1CPoDFfgTq90+9P/0C/oC","GOkL1uQy5u71FgABFvQJyOA98Of1FAEBF/UMu91B9uzxEwABF/IMu9w8+fPxDv4CFfoQt9I8+/jyDPwCFf0Rs8xB/fvvDfwCFPwOs84+APvxCvwCGPcVs84/9gHuDvoCFvcUttM3+gDxCvsDGPgTsdI9+/7xC/sCF/gUr9E/+v3vDPsCGPcVtM88+AHvDfoCGPsVrs9D+vzuDvsCF/gSr9BB+/7uDPoCF/oVrdFA+f3vDvsCFvkVs9A5/P7wC/sCF/oSsM9C+/3vDfsCF/kTsc1B+v/uDfoCGfcXsM8/9wHtDvsCF/cVr9Q6+/7yCvsCF/gRr9Q9/PzyCvsCF/sVqtBC+/nwDvsCFfwStM08/vvyC/wC","1xzz9w4K//P//AAC0BD1+wgFA/gA/AECzwnzAQ4FB/sC/gICzgrq+QwDCvcA/v8BzwztAAb2//oEAQECzQ3v+g/1BQAFAgECzA/v/gf/Bfb+AQEByxHuBAkABPcE/wABzBPu/wgCBvj+/wIByxXuAQ8CAP0FAgEBzxX0/QT4/fwLBQAB7hTr8foG7OYUEQD/DfsB0vwr1eMUFv3+FvAKw/040e4EG/oAE/MGv/w53OsCFv0BFfYItflA4O/8FfwCFPYIs/I/5/b4EPwDFPgJsOpB6/31DvwDFPkMrOk88P73C/sDFfcNrOo87gH2C/oDFfcNq+o97QD3C/oDFvYOq+k/6wL1DPoDFPkMrOk78P73CvsDFfYOq+s77wD3C/oDFfcNreo87QL2C/oDFfgNq+o+7AL3C/oDFfcOruc+7AX0DPoDFPkMrOg+7AL2C/oD"],"la":["/iQU8SrJ3AkQAPoB/iIW6y/G2QgRAfkB/SIW6jHB1QkUAfkB/B8X6jDA2AoOAvoB/R8X5jS+0w0PAvoB/hwb4jK81Q0TAPoB/hwa4DO+0Q8TAPsB/hoc2zTAzxMUAPsB/Rcb3ivD0xMRA/sB/hUb2C7E0xMVAf0BAREW0irH2RsTAfwBBwYHxSjZ5BwR/vkCCvz+wSrm6xkN/vgCDPX2wDDv7BUL/fYD","+CMU8iax4RUP+v8C+B4V6im04hIP+QAC9xwU6Siz4BUP+gIC9xsW5yS14RYQ/AAB9xkV4iS35RYP+wAB+xYN2iC97R0Q+v4AAAwB0CPK+h4P9f4ABAD1zijYABoK9P4BB/buzi/kABQH9f4CCezr0Tbq+w4I9f4DCebp1jft8wwH9v4DCeTq1znr9QoG9/8DCOXp2Tbu9QkH9/4DCuTq1Tvq9AsH9v8D","BN8a2hj22wL3A/sAA+AZ3BX52QL3A/sABOAa2xb50wL1A/oABN4Z2xX51gP2A/sABdsZ1hL42AP4BPsABNsX1RD30wH4BPwAA9oU0wz30QH5BfwAAtgR0Qn51QP8Bf0ABtgRywj62gT+B/0AB9cPxwf31gQACv0AAs4Jxwj93QsCCf3//sQB0hwb6hECBvn//8D9yhER5xD+CPr//r75wgwO6BD7B/v/","/OcQ3Brl3wH3AfkA/ecT3Bnl3QH3AfkB/ecV3hro3AL4AfoBAusb4h7n2P/4A/sB/OUR2BXl2gH3APoA/eEP1RTm2wT5AvsA/OAM0RHm2wX7A/wB+94Kzw7m2wf9BP0B/N0Kzg7n3Af+BP0B+t8R1g7x5AsDCPwB+dL9xQzx5xIDB/sA+c/+yhX86w/9BfoA98n4yhoF8RD9BfkA9MP0yRsE7Qv2BPkA","BQs+4jgKquYGEv3/BAs53zMPq+gFD/3+BAZD4zMHpegDDwD+AwZB3jIDoOUIDwD/AgU+3CsBpOUIDwH+BPs72R7/sO4GDQH/CPo8yh4Jpe4OFQAAB/s3xxkMpvAYGAD/CPktvxIPs/kaFf7/DPEfwggSxwIZEf3+EugRvgMk1gMTC/r9E+IGwAQt3v4MB/n9FeABwQM13PsLBvn9F9wDwwQ13PsIBvr9","BQ884EPwp/sOC/kABAk33jv0svwFCPn/BQk+3UHvof0HCvn/Bg0+0kbxlPkNDPj/Bwc6zzbvnQAMDPv/BgQ3yzDunQQRDvwABQM2yCvuoAQXEf0ABwEzwivznwoeEfwABf4jwhz5tRMfDvv/CvQYvRcCyhcaCfj/Du8NtxsRzxYXBvP/EegFtR8f1QwQBPL/EuEAvB0k2gYGBPX/FN4Cux4o1wQFBvT/","BhA65z7spvUQDfkABQ804Tzxq/cMCPkACAo73EDvovgLCfr/BwhC3j7rmfMMDvv/CAg91zvxm/ULDPn/CQM5zTTzo/gNC/oACAM7ziv0nfgUEfsABgQ40STynPoZE/wABQAy0B/zqf8YD/0AB/4lyRT7ugYdD/3/D/MYvg8HyRMZDPf+EOwQvBAO0xMTCfb/EucHvhEa3Q0MBvX+Ft8BvRsm3AIHCPP/","BRU650XMsP4VCvYBCBEx2UnTsgERBvQCBQ4z3ETOtv8OBfYBAxI730bCpwITCPYABBA610PFpAUWCfcBBQk10jvMrwYTCPkBAwgy0zPPsQYWCfsBBgc0yTjOqg0cC/kCBgYxxjbRrhQgC/kCBQIgxiLdxR0eB/oACvgUvh7v0x8dBPUAD/EHuCUA1CAWAPIBE+kAuCkR1RoN/vACFOL7vS0Z2A4I/vMC"],"si":["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"]}};
+
 /* ------------------------------------------------------------------
    L'oreille : écoute un instrument réel au micro et reconnaît les notes
    - détection de hauteur par l'algorithme YIN (de Cheveigné & Kawahara)
@@ -6281,7 +6289,11 @@ const PitchKit = (() => {
      nettement au-dessus de ce qu'on entendait juste avant. Le haut-parleur
      qui s'éteint, ou le mélange de deux notes, ne passent pas pour une note. */
   function makeTracker() {
-    const T = { cand: null, held: null, silent: 0, tune: 0, expectPc: null, ring: null, hist: [] };
+    /* voice : on chante les noms des notes. Une note reprise à la même hauteur (« sol sol », « mi mi ») passe
+       alors toujours par une consonne : un trou dans la hauteur (s, f) ou un creux du volume (m, l, d, r).
+       Seuls ces deux signes comptent, et pas avant 0,18 s : dans « mi » ou « ré », la voyelle qui suit la
+       consonne, déjà chantée à la bonne hauteur, fait remonter le volume sans être une nouvelle note. */
+    const T = { cand: null, held: null, silent: 0, tune: 0, expectPc: null, ring: null, hist: [], voice: false };
     const ATK = 2, HIST = 10;
     const remember = (rms) => { T.hist.push(rms); if (T.hist.length > HIST) T.hist.shift(); };
     // on : instant d'une attaque entendue dans cette trame (ou null)
@@ -6346,6 +6358,7 @@ const PitchKit = (() => {
           if (h.r === r && rms > h.re.base * h.re.k) {
             if (++h.re.n >= 2) {
               const t0 = h.re.t;
+              if (T.voice && h.t0 != null && t0 - h.t0 < 0.18) { h.re = null; k.push(rms); if (k.length > 9) k.shift(); return null; }
               T.held = { pc, r, peak: rms, min: rms, armed: false, t0 };
               T.on = null;
               return { r, cents: T.cand.c, f: res.f, t: t0 };
@@ -6358,7 +6371,7 @@ const PitchKit = (() => {
           let run = 0;
           for (let q = L - 2; q > 0 && k[q - 1] > k[q] * 1.005; q--) run++;
           const lo = L >= 2 ? Math.min(k[L - 2], k[L - 1]) : 0;
-          const restrike = !h.ring && run >= 5 && rms > lo * 1.3 && rms > gate * 1.3;
+          const restrike = !T.voice && !h.ring && run >= 5 && rms > lo * 1.3 && rms > gate * 1.3;
           // flûte, voix… : un creux puis une remontée (coup de langue, nouvelle attaque)
           if (!h.armed && rms < h.peak * 0.55) { h.armed = true; h.min = rms; }
           if (h.armed) h.min = Math.min(h.min, rms);
@@ -6367,7 +6380,7 @@ const PitchKit = (() => {
           // Si c'est justement cette note qui est attendue de nouveau (Sol Sol Sol Sol), l'attaque suffit,
           // même plus douce que la précédente (le volume peut ne pas monter : l'étouffoir du piano coupe
           // la note d'avant au moment où la nouvelle commence) ; sinon le volume doit monter de 10 %.
-          const onT = T.on != null && now - T.on < 0.075 && !h.ring && (h.t0 == null || T.on > h.t0 + 0.06) ? T.on : null;
+          const onT = !T.voice && T.on != null && now - T.on < 0.075 && !h.ring && (h.t0 == null || T.on > h.t0 + 0.06) ? T.on : null;
           if (onT != null) { h.re = { t: onT, base: L ? k[L - 1] : rms, n: 0, k: T.expectPc === pc ? 0.75 : 1.1 }; T.on = null; }
           else if (restrike || dip) h.re = { t: now, base: restrike ? lo : h.min, n: 0, k: 1.15 };
         } else if (!h.re) {
@@ -6441,7 +6454,168 @@ const PitchKit = (() => {
   // bruit de fond : suivi sur les trames sans hauteur (vite vers le bas, lentement vers le haut)
   const floorOf = (nf, rms) => (rms < nf ? nf * 0.9 + rms * 0.1 : Math.min(0.05, nf * 0.997 + rms * 0.003));
 
-  return { yin, makeTracker, makeOnset, gateOf, floorOf, NF0, FMIN, FMAX };
+  /* ---------- Les noms de notes chantés (la voix) ----------
+     Chaque syllabe (do, ré, mi, fa, sol, la, si) est résumée par son timbre : les MFCC (enveloppe du
+     spectre sur l'échelle des mels), toutes les 10 ms, du dernier creux d'énergie dans les 0,15 s qui
+     précèdent le début de la note chantée jusqu'à 0,15 s après : la consonne d'attaque (d, r, m, f, s, l)
+     puis la voyelle (o, é, i, a). On la compare
+     à des modèles par alignement souple (DTW, qui tolère qu'on chante plus vite ou plus lentement).
+     Les modèles : ceux de l'élève (« Régler ma voix ») ou, sans réglage, des modèles par défaut. */
+  const SYL = ['do', 're', 'mi', 'fa', 'sol', 'la', 'si'];
+  const SYL_PC = { 0: 'do', 2: 're', 4: 'mi', 5: 'fa', 7: 'sol', 9: 'la', 11: 'si' };
+  const SYL_PRE = 0.15, SYL_POST = 0.15;
+  const NFFT = 2048, NB = 24, NC = 12;
+  let fRe = null, fIm = null, bank = null;
+  function power(w) { // spectre de puissance (FFT radix 2 sur NFFT points)
+    if (!fRe) { fRe = new Float64Array(NFFT); fIm = new Float64Array(NFFT); }
+    const re = fRe, im = fIm, N = NFFT;
+    re.fill(0); im.fill(0); re.set(w);
+    for (let i = 1, j = 0; i < N; i++) {
+      let bit = N >> 1;
+      for (; j & bit; bit >>= 1) j ^= bit;
+      j ^= bit;
+      if (i < j) { const t = re[i]; re[i] = re[j]; re[j] = t; }
+    }
+    for (let len = 2; len <= N; len <<= 1) {
+      const a = (-2 * Math.PI) / len, wr = Math.cos(a), wi = Math.sin(a), h = len >> 1;
+      for (let i = 0; i < N; i += len) {
+        let cr = 1, ci = 0;
+        for (let k = 0; k < h; k++) {
+          const p = i + k, q = p + h;
+          const vr = re[q] * cr - im[q] * ci, vi = re[q] * ci + im[q] * cr;
+          re[q] = re[p] - vr; im[q] = im[p] - vi; re[p] += vr; im[p] += vi;
+          const t = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = t;
+        }
+      }
+    }
+    const P = new Float64Array(N / 2);
+    for (let i = 0; i < N / 2; i++) P[i] = re[i] * re[i] + im[i] * im[i];
+    return P;
+  }
+  function melBank(sr) {
+    if (bank && bank.sr === sr) return bank;
+    const mel = (f) => 2595 * Math.log10(1 + f / 700), imel = (m) => 700 * (Math.pow(10, m / 2595) - 1);
+    const lo = mel(80), hi = mel(7000), bin = sr / NFFT;
+    const edges = Array.from({ length: NB + 2 }, (_, i) => imel(lo + ((hi - lo) * i) / (NB + 1)));
+    const f = [];
+    for (let b = 0; b < NB; b++) {
+      const a = edges[b], c = edges[b + 1], d = edges[b + 2], w = [];
+      for (let k = Math.floor(a / bin); k <= Math.ceil(d / bin) && k < NFFT / 2; k++) {
+        const fk = k * bin, g = fk < c ? (fk - a) / (c - a) : (d - fk) / (d - c);
+        if (g > 0) w.push([k, g]);
+      }
+      f.push(w);
+    }
+    bank = { sr, f };
+    return bank;
+  }
+  // MFCC de x[from…to[ : un tableau de trames (Float32Array de NC coefficients)
+  function mfcc(x, sr, from, to) {
+    const win = Math.round(0.025 * sr), hop = Math.round(0.01 * sr), B = melBank(sr).f, out = [];
+    const w = new Float64Array(Math.min(win, NFFT)), e = new Float64Array(NB);
+    for (let s = Math.max(1, from); s + w.length <= Math.min(x.length, to); s += hop) {
+      for (let i = 0; i < w.length; i++) w[i] = (x[s + i] - 0.97 * x[s + i - 1]) * (0.54 - 0.46 * Math.cos((2 * Math.PI * i) / (w.length - 1)));
+      const P = power(w);
+      for (let b = 0; b < NB; b++) { let sum = 0; for (const [k, g] of B[b]) sum += g * P[k]; e[b] = Math.log(sum + 1e-10); }
+      const c = new Float32Array(NC);
+      for (let k = 1; k <= NC; k++) {
+        let s2 = 0;
+        for (let b = 0; b < NB; b++) s2 += e[b] * Math.cos((Math.PI * k * (b + 0.5)) / NB);
+        c[k - 1] = s2 * (1 + 6 * Math.sin((Math.PI * k) / 12));
+      }
+      out.push(c);
+    }
+    return out;
+  }
+  // distance moyenne le long du meilleur alignement (bande de ±50 %)
+  function dtw(A, Bq) {
+    const n = A.length, m = Bq.length;
+    if (!n || !m) return Infinity;
+    const band = Math.ceil(Math.max(n, m) / 2) + Math.abs(n - m);
+    let prev = new Float64Array(m + 1).fill(Infinity), cur = new Float64Array(m + 1);
+    prev[0] = 0;
+    for (let i = 1; i <= n; i++) {
+      cur.fill(Infinity);
+      const a = A[i - 1];
+      for (let j = Math.max(1, i - band); j <= Math.min(m, i + band); j++) {
+        const b = Bq[j - 1];
+        let s = 0;
+        for (let k = 0; k < NC; k++) { const d = a[k] - b[k]; s += d * d; }
+        cur[j] = Math.sqrt(s) + Math.min(prev[j - 1], prev[j], cur[j - 1]);
+      }
+      const t = prev; prev = cur; cur = t;
+    }
+    return prev[m] / (n + m);
+  }
+  // models : { do: [séquence, …], re: […], … } → { best, d: { do: distance, … } }
+  function nearest(seq, models) {
+    const d = {};
+    let best = null;
+    for (const s of SYL) {
+      const list = models[s] || [];
+      let v = Infinity;
+      for (const t of list) v = Math.min(v, dtw(seq, t));
+      d[s] = v;
+      if (best == null || v < d[best]) best = s;
+    }
+    return { best, d };
+  }
+  /* La syllabe chantée est-elle le nom attendu ? 'oui', 'non' (un autre nom, nettement plus proche)
+     ou null (on ne sait pas : on ne pénalise pas l'élève pour une hésitation de la reconnaissance). */
+  function sayMatch(syl, want, strict) {
+    if (!syl || !want || !isFinite(syl.d[want])) return null;
+    if (syl.best === want) return 'oui';
+    return syl.d[want] > syl.d[syl.best] * (strict ? 1.12 : 1.25) ? 'non' : null;
+  }
+  // modèles rangés en texte (base64 d'entiers sur 8 bits, une échelle commune)
+  function packModels(models) {
+    let mx = 1e-6;
+    for (const s of SYL) for (const t of models[s] || []) for (const c of t) for (const v of c) mx = Math.max(mx, Math.abs(v));
+    const sc = mx / 127, m = {};
+    for (const s of SYL) {
+      m[s] = (models[s] || []).map((t) => {
+        const b = new Uint8Array(t.length * NC);
+        t.forEach((c, i) => c.forEach((v, k) => { b[i * NC + k] = (Math.max(-127, Math.min(127, Math.round(v / sc))) + 256) % 256; }));
+        let str = ''; for (const x of b) str += String.fromCharCode(x);
+        return btoa(str);
+      });
+    }
+    return { s: +sc.toPrecision(5), m };
+  }
+  function unpackModels(p) {
+    const out = {};
+    for (const s of SYL) {
+      out[s] = ((p.m && p.m[s]) || []).map((str) => {
+        const raw = atob(str), n = raw.length / NC, t = [];
+        for (let i = 0; i < n; i++) { const c = new Float32Array(NC); for (let k = 0; k < NC; k++) { const v = raw.charCodeAt(i * NC + k); c[k] = (v > 127 ? v - 256 : v) * p.s; } t.push(c); }
+        return t;
+      });
+    }
+    return out;
+  }
+
+  // la fenêtre de la syllabe d'une note commencée à « on » (s) ; prev : début de la note d'avant (ou -1).
+  // Pas trop loin avant : la fin de la note précédente n'est pas la consonne de celle-ci.
+  function sylWindow(on, prev) {
+    const pre = Math.max(0.05, Math.min(SYL_PRE, prev >= 0 ? on - prev - 0.12 : SYL_PRE));
+    return [on - pre, on + SYL_POST];
+  }
+  /* Les MFCC de la syllabe d'une note commencée à l'échantillon « on », dans la fenêtre [a, b[ :
+     on laisse de côté ce qui précède le dernier creux d'énergie avant la note (le silence, ou la fin
+     de la note d'avant quand on enchaîne), pour garder la consonne d'attaque et la voyelle. */
+  function sylSeq(x, sr, a, on, b) {
+    a = Math.max(1, a); on = Math.max(a, Math.min(on, x.length));
+    const hop = Math.round(0.01 * sr), E = [];
+    for (let s = a; s + hop <= on; s += hop) { let e = 0; for (let i = s; i < s + hop; i++) e += x[i] * x[i]; E.push(e); }
+    let cut = a;
+    if (E.length > 1) {
+      let mn = Infinity; for (const e of E) mn = Math.min(mn, e);
+      for (let i = E.length - 1; i >= 0; i--) if (E[i] <= mn * 2 + 1e-12) { cut = a + i * hop; break; }
+    }
+    return mfcc(x, sr, cut, b);
+  }
+
+  return { yin, makeTracker, makeOnset, gateOf, floorOf, NF0, FMIN, FMAX, SYL, SYL_PC, SYL_PRE, SYL_POST, mfcc, dtw, nearest, sayMatch, sylWindow, sylSeq, packModels, unpackModels };
 })();
 
 const Ear = (() => {
@@ -6449,6 +6623,8 @@ const Ear = (() => {
   const S = {
     on: false, stream: null, nodes: [], an: null, buf: null, timer: 0, sr: 48000, nf: PitchKit.NF0, gated: false, lastUi: 0, T: PitchKit.makeTracker(),
     mode: '', ring: null, fill: 0, tok: 0, onset: null,
+    // la voix : historique du son (1 s), notes en attente de leur syllabe, modèles des syllabes
+    hist: null, hw: 0, ht: 0, wait: [], voice: null, lastOn: -1,
     // pour le diagnostic (?diag) : traitements du micro, trames par seconde, retard du traitement
     dg: { proc: null, frames: 0, since: 0, fps: 0, lag: 0, lagMax: 0, rms: 0, f: 0 },
   };
@@ -6539,7 +6715,7 @@ registerProcessor('ne-ear', NeEar);`;
       node.port.onmessage = (ev) => feed(ev.data.x, ev.data.t);
       src.connect(node);
       node.connect(mute);
-      Object.assign(S, { mode: 'worklet', nodes: [src, node, mute], an: null, ring: new Float32Array(N), fill: 0 });
+      Object.assign(S, { mode: 'worklet', nodes: [src, node, mute], an: null, ring: new Float32Array(N), fill: 0, hist: new Float32Array(Math.round(ctx.sampleRate)), hw: 0, ht: 0, wait: [], lastOn: -1 });
     } else {
       const an = ctx.createAnalyser();
       an.fftSize = N;
@@ -6563,13 +6739,18 @@ registerProcessor('ne-ear', NeEar);`;
     S.nodes.forEach((n) => { try { n.disconnect(); } catch (e) { /* déjà débranché */ } });
     if (S.mode === 'worklet' && S.nodes[1]) S.nodes[1].port.onmessage = null;
     S.stream.getTracks().forEach((t) => t.stop());
-    Object.assign(S, { on: false, stream: null, nodes: [], an: null, ring: null });
+    Object.assign(S, { on: false, stream: null, nodes: [], an: null, ring: null, hist: null, wait: [] });
     session('playback');
   }
 
   // un morceau de son arrive du fil audio (t : instant de son dernier échantillon)
   function feed(x, t) {
     if (!S.on || !S.ring) return;
+    if (S.hist) { // l'historique : le son de la dernière seconde
+      const H = S.hist, L = H.length;
+      for (let i = 0; i < x.length; i++) { H[S.hw] = x[i]; S.hw = (S.hw + 1) % L; }
+      S.ht = t;
+    }
     const r = S.ring, hop = x.length;
     if (hop >= N) r.set(x.subarray(hop - N));
     else { r.copyWithin(0, hop); r.set(x, N - hop); }
@@ -6580,6 +6761,34 @@ registerProcessor('ne-ear', NeEar);`;
     if (lag > S.dg.lagMax) S.dg.lagMax = lag;
     const ago = S.onset(x, PitchKit.gateOf(S.nf));
     analyzeFrame(r, t, ago == null ? null : t - ago);
+    if (S.wait.length) settleSyllables();
+  }
+
+  /* La voix : une note chantée attend d'avoir 0,15 s de son après son début, puis sa syllabe est
+     reconnue et la note part, avec { syl : { best, d } } (l'instant de la note reste celui du début). */
+  function sample(t0, t1) { // le son entre deux instants, pris dans l'historique
+    const H = S.hist, L = H.length, n = Math.round((t1 - t0) * S.sr), back = Math.round((S.ht - t0) * S.sr);
+    if (n <= 0 || back > L || back < n) return null;
+    const out = new Float32Array(n);
+    let i0 = (S.hw - back + L * 2) % L;
+    for (let i = 0; i < n; i++) { out[i] = H[i0]; i0 = (i0 + 1) % L; }
+    return out;
+  }
+  function settleSyllables() {
+    while (S.wait.length) {
+      const w = S.wait[0];
+      if (S.ht < w.on + PitchKit.SYL_POST) return;
+      S.wait.shift();
+      const [t0, t1] = PitchKit.sylWindow(w.on, w.prev);
+      const x = sample(t0, t1);
+      if (x && S.voice) {
+        const seq = PitchKit.sylSeq(x, S.sr, 0, Math.round((w.on - t0) * S.sr), x.length);
+        const syl = PitchKit.nearest(seq, S.voice.models);
+        w.hit.syl = { best: syl.best, d: syl.d, user: S.voice.user };
+        w.hit.seq = seq;
+      }
+      if (onNote) onNote(w.hit);
+    }
   }
 
   function analyze() {
@@ -6617,7 +6826,12 @@ registerProcessor('ne-ear', NeEar);`;
     S.dg.f = res ? res.f : 0;
     if (!res) S.nf = PitchKit.floorOf(S.nf, rms);
     const hit = S.T.push(res, rms, gate, now, on);
-    if (hit && onNote) onNote(hit);
+    if (hit && S.voice && S.hist) {
+      // la voix chantée commence un peu avant la première trame où sa hauteur est sûre
+      const onT = hit.t - 0.035;
+      S.wait.push({ hit, on: onT, prev: S.lastOn });
+      S.lastOn = onT;
+    } else if (hit && onNote) onNote(hit);
     frame(rms, res, false);
   }
 
@@ -6643,6 +6857,9 @@ registerProcessor('ne-ear', NeEar);`;
 
   return {
     start, stop, diag,
+    // la voix : models = { do: [séquences], … } ou null (pas de reconnaissance des noms) ; user : réglés par l'élève
+    setVoice: (models, user) => { S.voice = models ? { models, user: !!user } : null; S.wait = []; S.T.voice = !!models; },
+    voiceOk: () => S.mode === 'worklet',
     active: () => S.on,
     expect: (pc) => { S.T.expectPc = pc; },
     nudge: (c) => S.T.nudge(c),
@@ -21025,7 +21242,7 @@ const HomeSkin = (() => {
           <ol class="lh-steps">
             <li>Choisis une comptine : les plus faciles sont au début du fil.</li>
             <li>Écoute-la en entier, ou phrase par phrase avec le bouton rond. « Jusqu’à la note » rejoue le début de la phrase et s’arrête sur la note à trouver.</li>
-            <li>Touche « À toi de jouer ! » : la page joue la phrase, compte « 1, 2, 3, 4 », puis c’est à toi. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec ton instrument, la page t’écoute au micro.</li>
+            <li>Touche « À toi de jouer ! » : la page joue la phrase, compte « 1, 2, 3, 4 », puis c’est à toi. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec ton instrument, la page t’écoute au micro. Avec la voix, chante chaque note en disant son nom : la page vérifie la hauteur et le nom.</li>
             <li>Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée rejoint la comptine et le décor s’anime.</li>
             <li>« Phrase par phrase » pour t’entraîner avec de l’aide, ou « Toute la comptine » d’un coup, sans aide : à la fin, la page te ramène sur les phrases à revoir. Tu peux rejouer autant de fois que tu veux.</li>
             <li>Niveau 2 : après le décompte, joue toute la phrase en rythme. Une phrase réussie, la suivante démarre toute seule.</li>
@@ -21039,7 +21256,7 @@ const HomeSkin = (() => {
       </section>
       <p class="lh-foot">${typeof Suivi !== 'undefined' && Suivi.configured
         ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré sans nom, avec l’adresse IP de la connexion, et effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
-        : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute. Comptines traditionnelles du domaine public. Décors en 3D faits avec three.js (licence MIT) ; titre en police Gluten (SIL OFL). Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
+        : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute. Comptines traditionnelles du domaine public. Décors en 3D faits avec three.js (licence MIT) ; titre en police Gluten (SIL OFL). Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0). Reconnaissance des noms chantés : modèles tirés des voix de synthèse eSpeak NG.<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
     </main>`;
     root = app.querySelector('.lhome');
     app.querySelector('#home-inst').addEventListener('change', (e) => setInst(e.target.value));
@@ -21297,6 +21514,8 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
      qui joue les phrases (null : chaque comptine garde le sien). */
   const INSTS = {
     none: { name: 'Sans instrument', the: '', at: '', fam: 'C', play: 0, voice: null },
+    // la voix : on chante les notes en disant leur nom ; la page vérifie la hauteur et le nom (src/ear.js)
+    voix: { name: 'Voix', the: 'la voix', at: 'à la voix', fam: 'C', play: 0, voice: null, sing: true },
     piano: { name: 'Piano', the: 'le piano', at: 'au piano', fam: 'C', play: 0, voice: 'piano' },
     flute: { name: 'Flûte', the: 'la flûte', at: 'à la flûte', fam: 'C', play: 12, voice: 'flute' },
     clarinette: { name: 'Clarinette en si♭', the: 'la clarinette en si♭', at: 'à la clarinette', fam: 'Bb', play: -2, voice: 'clarinet' },
@@ -21351,6 +21570,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   const voiceNow = () => inst().voice || (G && G.song.voice);
   const instNote = () => {
     const i = inst();
+    if (i.sing) return 'Chante chaque note en disant son nom (do, ré, mi…) : la page écoute au micro la hauteur et le nom. Une voix grave peut chanter une octave plus bas. Les phrases gardent le timbre de chaque comptine.';
     if (!i.voice) return 'Chaque comptine garde son propre timbre ; les notes sonnent comme elles sont écrites.';
     const of = i.the.startsWith('l’') ? 'de ' + i.the : i.the.startsWith('le ') ? 'du ' + i.the.slice(3) : 'de ' + i.the;
     const sound = ` Les phrases sont jouées avec le son enregistré ${of}.`;
@@ -21361,13 +21581,17 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   };
   function instrLine(song) {
     const i = inst();
+    if (i.sing) return `En do majeur, jouée ${song.instrument} : chante-la en disant le nom des notes.`;
     if (!i.voice) return `En do majeur, jouée ${song.instrument}.`;
     if (i.fam !== 'C') return `En do majeur (pour ${i.the}, elle sonne en ${i.key}), jouée ${i.at}.`;
     return `En do majeur, jouée ${i.at}${i.play === -12 ? ', une octave plus bas' : i.play === 12 ? ', une octave plus haut' : ''}.`;
   }
   function setInst(k) {
     if (!INSTS[k]) return;
+    const was = settings.inst;
     settings.inst = k;
+    const toMic = k === 'voix' && was !== 'voix' && settings.mode !== 'mic'; // on chante : la page écoute au micro
+    if (toMic) settings.mode = 'mic';
     save(SET_KEY, settings);
     Sound.setTranspose(inst().play);
     Sound.useSamples(inst().voice);
@@ -21379,12 +21603,104 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
       expectNext();
       if (el.instr) el.instr.textContent = instrLine(G.song);
       if (el.instChip) el.instChip.textContent = inst().voice ? inst().name : 'en do';
+      voiceUI();
+      if (toMic) applyMode(true);
     }
+    applyVoice();
   }
   function setLevel(v) {
     settings.level = v === 2 ? 2 : 1;
     save(SET_KEY, settings);
     if (G && view === 'song') { stopAll(); renderSong(G.song); }
+  }
+
+  /* ---------------- la voix : chanter les notes en disant leur nom ----------------
+     L'oreille (src/ear.js) reconnaît la syllabe chantée au début de chaque note, sur cet appareil :
+     des modèles par défaut (src/voix-modeles.js) et, si l'élève a « réglé sa voix », les siens en plus,
+     rangés ici (le timbre de chaque syllabe, jamais le son). Une note n'est juste que si la hauteur ET
+     le nom le sont ; quand la reconnaissance hésite, on ne pénalise pas. */
+  const SYL_FR = { do: 'do', re: 'ré', mi: 'mi', fa: 'fa', sol: 'sol', la: 'la', si: 'si' };
+  const VOICE_KEY = (window.NE_NS || '') + 'notes-envolees-voix';
+  const singing = () => !!inst().sing && settings.mode === 'mic';
+  const sylOf = (midi) => PitchKit.SYL_PC[mod12(midi)];
+  // 'oui', 'non' (un autre nom, nettement) ou null (pas de syllabe, ou la reconnaissance hésite)
+  const nameSaid = (syl, midi) => (syl ? PitchKit.sayMatch(syl, sylOf(midi), syl.user) : null);
+  let defVoice = null;
+  function myVoice() {
+    try { const v = JSON.parse(localStorage.getItem(VOICE_KEY) || 'null'); return v && v.m ? PitchKit.unpackModels(v) : null; } catch (e) { return null; }
+  }
+  function applyVoice() {
+    if (!singing() || typeof VOIX_MODELES === 'undefined') { Ear.setVoice(null); return; }
+    if (!defVoice) defVoice = PitchKit.unpackModels(VOIX_MODELES);
+    const mine = G && G.cal ? null : myVoice();
+    Ear.setVoice(mine ? Object.fromEntries(PitchKit.SYL.map((s) => [s, [...(mine[s] || []), ...defVoice[s]]])) : defVoice, !!mine);
+  }
+  const earText = () => (inst().sing
+    ? (G && G.level === 2 ? 'La page écoute ta voix avec le micro : chante chaque note en disant son nom, puis elle vérifie les notes et le rythme.' : 'La page écoute ta voix avec le micro : chante chaque note en disant son nom (do, ré, mi…).')
+    : (G && G.level === 2 ? 'La page écoute ton instrument avec le micro, puis vérifie les notes et le rythme.' : 'La page écoute ton instrument avec le micro et te dit si la note est juste.'));
+  const micLabel = () => (inst().sing ? 'Ma voix' : 'Mon instrument');
+  // les libellés qui changent avec la voix
+  function voiceUI() {
+    if (!el.main || !document.contains(el.main)) return;
+    const v = !!inst().sing, mb = app.querySelector('.seg-mode [data-mode="mic"]');
+    if (mb) { mb.setAttribute('aria-label', micLabel()); mb.title = micLabel(); mb.lastElementChild.textContent = micLabel(); }
+    if (el.earText) el.earText.textContent = earText();
+    el.instChip.hidden = v;
+    el.bCal.hidden = !v || (Ear.active() && !Ear.voiceOk());
+  }
+
+  /* « Régler ma voix » : la page joue do, ré, mi… jusqu'à si ; l'élève chante chaque note en disant son nom */
+  const CAL_PCS = [0, 2, 4, 5, 7, 9, 11];
+  const calStopBtn = '<button class="mini hint-btn" type="button" data-act="cal-stop">Arrêter</button>';
+  function calStart() {
+    if (!G || !singing()) return;
+    if (!Ear.active()) { startMic().then(() => { if (G && Ear.active() && !G.cal) calStart(); }); return; }
+    if (!Ear.voiceOk()) { setHint('Ce navigateur ne me laisse pas reconnaître les noms chantés : je vérifie seulement la hauteur.', ''); return; }
+    G.acts++;
+    cancelAttempt(true);
+    stopPlayback(true);
+    G.cal = { i: 0, seqs: {} };
+    applyVoice();
+    calStep();
+  }
+  function calStep() {
+    const c = G && G.cal;
+    if (!c) return;
+    const pc = CAL_PCS[c.i], L = PC_LETTER[pc];
+    Ear.expect(pc);
+    Sound.tap(voiceNow(), 60 + pc, 0.9);
+    setHint(`Réglage ${c.i + 1}/7${NB}: chante ${chip(L, NOTE_FR[L])} en disant «${NB}${SYL_FR[PitchKit.SYL[c.i]]}${NB}» ${calStopBtn}`, '');
+  }
+  function calHit(hit) {
+    const c = G.cal, pc = CAL_PCS[c.i], L = PC_LETTER[pc];
+    if (!hit.seq || !hit.seq.length) return;
+    const d = Math.abs(mod12(hit.r) - pc), want = PitchKit.SYL[c.i];
+    const again = '<button class="mini hint-btn" type="button" data-act="cal-again">Réécouter</button>';
+    if (Math.min(d, 12 - d) > 1) { // le timbre compte, pas la justesse : un demi-ton près suffit
+      retrigger(el.heard, 'is-wrong');
+      setHint(`J’entends ${PC_FR[mod12(hit.r)]}, pas ${chip(L, NOTE_FR[L])} ${again} ${calStopBtn}`, 'down');
+      return;
+    }
+    if (PitchKit.sayMatch(hit.syl, want, false) === 'non') { // nettement un autre nom : on ne l'apprend pas
+      retrigger(el.heard, 'is-wrong');
+      setHint(`J’entends «${NB}${SYL_FR[hit.syl.best]}${NB}»${NB}: dis «${NB}${SYL_FR[want]}${NB}» ${again} ${calStopBtn}`, 'down');
+      return;
+    }
+    retrigger(el.heard, 'is-good');
+    c.seqs[PitchKit.SYL[c.i]] = hit.seq;
+    if (++c.i < CAL_PCS.length) { later(() => { if (G && G.cal === c) calStep(); }, 650); return; }
+    try { localStorage.setItem(VOICE_KEY, JSON.stringify(PitchKit.packModels(Object.fromEntries(PitchKit.SYL.map((s) => [s, [c.seqs[s]]]))))); } catch (e) { /* stockage indisponible : réglage pour cette visite seulement */ }
+    G.cal = null;
+    applyVoice();
+    expectNext();
+    setHint('Ta voix est réglée : la page reconnaît mieux les noms que tu chantes.', 'ok');
+  }
+  function calStop() {
+    if (!G || !G.cal) return;
+    G.cal = null;
+    applyVoice();
+    expectNext();
+    idleHint();
   }
 
   /* ---------------- suivi des parties, pour le professeur (src/suivi.js) ---------------- */
@@ -21408,6 +21724,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
 
   let view = 'home';
   let G = null; // partie en cours
+  applyVoice();
   const timers = new Set();
   const later = (fn, ms) => { const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); return id; };
   function stopAll() {
@@ -21469,7 +21786,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
           <ol class="steps">
             <li><p>Choisis une comptine. Les plus faciles sont au début du chemin.</p></li>
             <li><p>Écoute-la en entier, ou phrase par phrase avec le bouton rond. « Jusqu’à la note » rejoue le début de la phrase et s’arrête sur la note à trouver.</p></li>
-            <li><p>Touche « À toi de jouer ! » : la page joue la phrase, compte « 1, 2, 3, 4 », puis c’est à toi. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec ton instrument, la page t’écoute au micro et te dit si la note est juste.</p></li>
+            <li><p>Touche « À toi de jouer ! » : la page joue la phrase, compte « 1, 2, 3, 4 », puis c’est à toi. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec ton instrument, la page t’écoute au micro et te dit si la note est juste. Avec la voix, chante chaque note en disant son nom : la page vérifie la hauteur et le nom.</p></li>
             <li><p>Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée se pose à sa hauteur et le décor s’anime.</p></li>
             <li><p>« Phrase par phrase » pour t’entraîner avec de l’aide, ou « Toute la comptine » d’un coup, sans aide : à la fin, la page te ramène sur les phrases à revoir. Tu peux rejouer autant de fois que tu veux.</p></li>
             <li><p>Niveau 2 : après le décompte, joue toute la phrase en rythme ; la page vérifie chaque note et sa place dans le temps. Une phrase réussie, la suivante démarre toute seule.</p></li>
@@ -21495,7 +21812,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
         </section>
         <p class="home-foot">${Suivi.configured
           ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré sans nom, avec l’adresse IP de la connexion, et effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
-          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute (au niveau 2, le décompte). Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
+          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute (au niveau 2, le décompte). Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0). Reconnaissance des noms chantés : modèles tirés des voix de synthèse eSpeak NG.<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
       </div>
     </main>`;
     app.querySelector('#home-inst').addEventListener('change', (e) => setInst(e.target.value));
@@ -21644,7 +21961,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
         <div class="xylo" role="group" aria-label="Xylophone : choisis la note">${keys}</div>
         <div class="ear" id="ear" hidden>
           <div class="ear-off" id="ear-off">
-            <p class="ear-text">${lv2 ? 'La page écoute ton instrument avec le micro, puis vérifie les notes et le rythme.' : 'La page écoute ton instrument avec le micro et te dit si la note est juste.'}</p>
+            <p class="ear-text" id="ear-text">${earText()}</p>
             <div class="ear-row"><button class="btn-big" id="mic-on" type="button"><span class="ic">${ICON.mic}</span><span>Allumer le micro</span></button></div>
             <div class="ear-msg" id="ear-msg" hidden></div>
           </div>
@@ -21655,7 +21972,8 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
               <div class="tuner" aria-hidden="true"><i class="tz"></i><b class="needle" id="needle"></b><span class="t-lo">bas</span><span class="t-mid">juste</span><span class="t-hi">haut</span></div>
             </div>
             <div class="ear-side">
-              <button class="mini" id="inst-chip" type="button" title="Changer d’instrument">${esc(inst().voice ? inst().name : 'en do')}</button>
+              <button class="mini" id="inst-chip" type="button" title="Changer d’instrument"${inst().sing ? ' hidden' : ''}>${esc(inst().voice ? inst().name : 'en do')}</button>
+              <button class="mini" id="b-cal" type="button" title="La page apprend comment tu chantes do, ré, mi…"${inst().sing ? '' : ' hidden'}>Régler<span class="lbl-l"> ma voix</span></button>
               <button class="mini" id="mic-off" type="button" aria-label="Couper le micro">Couper<span class="lbl-l"> le micro</span></button>
             </div>
           </div>
@@ -21667,7 +21985,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
           </div>
           <div class="seg seg-mode" role="radiogroup" aria-label="Jouer avec">
             <button type="button" role="radio" data-mode="xylo" aria-checked="${settings.mode === 'xylo'}" aria-label="Xylophone" title="Xylophone">${ICON.xylo}<span>Xylophone</span></button>
-            <button type="button" role="radio" data-mode="mic" aria-checked="${settings.mode === 'mic'}" aria-label="Mon instrument" title="Mon instrument">${ICON.mic}<span>Mon instrument</span></button>
+            <button type="button" role="radio" data-mode="mic" aria-checked="${settings.mode === 'mic'}" aria-label="${micLabel()}" title="${micLabel()}">${ICON.mic}<span>${micLabel()}</span></button>
           </div>
           <div class="seg seg-slow"><button type="button" id="b-slow" aria-pressed="${G.slow}" aria-label="Lentement" title="Lentement">${ICON.turtle}</button></div>
         </div>
@@ -21702,6 +22020,8 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
       needle: app.querySelector('#needle'),
       instSel: app.querySelector('#inst-sel'),
       instChip: app.querySelector('#inst-chip'),
+      bCal: app.querySelector('#b-cal'),
+      earText: app.querySelector('#ear-text'),
     };
     song.notes.forEach((_, n) => paintBead(n));
     song.phrases.forEach((_, p) => paintPill(p));
@@ -21785,9 +22105,10 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     const mic = settings.mode === 'mic';
     if (G.song.given.has(G.cursor) || G.revealed.has(G.cursor)) {
       const first = G.song.phrases[note.phrase].notes[0] === G.cursor && !G.revealed.has(G.cursor);
-      setHint(`${first ? 'Note donnée : joue' : 'Joue'} ${chip(note.letter, note.fr)}${mic ? ' sur ton instrument' : ''}`, '');
+      const verb = singing() ? 'chante' : 'joue';
+      setHint(`${first ? 'Note donnée : ' + verb : verb[0].toUpperCase() + verb.slice(1)} ${chip(note.letter, note.fr)}${mic && !singing() ? ' sur ton instrument' : ''}`, '');
     } else {
-      setHint(mic ? 'À toi : joue la note suivante' : 'À toi : trouve la note suivante', '');
+      setHint(singing() ? 'À toi : chante la note suivante' : mic ? 'À toi : joue la note suivante' : 'À toi : trouve la note suivante', '');
     }
   }
 
@@ -21900,6 +22221,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
 
   function goAttempt(sc) {
     if (!G || G.done) return;
+    if (G.cal) { G.cal = null; applyVoice(); }
     cancelAttempt(true);
     stopPlayback(true); // une écoute en cours : on revient d'abord où l'on en était
     if (settings.mode === 'mic' && !Ear.active()) {
@@ -22104,9 +22426,12 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     }
   }
 
+  let heardSyl = null; // la dernière syllabe reconnue, montrée un instant sous la note entendue
   function heardNote(hit) {
     if (!G || settings.mode !== 'mic') return;
-    if (G.take) { recordNote({ t: (hit.t != null ? hit.t : Sound.now()) - Sound.outLatency() - 0.03, written: hit.r - inst().off }); return; }
+    if (hit.syl) heardSyl = { s: hit.syl.best, pc: mod12(hit.r), t: performance.now() };
+    if (G.cal) { calHit(hit); return; }
+    if (G.take) { recordNote({ t: (hit.t != null ? hit.t : Sound.now()) - Sound.outLatency() - 0.03, written: hit.r - inst().off, syl: hit.syl }); return; }
     if (G.done || G.level === 2 || !G.live || G.cnt) return;
     if (G.cursor == null) return;
     if (G.playing) {
@@ -22116,13 +22441,19 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     }
     const written = hit.r - inst().off;
     const target = G.song.notes[G.cursor];
+    const pitchOk = mod12(written) === mod12(target.midi);
+    const said = singing() ? nameSaid(hit.syl, target.midi) : null;
     if (G.stage === 'whole') {
-      const ok = mod12(written) === mod12(target.midi);
-      if (ok) Ear.nudge(hit.cents);
-      wholeNote(ok, el.heard);
+      if (pitchOk) Ear.nudge(hit.cents);
+      wholeNote(pitchOk && said !== 'non', el.heard);
       return;
     }
-    if (mod12(written) === mod12(target.midi)) {
+    if (pitchOk && said === 'non') {
+      // la bonne hauteur, mais un autre nom
+      Ear.nudge(hit.cents);
+      retrigger(el.heard, 'is-wrong');
+      bad(`Bonne hauteur${NB}! Mais j’entends «${NB}${SYL_FR[hit.syl.best]}${NB}»${NB}: chante «${NB}${SYL_FR[sylOf(target.midi)]}${NB}»`, null);
+    } else if (pitchOk) {
       Ear.nudge(hit.cents);
       good(el.heard, target);
     } else {
@@ -22177,8 +22508,9 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   function bad(text, up, rightTxt, leftTxt) {
     G.errors++;
     G.attempts++;
-    const html = up ? `${text} ${ICON.right}${rightTxt ? `<small>${rightTxt}</small>` : ''}` : `${ICON.left} ${text}${leftTxt ? ` <small>${leftTxt}</small>` : ''}`;
-    setHint(html, up ? 'up' : 'down');
+    // up : la flèche (plus aigu, plus grave) ; null : pas de flèche (la voix : bonne hauteur, mauvais nom)
+    const html = up == null ? text : up ? `${text} ${ICON.right}${rightTxt ? `<small>${rightTxt}</small>` : ''}` : `${ICON.left} ${text}${leftTxt ? ` <small>${leftTxt}</small>` : ''}`;
+    setHint(html, up == null ? 'down' : up ? 'up' : 'down');
     if (G.attempts >= 3 && G.cursor != null) {
       const target = G.song.notes[G.cursor];
       const t = G.keys.findIndex((k) => k.midi === target.midi);
@@ -22409,7 +22741,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     const exp = idx.map((n) => { const nt = song.notes[n]; return { n, t: (nt.t - t0) * ci.spb, midi: nt.midi, ph: nt.phrase }; });
     const starts = song.phrases.map((ph) => (song.notes[ph.notes[0]].t - t0) * ci.spb);
     const tk = Object.assign({}, ci, {
-      p, full, exp, starts, got: [], phase: 'count', k: -1, raf: 0, mic: settings.mode === 'mic',
+      p, full, exp, starts, got: [], phase: 'count', k: -1, raf: 0, mic: settings.mode === 'mic', sing: singing() && Ear.voiceOk(),
       Tend: ci.T0 + exp[exp.length - 1].t + Math.max(0.9, 1.6 * ci.beatSec),
       srcs: ci.clicks.map((t, i) => Sound.clickAt(t, ci.labels[i] === 1)),
     });
@@ -22445,7 +22777,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     if (!tk) return;
     const t = n.t - tk.T0;
     if (t < -0.6 * tk.beatSec) return; // joué pendant le décompte : pas compté
-    tk.got.push({ t, midi: n.midi, written: n.written });
+    tk.got.push({ t, midi: n.midi, written: n.written, syl: n.syl });
     if (tk.mic) Ear.expect(mod12(tk.exp[Math.min(tk.got.length, tk.exp.length - 1)].midi + inst().off));
   }
 
@@ -22496,7 +22828,8 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     G.take = null;
     el.main.classList.remove('is-taking');
     if (tk.mic) Ear.expect(null);
-    const same = tk.mic ? (e, g) => mod12(g.written) === mod12(e.midi) : (e, g) => g.midi === e.midi;
+    // la voix : la bonne hauteur ET le bon nom (sauf si la reconnaissance hésite)
+    const same = tk.mic ? (e, g) => mod12(g.written) === mod12(e.midi) && !(tk.sing && nameSaid(g.syl, e.midi) === 'non') : (e, g) => g.midi === e.midi;
     const r = Rhythm.evaluate({ exp: tk.exp, got: tk.got, beat: tk.beatSec, same, mic: tk.mic });
     if (tk.full) { endFullTake(tk, r); return; }
     setGoUI(false);
@@ -22511,7 +22844,15 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     ph.notes.forEach((n) => paintBead(n));
     G.results[tk.p] = phraseResult(tk, r, tk.p);
     showResult(tk.p);
-    const v = Rhythm.verdict(r, (i) => `La ${i ? i + 1 + 'e' : '1re'} note`);
+    let v = Rhythm.verdict(r, (i) => `La ${i ? i + 1 + 'e' : '1re'} note`);
+    if (tk.sing && !r.pass && r.wrong && !r.missed) {
+      // les seules fausses notes sont à la bonne hauteur : c'est le nom qui n'allait pas
+      const slips = r.notes.filter((x) => x.kind === 'wrong').map((x) => [tk.exp[x.i], tk.got[x.j]]).filter(([e2, g]) => mod12(g.written) === mod12(e2.midi));
+      if (slips.length === r.wrong) {
+        const [e2, g] = slips[0];
+        v = { mood: 'down', text: slips.length === 1 ? `Bonne hauteur, mais j’entends «${NB}${SYL_FR[g.syl.best]}${NB}» au lieu de «${NB}${SYL_FR[sylOf(e2.midi)]}${NB}».` : `${slips.length} notes à la bonne hauteur, mais pas avec le bon nom.` };
+      }
+    }
     setHint(v.text, v.mood);
     if (r.pass) G.passed.add(tk.p); else G.fails++;
     paintPill(tk.p);
@@ -22727,6 +23068,8 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   }
   function applyMode(userAction) {
     const mic = settings.mode === 'mic';
+    if (!mic && G.cal) G.cal = null;
+    applyVoice();
     el.main.dataset.mode = settings.mode;
     app.querySelectorAll('.seg-mode [role="radio"]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.mode === settings.mode)));
     el.ear.hidden = !mic;
@@ -22767,6 +23110,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     el.earMsg.hidden = !msgHtml;
     el.earMsg.innerHTML = msgHtml || '';
     if (on) el.instChip.textContent = inst().voice ? inst().name : 'en do';
+    voiceUI();
   }
   const FATAL = (code) => (code === 'denied' && framed) || code === 'unsupported' || code === 'noaudio';
 
@@ -22784,11 +23128,15 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   async function startMic() {
     if (micBusy) return;
     micBusy = true;
+    applyVoice();
     try {
       await Ear.start({ onNote: heardNote, onFrame: heardFrame, onEnded: () => { if (el.ear) showEar(false, MIC_MSG.ended); } });
       micWanted = true;
       if (G && G.done && !G.keepMic) { pauseMicDone(); return; }
-      if (settings.mode === 'mic' && el.ear && document.contains(el.ear)) { showEar(true); expectNext(); cursorHint(); }
+      if (settings.mode === 'mic' && el.ear && document.contains(el.ear)) {
+        showEar(true); expectNext(); cursorHint();
+        if (singing() && !Ear.voiceOk()) setHint('Ce navigateur ne me laisse pas reconnaître les noms chantés : je vérifie seulement la hauteur.', '');
+      }
     } catch (e) {
       const code = (e && e.code) || 'other';
       if (!micErrs.has(code)) { micErrs.add(code); track('micro', { code }); }
@@ -22819,7 +23167,8 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     const pc = mod12(written), L = PC_LETTER[pc];
     el.heardN.textContent = PC_FR[pc];
     if (L) el.heard.dataset.l = L; else delete el.heard.dataset.l;
-    el.earCap.textContent = `J’entends ${PC_FR[pc]}`;
+    const sy = heardSyl && heardSyl.pc === mod12(fr.note) && performance.now() - heardSyl.t < 2500 ? heardSyl.s : null;
+    el.earCap.textContent = sy ? `J’entends «${NB}${SYL_FR[sy]}${NB}» sur ${PC_FR[pc]}` : `J’entends ${PC_FR[pc]}`;
     el.needle.classList.remove('off');
     el.needle.style.setProperty('--c', Math.max(-50, Math.min(50, fr.cents)).toFixed(1));
   }
@@ -22887,6 +23236,11 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
       fitDone();
     }));
     app.querySelector('#mic-on').addEventListener('click', startMic);
+    el.bCal.addEventListener('click', calStart);
+    el.hint.addEventListener('click', (ev) => {
+      if (ev.target.closest('[data-act="cal-stop"]')) calStop();
+      else if (ev.target.closest('[data-act="cal-again"]') && G && G.cal) calStep();
+    });
     app.querySelector('#mic-off').addEventListener('click', () => { micWanted = false; Ear.stop(); showEar(false); });
     el.instSel.addEventListener('change', () => setInst(el.instSel.value));
     el.instChip.addEventListener('click', () => { try { el.instSel.showPicker(); } catch (e) { el.instSel.focus(); } });

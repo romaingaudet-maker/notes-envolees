@@ -50,6 +50,10 @@ dd { margin: 0; min-width: 0; }
 .toggle input { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--red); flex: none; }
 .toggle p { font-size: 15px; color: var(--ink-soft); }
 .toggle p[hidden] { display: none; }
+.voice-wipe { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin-top: 8px; }
+.voice-wipe[hidden], .voice-wipe button[hidden] { display: none; }
+.voice-wipe button { min-height: 36px; padding: 0 14px; border-radius: 999px; border: 2px solid var(--ink); background: #FFFFFF; color: var(--ink); font: inherit; font-weight: 700; font-size: 15px; cursor: pointer; }
+.voice-wipe span { font-size: 15px; color: var(--ink-soft); }
 .code { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-weight: 700; color: var(--ink); background: var(--card); padding: 1px 7px; border-radius: 6px; }
 @media (max-width: 520px) { dl { grid-template-columns: minmax(0, 1fr); gap: 2px 0; } dd { margin-bottom: 8px; } }
 </style>
@@ -66,7 +70,7 @@ dd { margin: 0; min-width: 0; }
   <section class="brief" aria-labelledby="t-bref">
     <h2 id="t-bref">En bref</h2>
     <ul>
-      <li>Le son du micro reste sur l’appareil : il sert seulement à reconnaître les notes. Il n’est ni enregistré ni envoyé.</li>
+      <li>Le son du micro reste sur l’appareil : il sert seulement à reconnaître les notes (et, quand on chante, leur nom). Il n’est ni enregistré ni envoyé.</li>
       <li>Pas de compte, pas de publicité, pas de cookie.</li>
       <li>Le déroulé des parties (comptine, étoiles, erreurs…) est envoyé au professeur avec un identifiant tiré au hasard, sans nom, pour qu’il suive les progrès. Il est effacé au bout de 13 mois, et on peut le couper sur cet appareil (plus bas).</li>
     </ul>
@@ -87,7 +91,9 @@ dd { margin: 0; min-width: 0; }
     <h2 id="t-donnees">Données personnelles</h2>
     <h3>Ce qui reste sur l’appareil</h3>
     <ul>
-      <li><strong>Le son du micro</strong>, si l’élève choisit de jouer avec le micro : le navigateur demande d’abord l’autorisation, puis le son est analysé dans la page pour reconnaître la hauteur des notes, et aussitôt oublié. Il n’est jamais enregistré ni envoyé. Le micro s’éteint quand l’élève l’arrête, à la fin de la comptine, au retour à l’accueil et dès que la page passe en arrière-plan (il se rallume au retour si l’élève jouait avec).</li>
+      <li><strong>Le son du micro</strong>, si l’élève choisit de jouer avec le micro : le navigateur demande d’abord l’autorisation, puis le son est analysé dans la page pour reconnaître la hauteur des notes et, si l’élève chante avec la voix, la syllabe chantée (do, ré, mi…), et aussitôt oublié. Il n’est jamais enregistré ni envoyé. Le micro s’éteint quand l’élève l’arrête, à la fin de la comptine, au retour à l’accueil et dès que la page passe en arrière-plan (il se rallume au retour si l’élève jouait avec).</li>
+      <li><strong>Le réglage de la voix</strong>, seulement si l’élève touche « Régler ma voix » : pour chaque nom de note, un résumé chiffré du timbre de la syllabe chantée, qui aide à reconnaître les noms. Ce n’est pas un enregistrement : ni le son ni la hauteur de la voix n’y sont gardés. Il reste dans le navigateur et n’est jamais envoyé.
+        <span class="voice-wipe" id="voice-wipe" hidden><button type="button" id="voice-forget">Effacer le réglage de la voix</button> <span id="voice-state"></span></span></li>
       <li><strong>Les réglages</strong> (instrument, niveau, xylophone ou micro) et <strong>le meilleur nombre d’étoiles</strong> de chaque comptine, gardés dans le navigateur (stockage local). Le site n’utilise aucun cookie.</li>
     </ul>
     <h3>Le suivi des parties, pour le professeur</h3>
@@ -121,6 +127,7 @@ dd { margin: 0; min-width: 0; }
     <ul>
       <li>Comptines traditionnelles du domaine public.</li>
       <li>Sons d’instruments enregistrés : VSCO 2 Community Edition, VCSL et Weresax (Karoryfer), licence CC0 ; Sonatina Symphonic Orchestra, licence CC Sampling Plus 1.0.</li>
+      <li>Reconnaissance des noms chantés : modèles par défaut tirés des voix de synthèse du logiciel libre eSpeak NG (licence GPL v3).</li>
       <li>Polices Gluten et Andika, licence SIL Open Font License 1.1, livrées avec la page.</li>
       <li>Décors 3D de la version en laine : bibliothèque three.js, licence MIT.</li>
       <li>Le code du site est consultable sur <a href="https://github.com/romaingaudet-maker/notes-envolees" target="_blank" rel="noopener">GitHub</a>.</li>
@@ -202,7 +209,8 @@ const Suivi = (() => {
    Les Notes Envolées — page des mentions légales (mentions-legales.html)
    - « Retour au jeu » ramène à la version d'où l'on vient (papier ou laine) ;
    - la case coupe ou rétablit le suivi sur cet appareil (Suivi.exclude) ;
-   - le code de l'appareil est celui que montre la page de suivi du professeur.
+   - le code de l'appareil est celui que montre la page de suivi du professeur ;
+   - le réglage de la voix, s'il y en a un, peut être effacé.
    Cette page n'envoie rien.
 ------------------------------------------------------------------- */
 (() => {
@@ -232,6 +240,19 @@ const Suivi = (() => {
   }
   box.addEventListener('change', () => { Suivi.exclude(box.checked); paint(box.checked); });
   paint();
+
+  // le réglage de la voix (« Régler ma voix »), gardé dans ce navigateur : on peut l'effacer
+  const VK = (window.NE_NS || '') + 'notes-envolees-voix';
+  const has = () => { try { return !!localStorage.getItem(VK); } catch (e) { return false; } };
+  const wipe = $('voice-wipe'), vstate = $('voice-state');
+  if (wipe && has()) {
+    wipe.hidden = false;
+    $('voice-forget').addEventListener('click', () => {
+      try { localStorage.removeItem(VK); } catch (e) { /* stockage indisponible */ }
+      $('voice-forget').hidden = true;
+      vstate.textContent = has() ? 'Ce navigateur n’a pas pu l’effacer.' : 'Réglage de la voix effacé.';
+    });
+  }
 })();
 
 </script>

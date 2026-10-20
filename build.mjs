@@ -20,7 +20,7 @@ const fontsCss = '/* Gluten (c) 2020 The Gluten Project Authors ; Andika (c) 200
   font('Andika', 400, 'andika-latin-400-normal.woff2'), font('Andika', 700, 'andika-latin-700-normal.woff2'),
 ].join('\n');
 const css = fontsCss + '\n' + ['_base.css', '_controls.css', '_scenes1.css', '_scenes2.css', '_motion.css'].map(r).join('\n');
-const js = ['songs.js', 'audio.js', 'ear.js', 'rythme.js', 'scenes.js', 'scenes2.js', 'suivi.js', 'app.js'].map(r).join('\n');
+const js = ['songs.js', 'audio.js', 'voix-modeles.js', 'ear.js', 'rythme.js', 'scenes.js', 'scenes2.js', 'suivi.js', 'app.js'].map(r).join('\n');
 const shell = r('shell.html');
 const fill = (t, c = css, j = js) => t.replace('/*__CSS__*/', () => c).replace('/*__JS__*/', () => j);
 const page = fill(shell);
@@ -96,7 +96,7 @@ write('suivi.html', prof);
   ].join('\n') + '\n})();';
   const three = rl('vendor/three.min.js');
   const css2 = css + '\n' + rl('laine.css');
-  const js2 = ['songs.js', 'audio.js', 'ear.js', 'rythme.js', 'scenes.js', 'scenes2.js', 'suivi.js'].map(r).join('\n') + '\n' + laineJs + '\n' + r('app.js');
+  const js2 = ['songs.js', 'audio.js', 'voix-modeles.js', 'ear.js', 'rythme.js', 'scenes.js', 'scenes2.js', 'suivi.js'].map(r).join('\n') + '\n' + laineJs + '\n' + r('app.js');
   const lshell = rl('shell.html');
   const ONLINE = 'https://romaingaudet-maker.github.io/notes-envolees/laine/';
   const lfill = (t, pre) => t.replace('/*__CSS__*/', () => css2).replace('/*__PRE__*/', () => pre).replace('/*__THREE__*/', () => three).replace('/*__JS__*/', () => js2);
