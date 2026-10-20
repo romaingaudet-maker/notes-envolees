@@ -158,6 +158,7 @@
   // 'oui', 'non' (un autre nom, nettement) ou null (pas de syllabe, ou la reconnaissance hésite)
   const nameSaid = (syl, midi) => (syl ? PitchKit.sayMatch(syl, sylOf(midi), syl.user) : null);
   let defVoice = null;
+  const hasMyVoice = () => { try { return !!localStorage.getItem(VOICE_KEY); } catch (e) { return false; } };
   function myVoice() {
     try { const v = JSON.parse(localStorage.getItem(VOICE_KEY) || 'null'); return v && v.m ? PitchKit.unpackModels(v) : null; } catch (e) { return null; }
   }
@@ -165,7 +166,7 @@
     if (!singing() || typeof VOIX_MODELES === 'undefined') { Ear.setVoice(null); return; }
     if (!defVoice) defVoice = PitchKit.unpackModels(VOIX_MODELES);
     const mine = G && G.cal ? null : myVoice();
-    Ear.setVoice(mine ? Object.fromEntries(PitchKit.SYL.map((s) => [s, [...(mine[s] || []), ...defVoice[s]]])) : defVoice, !!mine);
+    Ear.setVoice(defVoice, mine);
   }
   const earText = () => (inst().sing
     ? (G && G.level === 2 ? 'La page écoute ta voix avec le micro : chante chaque note en disant son nom, puis elle vérifie les notes et le rythme.' : 'La page écoute ta voix avec le micro : chante chaque note en disant son nom (do, ré, mi…).')
@@ -179,58 +180,68 @@
     if (el.earText) el.earText.textContent = earText();
     el.instChip.hidden = v;
     el.bCal.hidden = !v || (Ear.active() && !Ear.voiceOk());
+    el.bCal.classList.toggle('is-ready', v && !hasMyVoice() && !(G && G.cal));
   }
 
   /* « Régler ma voix » : la page joue do, ré, mi… jusqu'à si ; l'élève chante chaque note en disant son nom */
   const CAL_PCS = [0, 2, 4, 5, 7, 9, 11];
   const calStopBtn = '<button class="mini hint-btn" type="button" data-act="cal-stop">Arrêter</button>';
-  function calStart() {
+  // first : proposé avant le premier essai (sinon, l'élève a touché « Régler »)
+  function calStart(first) {
     if (!G || !singing()) return;
-    if (!Ear.active()) { startMic().then(() => { if (G && Ear.active() && !G.cal) calStart(); }); return; }
+    if (!Ear.active()) { startMic().then(() => { if (G && Ear.active() && !G.cal) calStart(first); }); return; }
     if (!Ear.voiceOk()) { setHint('Ce navigateur ne me laisse pas reconnaître les noms chantés : je vérifie seulement la hauteur.', ''); return; }
     G.acts++;
     cancelAttempt(true);
     stopPlayback(true);
-    G.cal = { i: 0, seqs: {} };
+    G.cal = { i: 0, seqs: {}, first: !!first };
     applyVoice();
+    voiceUI();
+    if (first) {
+      setHint(`D’abord, la page apprend ta voix${NB}: chante chaque note en disant son nom ${calStopBtn}`, '');
+      later(() => { if (G && G.cal && G.cal.i === 0) calStep(); }, 2200);
+      return;
+    }
     calStep();
   }
   function calStep() {
     const c = G && G.cal;
     if (!c) return;
     const pc = CAL_PCS[c.i], L = PC_LETTER[pc];
+    c.on = true;
     Ear.expect(pc);
     Sound.tap(voiceNow(), 60 + pc, 0.9);
     setHint(`Réglage ${c.i + 1}/7${NB}: chante ${chip(L, NOTE_FR[L])} en disant «${NB}${SYL_FR[PitchKit.SYL[c.i]]}${NB}» ${calStopBtn}`, '');
   }
   function calHit(hit) {
     const c = G.cal, pc = CAL_PCS[c.i], L = PC_LETTER[pc];
-    if (!hit.seq || !hit.seq.length) return;
-    const d = Math.abs(mod12(hit.r) - pc), want = PitchKit.SYL[c.i];
+    if (!hit.seq || !hit.seq.length || !c.on) return; // pas avant que la page ait joué la première note
+
+    const want = PitchKit.SYL[c.i];
     const again = '<button class="mini hint-btn" type="button" data-act="cal-again">Réécouter</button>';
-    if (Math.min(d, 12 - d) > 1) { // le timbre compte, pas la justesse : un demi-ton près suffit
+    // la bonne note (à l'octave près) : sinon, ce pourrait être un autre nom (mi et fa, si et do sont voisins)
+    if (mod12(hit.r) !== pc) {
       retrigger(el.heard, 'is-wrong');
       setHint(`J’entends ${PC_FR[mod12(hit.r)]}, pas ${chip(L, NOTE_FR[L])} ${again} ${calStopBtn}`, 'down');
       return;
     }
-    if (PitchKit.sayMatch(hit.syl, want, false) === 'non') { // nettement un autre nom : on ne l'apprend pas
-      retrigger(el.heard, 'is-wrong');
-      setHint(`J’entends «${NB}${SYL_FR[hit.syl.best]}${NB}»${NB}: dis «${NB}${SYL_FR[want]}${NB}» ${again} ${calStopBtn}`, 'down');
-      return;
-    }
+    // on ne vérifie pas le nom avec les modèles par défaut : c'est justement quand ils reconnaissent mal
+    // la voix de l'élève que le réglage sert ; il chante le nom qu'on lui demande
     retrigger(el.heard, 'is-good');
-    c.seqs[PitchKit.SYL[c.i]] = hit.seq;
+    c.seqs[want] = hit.seq;
     if (++c.i < CAL_PCS.length) { later(() => { if (G && G.cal === c) calStep(); }, 650); return; }
     try { localStorage.setItem(VOICE_KEY, JSON.stringify(PitchKit.packModels(Object.fromEntries(PitchKit.SYL.map((s) => [s, [c.seqs[s]]]))))); } catch (e) { /* stockage indisponible : réglage pour cette visite seulement */ }
     G.cal = null;
     applyVoice();
+    voiceUI();
     expectNext();
-    setHint('Ta voix est réglée : la page reconnaît mieux les noms que tu chantes.', 'ok');
+    setHint(`Ta voix est réglée${NB}! Touche «${NB}${GO}${NB}»`, 'ok');
   }
   function calStop() {
     if (!G || !G.cal) return;
     G.cal = null;
     applyVoice();
+    voiceUI();
     expectNext();
     idleHint();
   }
@@ -344,7 +355,7 @@
         </section>
         <p class="home-foot">${Suivi.configured
           ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré sans nom, avec l’adresse IP de la connexion, et effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
-          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute (au niveau 2, le décompte). Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0). Reconnaissance des noms chantés : modèles tirés des voix de synthèse eSpeak NG.<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
+          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute (au niveau 2, le décompte). Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0). Reconnaissance des noms chantés : modèles tirés des voix de synthèse Kokoro (licence Apache 2.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
       </div>
     </main>`;
     app.querySelector('#home-inst').addEventListener('change', (e) => setInst(e.target.value));
@@ -715,6 +726,9 @@
     const q = G.view;
     let html = `Touche «${NB}${GO}${NB}»`, cls = '', ready = false;
     if (G.stage === 'whole') html = G.level === 2 ? 'Toute la comptine, en rythme' : 'Toute la comptine, sans aide';
+    // la voix pas encore réglée : on le propose avant le premier essai
+    const fresh = !G.found.size && !G.passed.size && !G.errors && !G.fails;
+    if (singing() && !hasMyVoice() && fresh && !G.calAsked) html = `Touche «${NB}${GO}${NB}»${NB}: d’abord, la page apprend ta voix`;
     else if (G.stage === 'review' && G.queue.includes(q) && !isDone(q)) { html = `À revoir${NB}: phrase ${q + 1}`; cls = 'up'; ready = true; }
     else if (isDone(q)) { html = `Phrase ${q + 1} ${G.level === 2 ? 'réussie' : 'retrouvée'}${NB}!`; cls = 'ok'; }
     setHint(html, cls);
@@ -753,7 +767,9 @@
 
   function goAttempt(sc) {
     if (!G || G.done) return;
-    if (G.cal) { G.cal = null; applyVoice(); }
+    if (G.cal) { G.cal = null; applyVoice(); voiceUI(); }
+    // la voix jamais réglée sur cet appareil : le premier essai commence par « Régler ma voix » (on peut l'arrêter)
+    if (singing() && !hasMyVoice() && !G.calAsked) { G.calAsked = true; calStart(true); return; }
     cancelAttempt(true);
     stopPlayback(true); // une écoute en cours : on revient d'abord où l'on en était
     if (settings.mode === 'mic' && !Ear.active()) {
@@ -961,7 +977,8 @@
   let heardSyl = null; // la dernière syllabe reconnue, montrée un instant sous la note entendue
   function heardNote(hit) {
     if (!G || settings.mode !== 'mic') return;
-    if (hit.syl) heardSyl = { s: hit.syl.best, pc: mod12(hit.r), t: performance.now() };
+    // seulement un nom dont la reconnaissance est sûre (nettement plus proche que tous les autres)
+    if (hit.syl) heardSyl = PitchKit.SYL.every((s) => s === hit.syl.best || PitchKit.sayMatch(hit.syl, s, hit.syl.user) === 'non') ? { s: hit.syl.best, pc: mod12(hit.r), t: performance.now() } : null;
     if (G.cal) { calHit(hit); return; }
     if (G.take) { recordNote({ t: (hit.t != null ? hit.t : Sound.now()) - Sound.outLatency() - 0.03, written: hit.r - inst().off, syl: hit.syl }); return; }
     if (G.done || G.level === 2 || !G.live || G.cnt) return;
@@ -1768,9 +1785,9 @@
       fitDone();
     }));
     app.querySelector('#mic-on').addEventListener('click', startMic);
-    el.bCal.addEventListener('click', calStart);
+    el.bCal.addEventListener('click', () => calStart(false));
     el.hint.addEventListener('click', (ev) => {
-      if (ev.target.closest('[data-act="cal-stop"]')) calStop();
+      if (ev.target.closest('[data-act="cal-stop"]')) { G.acts++; calStop(); }
       else if (ev.target.closest('[data-act="cal-again"]') && G && G.cal) calStep();
     });
     app.querySelector('#mic-off').addEventListener('click', () => { micWanted = false; Ear.stop(); showEar(false); });

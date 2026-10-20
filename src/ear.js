@@ -217,9 +217,12 @@ const PitchKit = (() => {
           const lo = L >= 2 ? Math.min(k[L - 2], k[L - 1]) : 0;
           const restrike = !T.voice && !h.ring && run >= 5 && rms > lo * 1.3 && rms > gate * 1.3;
           // flûte, voix… : un creux puis une remontée (coup de langue, nouvelle attaque)
-          if (!h.armed && rms < h.peak * 0.55) { h.armed = true; h.min = rms; }
+          // la voix : un vrai creux (la consonne entre deux syllabes, ~10 dB sous le volume des trames juste
+          // avant), pas l'ondulation du vibrato ni la voyelle tenue plus doucement que l'attaque
+          const ref = T.voice ? (L ? Math.max(...k.slice(-6)) : rms) : h.peak;
+          if (!h.armed && rms < ref * (T.voice ? 0.3 : 0.55)) { h.armed = true; h.min = rms; }
           if (h.armed) h.min = Math.min(h.min, rms);
-          const dip = h.armed && rms > h.min * 1.8 && rms > gate * 1.3;
+          const dip = h.armed && rms > h.min * (T.voice ? 2.5 : 1.8) && rms > gate * 1.3;
           // une attaque entendue à l'instant (même hauteur juste après) : la même note, jouée de nouveau
           // Si c'est justement cette note qui est attendue de nouveau (Sol Sol Sol Sol), l'attaque suffit,
           // même plus douce que la précédente (le volume peut ne pas monter : l'étouffoir du piano coupe
@@ -228,7 +231,7 @@ const PitchKit = (() => {
           if (onT != null) { h.re = { t: onT, base: L ? k[L - 1] : rms, n: 0, k: T.expectPc === pc ? 0.75 : 1.1 }; T.on = null; }
           else if (restrike || dip) h.re = { t: now, base: restrike ? lo : h.min, n: 0, k: 1.15 };
         } else if (!h.re) {
-          if (!h.armed && rms < h.peak * 0.55) { h.armed = true; h.min = rms; }
+          if (!h.armed && rms < (T.voice && L ? Math.max(...k.slice(-6)) * 0.3 : h.peak * 0.55)) { h.armed = true; h.min = rms; }
           if (h.armed) h.min = Math.min(h.min, rms);
         }
         k.push(rms); if (k.length > 9) k.shift();
@@ -238,10 +241,12 @@ const PitchKit = (() => {
       const h = T.held;
       if (h) {
         h.re = null;
-        if (!h.armed && rms < h.peak * 0.55) { h.armed = true; h.min = rms; }
+        const ref = T.voice && h.lv && h.lv.length ? Math.max(...h.lv.slice(-6)) : h.peak;
+        if (!h.armed && rms < ref * (T.voice ? 0.3 : 0.55)) { h.armed = true; h.min = rms; }
         else if (h.armed) h.min = Math.min(h.min, rms);
       }
-      if (T.silent >= 3) { T.held = null; T.cand = null; }
+      // la voix : une voyelle tenue perd parfois sa hauteur deux ou trois trames (souffle) ; la note continue
+      if (T.silent >= (T.voice ? 5 : 3)) { T.held = null; T.cand = null; }
       return null;
     };
     T.hold = (pc, rms) => { remember(rms); T.held = pc == null ? null : { pc, peak: rms, min: rms, armed: false }; T.cand = null; T.silent = 0; };
@@ -300,16 +305,17 @@ const PitchKit = (() => {
 
   /* ---------- Les noms de notes chantés (la voix) ----------
      Chaque syllabe (do, ré, mi, fa, sol, la, si) est résumée par son timbre : les MFCC (enveloppe du
-     spectre sur l'échelle des mels), toutes les 10 ms, du dernier creux d'énergie dans les 0,15 s qui
-     précèdent le début de la note chantée jusqu'à 0,15 s après : la consonne d'attaque (d, r, m, f, s, l)
-     puis la voyelle (o, é, i, a). On la compare
-     à des modèles par alignement souple (DTW, qui tolère qu'on chante plus vite ou plus lentement).
-     Les modèles : ceux de l'élève (« Régler ma voix ») ou, sans réglage, des modèles par défaut. */
+     spectre sur l'échelle des mels), toutes les 20 ms, du dernier creux d'énergie dans les 0,15 s qui
+     précèdent le début de la note chantée jusqu'à 0,35 s après (ou la note suivante) : la consonne
+     d'attaque (d, r, m, f, s, l) puis la voyelle tenue (o, é, i, a). On la compare à des modèles par
+     alignement souple (DTW, qui tolère qu'on chante plus vite ou plus lentement).
+     Les modèles par défaut viennent d'une cinquantaine de voix de synthèse neuronales (Kokoro) chantées à hauteur fixe ;
+     ceux de l'élève (« Régler ma voix ») s'y ajoutent, et rendent la reconnaissance bien plus sûre. */
   const SYL = ['do', 're', 'mi', 'fa', 'sol', 'la', 'si'];
   const SYL_PC = { 0: 'do', 2: 're', 4: 'mi', 5: 'fa', 7: 'sol', 9: 'la', 11: 'si' };
-  const SYL_PRE = 0.15, SYL_POST = 0.15;
+  const SYL_PRE = 0.15, SYL_POST = 0.35;
   const NFFT = 2048, NB = 24, NC = 12;
-  let fRe = null, fIm = null, bank = null;
+  let fRe = null, fIm = null;
   function power(w) { // spectre de puissance (FFT radix 2 sur NFFT points)
     if (!fRe) { fRe = new Float64Array(NFFT); fIm = new Float64Array(NFFT); }
     const re = fRe, im = fIm, N = NFFT;
@@ -336,10 +342,13 @@ const PitchKit = (() => {
     for (let i = 0; i < N / 2; i++) P[i] = re[i] * re[i] + im[i] * im[i];
     return P;
   }
-  function melBank(sr) {
-    if (bank && bank.sr === sr) return bank;
+  // warp : le banc de filtres glissé en fréquence (×warp), pour une voix au conduit vocal plus court ou plus long
+  const banks = {};
+  function melBank(sr, warp = 1) {
+    const key = sr + ':' + warp;
+    if (banks[key]) return banks[key];
     const mel = (f) => 2595 * Math.log10(1 + f / 700), imel = (m) => 700 * (Math.pow(10, m / 2595) - 1);
-    const lo = mel(80), hi = mel(7000), bin = sr / NFFT;
+    const lo = mel(80 * warp), hi = mel(7000 * warp), bin = sr / NFFT;
     const edges = Array.from({ length: NB + 2 }, (_, i) => imel(lo + ((hi - lo) * i) / (NB + 1)));
     const f = [];
     for (let b = 0; b < NB; b++) {
@@ -350,12 +359,11 @@ const PitchKit = (() => {
       }
       f.push(w);
     }
-    bank = { sr, f };
-    return bank;
+    return (banks[key] = { sr, f });
   }
-  // MFCC de x[from…to[ : un tableau de trames (Float32Array de NC coefficients)
-  function mfcc(x, sr, from, to) {
-    const win = Math.round(0.025 * sr), hop = Math.round(0.01 * sr), B = melBank(sr).f, out = [];
+  // MFCC de x[from…to[ : un tableau de trames (Float32Array de NC coefficients), fenêtres de 25 ms toutes les 20 ms
+  function mfcc(x, sr, from, to, warp = 1) {
+    const win = Math.round(0.025 * sr), hop = Math.round(0.02 * sr), B = melBank(sr, warp).f, out = [];
     const w = new Float64Array(Math.min(win, NFFT)), e = new Float64Array(NB);
     for (let s = Math.max(1, from); s + w.length <= Math.min(x.length, to); s += hop) {
       for (let i = 0; i < w.length; i++) w[i] = (x[s + i] - 0.97 * x[s + i - 1]) * (0.54 - 0.46 * Math.cos((2 * Math.PI * i) / (w.length - 1)));
@@ -391,14 +399,17 @@ const PitchKit = (() => {
     }
     return prev[m] / (n + m);
   }
-  // models : { do: [séquence, …], re: […], … } → { best, d: { do: distance, … } }
-  function nearest(seq, models) {
+  /* seqs : la syllabe chantée, telle quelle puis vue par des bancs de filtres glissés (sylSeqs) ; models : les
+     modèles par défaut { do: [séquence, …], … }, comparés à toutes ces vues (des voix de toutes tailles) ;
+     mine : ceux de l'élève (« Régler ma voix »), comparés à la syllabe telle quelle. → { best, d: { do: distance, … } } */
+  function nearest(seqs, models, mine) {
+    if (seqs && seqs.length && !Array.isArray(seqs[0])) seqs = [seqs]; // une seule séquence
     const d = {};
     let best = null;
     for (const s of SYL) {
-      const list = models[s] || [];
       let v = Infinity;
-      for (const t of list) v = Math.min(v, dtw(seq, t));
+      for (const t of (models && models[s]) || []) for (const q of seqs) v = Math.min(v, dtw(q, t));
+      for (const t of (mine && mine[s]) || []) v = Math.min(v, dtw(seqs[0], t));
       d[s] = v;
       if (best == null || v < d[best]) best = s;
     }
@@ -409,7 +420,7 @@ const PitchKit = (() => {
   function sayMatch(syl, want, strict) {
     if (!syl || !want || !isFinite(syl.d[want])) return null;
     if (syl.best === want) return 'oui';
-    return syl.d[want] > syl.d[syl.best] * (strict ? 1.12 : 1.25) ? 'non' : null;
+    return syl.d[want] > syl.d[syl.best] * (strict ? 1.2 : 1.3) ? 'non' : null;
   }
   // modèles rangés en texte (base64 d'entiers sur 8 bits, une échelle commune)
   function packModels(models) {
@@ -438,16 +449,17 @@ const PitchKit = (() => {
     return out;
   }
 
-  // la fenêtre de la syllabe d'une note commencée à « on » (s) ; prev : début de la note d'avant (ou -1).
-  // Pas trop loin avant : la fin de la note précédente n'est pas la consonne de celle-ci.
-  function sylWindow(on, prev) {
+  /* La fenêtre de la syllabe d'une note commencée à « on » (s) ; prev : début de la note d'avant (ou -1),
+     next : début de la note suivante si elle est déjà là. Pas trop loin avant : la fin de la note précédente
+     n'est pas la consonne de celle-ci ; et pas au-delà de la note suivante (notes brèves). */
+  function sylWindow(on, prev, next) {
     const pre = Math.max(0.05, Math.min(SYL_PRE, prev >= 0 ? on - prev - 0.12 : SYL_PRE));
-    return [on - pre, on + SYL_POST];
+    return [on - pre, next != null ? Math.max(on + 0.1, Math.min(on + SYL_POST, next - 0.02)) : on + SYL_POST];
   }
   /* Les MFCC de la syllabe d'une note commencée à l'échantillon « on », dans la fenêtre [a, b[ :
      on laisse de côté ce qui précède le dernier creux d'énergie avant la note (le silence, ou la fin
      de la note d'avant quand on enchaîne), pour garder la consonne d'attaque et la voyelle. */
-  function sylSeq(x, sr, a, on, b) {
+  function sylSeq(x, sr, a, on, b, warp = 1) {
     a = Math.max(1, a); on = Math.max(a, Math.min(on, x.length));
     const hop = Math.round(0.01 * sr), E = [];
     for (let s = a; s + hop <= on; s += hop) { let e = 0; for (let i = s; i < s + hop; i++) e += x[i] * x[i]; E.push(e); }
@@ -456,10 +468,13 @@ const PitchKit = (() => {
       let mn = Infinity; for (const e of E) mn = Math.min(mn, e);
       for (let i = E.length - 1; i >= 0; i--) if (E[i] <= mn * 2 + 1e-12) { cut = a + i * hop; break; }
     }
-    return mfcc(x, sr, cut, b);
+    return mfcc(x, sr, cut, b, warp);
   }
+  // la syllabe telle quelle, puis vue par des bancs glissés (voix plus grave, voix plus aiguë : enfant…)
+  const WARPS = [1, 0.9, 1.1];
+  const sylSeqs = (x, sr, a, on, b) => WARPS.map((w) => sylSeq(x, sr, a, on, b, w));
 
-  return { yin, makeTracker, makeOnset, gateOf, floorOf, NF0, FMIN, FMAX, SYL, SYL_PC, SYL_PRE, SYL_POST, mfcc, dtw, nearest, sayMatch, sylWindow, sylSeq, packModels, unpackModels };
+  return { yin, makeTracker, makeOnset, gateOf, floorOf, NF0, FMIN, FMAX, SYL, SYL_PC, SYL_PRE, SYL_POST, mfcc, dtw, nearest, sayMatch, sylWindow, sylSeq, sylSeqs, packModels, unpackModels };
 })();
 
 const Ear = (() => {
@@ -467,7 +482,7 @@ const Ear = (() => {
   const S = {
     on: false, stream: null, nodes: [], an: null, buf: null, timer: 0, sr: 48000, nf: PitchKit.NF0, gated: false, lastUi: 0, T: PitchKit.makeTracker(),
     mode: '', ring: null, fill: 0, tok: 0, onset: null,
-    // la voix : historique du son (1 s), notes en attente de leur syllabe, modèles des syllabes
+    // la voix : historique du son (1,5 s), notes en attente de leur syllabe, modèles des syllabes
     hist: null, hw: 0, ht: 0, wait: [], voice: null, lastOn: -1,
     // pour le diagnostic (?diag) : traitements du micro, trames par seconde, retard du traitement
     dg: { proc: null, frames: 0, since: 0, fps: 0, lag: 0, lagMax: 0, rms: 0, f: 0 },
@@ -559,7 +574,7 @@ registerProcessor('ne-ear', NeEar);`;
       node.port.onmessage = (ev) => feed(ev.data.x, ev.data.t);
       src.connect(node);
       node.connect(mute);
-      Object.assign(S, { mode: 'worklet', nodes: [src, node, mute], an: null, ring: new Float32Array(N), fill: 0, hist: new Float32Array(Math.round(ctx.sampleRate)), hw: 0, ht: 0, wait: [], lastOn: -1 });
+      Object.assign(S, { mode: 'worklet', nodes: [src, node, mute], an: null, ring: new Float32Array(N), fill: 0, hist: new Float32Array(Math.round(1.5 * ctx.sampleRate)), hw: 0, ht: 0, wait: [], lastOn: -1 });
     } else {
       const an = ctx.createAnalyser();
       an.fftSize = N;
@@ -590,7 +605,7 @@ registerProcessor('ne-ear', NeEar);`;
   // un morceau de son arrive du fil audio (t : instant de son dernier échantillon)
   function feed(x, t) {
     if (!S.on || !S.ring) return;
-    if (S.hist) { // l'historique : le son de la dernière seconde
+    if (S.hist) { // l'historique : le son des 1,5 dernières secondes
       const H = S.hist, L = H.length;
       for (let i = 0; i < x.length; i++) { H[S.hw] = x[i]; S.hw = (S.hw + 1) % L; }
       S.ht = t;
@@ -608,7 +623,7 @@ registerProcessor('ne-ear', NeEar);`;
     if (S.wait.length) settleSyllables();
   }
 
-  /* La voix : une note chantée attend d'avoir 0,15 s de son après son début, puis sa syllabe est
+  /* La voix : une note chantée attend d'avoir SYL_POST de son après son début (ou la note suivante), puis sa syllabe est
      reconnue et la note part, avec { syl : { best, d } } (l'instant de la note reste celui du début). */
   function sample(t0, t1) { // le son entre deux instants, pris dans l'historique
     const H = S.hist, L = H.length, n = Math.round((t1 - t0) * S.sr), back = Math.round((S.ht - t0) * S.sr);
@@ -620,16 +635,16 @@ registerProcessor('ne-ear', NeEar);`;
   }
   function settleSyllables() {
     while (S.wait.length) {
-      const w = S.wait[0];
-      if (S.ht < w.on + PitchKit.SYL_POST) return;
+      const w = S.wait[0], nx = S.wait[1];
+      const [t0, t1] = PitchKit.sylWindow(w.on, w.prev, nx ? nx.on : null);
+      if (S.ht < t1) return;
       S.wait.shift();
-      const [t0, t1] = PitchKit.sylWindow(w.on, w.prev);
       const x = sample(t0, t1);
       if (x && S.voice) {
-        const seq = PitchKit.sylSeq(x, S.sr, 0, Math.round((w.on - t0) * S.sr), x.length);
-        const syl = PitchKit.nearest(seq, S.voice.models);
-        w.hit.syl = { best: syl.best, d: syl.d, user: S.voice.user };
-        w.hit.seq = seq;
+        const seqs = PitchKit.sylSeqs(x, S.sr, 0, Math.round((w.on - t0) * S.sr), x.length);
+        const syl = PitchKit.nearest(seqs, S.voice.models, S.voice.mine);
+        w.hit.syl = { best: syl.best, d: syl.d, user: !!S.voice.mine };
+        w.hit.seq = seqs[0];
       }
       if (onNote) onNote(w.hit);
     }
@@ -701,8 +716,9 @@ registerProcessor('ne-ear', NeEar);`;
 
   return {
     start, stop, diag,
-    // la voix : models = { do: [séquences], … } ou null (pas de reconnaissance des noms) ; user : réglés par l'élève
-    setVoice: (models, user) => { S.voice = models ? { models, user: !!user } : null; S.wait = []; S.T.voice = !!models; },
+    // la voix : models = modèles par défaut { do: [séquences], … } ou null (pas de reconnaissance des noms) ;
+    // mine : ceux de l'élève (« Régler ma voix »), ou null
+    setVoice: (models, mine) => { S.voice = models ? { models, mine: mine || null } : null; S.wait = []; S.T.voice = !!models; },
     voiceOk: () => S.mode === 'worklet',
     active: () => S.on,
     expect: (pc) => { S.T.expectPc = pc; },

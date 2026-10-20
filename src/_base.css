@@ -507,7 +507,10 @@ a { color: inherit; }
 /* « À toi de jouer ! » proposé (phrases à revoir) : le bouton respire doucement */
 .btn-big.is-ready { animation: go-ready 1.6s ease-in-out infinite; }
 @keyframes go-ready { 0%, 100% { box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 62%, #000), 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 62%, #000), 0 0 0 9px color-mix(in srgb, var(--accent) 0%, transparent); } }
-@media (prefers-reduced-motion: reduce) { .btn-big.is-ready { animation: none; } }
+/* « Régler ma voix » pas encore fait : le petit bouton respire aussi */
+.mini.is-ready { border-color: var(--accent); color: var(--accent); animation: mini-ready 1.6s ease-in-out infinite; }
+@keyframes mini-ready { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 0%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .btn-big.is-ready, .mini.is-ready { animation: none; } }
 /* libellé double (« Tout écouter » / « Arrêter ») : le bouton a la largeur du plus long, rien ne se décale */
 .lbl2 { display: inline-grid; }
 .lbl2 > span { grid-area: 1 / 1; text-align: center; }
