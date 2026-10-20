@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 const ctx = { Math, Float32Array, console, performance: { now: () => 0 }, navigator: {}, Sound: {} };
 vm.runInNewContext(fs.readFileSync(new URL('../src/ear.js', import.meta.url), 'utf8') + '\nthis.PitchKit = PitchKit;', ctx);
-const { yin, makeTracker, gateOf, floorOf, NF0 } = ctx.PitchKit;
+const { yin, makeTracker, makeOnset, gateOf, floorOf, NF0 } = ctx.PitchKit;
 const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
 const N = 2048;
 let rnd = 1; const rand = () => ((rnd = (rnd * 1103515245 + 12345) % 2147483648) / 2147483648) * 2 - 1;
@@ -51,30 +51,35 @@ function render(sr, events, tail = 0.4) {
     for (let i = i0; i < i1; i++) {
       const t = (i - i0) / sr;
       const env = e.decay ? Math.exp(-t / e.decay) : Math.min(1, t / 0.02) * Math.min(1, (e.t + e.d - i / sr) / 0.02);
-      y[i] += 0.25 * LEVEL * env * TIMBRES[e.timbre || 'flûte à bec'](f, t);
+      y[i] += 0.25 * LEVEL * (e.gain || 1) * env * TIMBRES[e.timbre || 'flûte à bec'](f, t);
+      // bruit d'attaque : marteau du piano, médiator, coup de langue (quelques millisecondes)
+      if (e.hammer && t < 0.02) y[i] += 0.25 * LEVEL * (e.gain || 1) * e.hammer * Math.exp(-t / 0.004) * rand();
     }
   }
   for (let i = 0; i < y.length; i++) y[i] += NOISE * rand();
   return y;
 }
 function listen(sr, y, expectPc = null) {
-  const T = makeTracker(); T.expectPc = expectPc;
-  const hop = Math.round(0.028 * sr), got = [];
+  // expectPc : une note attendue pour tout le passage, ou la suite des notes attendues (comme pendant un essai)
+  const T = makeTracker(); const seq = Array.isArray(expectPc) ? expectPc : null; T.expectPc = seq ? seq[0] : expectPc;
+  const hop = Math.round(0.028 * sr), got = [], onset = makeOnset(sr);
   let nf = NF0;
   for (let s = 0; s + N <= y.length; s += hop) {
-    const x = y.subarray(s, s + N);
+    const x = y.subarray(s, s + N), now = (s + N) / sr;
     let ss = 0; for (let i = 0; i < N; i++) ss += x[i] * x[i];
     const rms = Math.sqrt(ss / N), gate = gateOf(nf);
-    const res = rms > gate ? yin(x, sr) : null;
+    const ago = onset(y.subarray(s === 0 ? 0 : s + N - hop, s + N), gate);
+    if (seq) T.expectPc = seq[Math.min(got.length, seq.length - 1)] % 12;
+    const res = rms > gate ? yin(x, sr, undefined, undefined, T.expectPc) : null;
     if (!res) nf = floorOf(nf, rms);
-    const hit = T.push(res, rms, gate);
+    const hit = T.push(res, rms, gate, now, ago == null ? null : now - ago);
     if (hit) got.push(hit.r);
   }
   return got;
 }
 const names = (a) => a.map((m) => ['Do', 'Do#', 'Ré', 'Mib', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 'La', 'Sib', 'Si'][m % 12] + (Math.floor(m / 12) - 1)).join(' ');
-function scenario(title, sr, events, expect) {
-  const got = listen(sr, render(sr, events));
+function scenario(title, sr, events, expect, attendu = null) {
+  const got = listen(sr, render(sr, events), attendu);
   const ok = got.join() === expect.join();
   if (!ok) fails++;
   console.log(`${ok ? '✓' : '✗'} ${title} → ${names(got)}${ok ? '' : '   (attendu ' + names(expect) + ')'}`);
@@ -121,6 +126,43 @@ scenario('tél. : piano, même note frappée deux fois', 48000, [{ m: 64, t: 0.2
   scenario('ordi : piano, « mais comme il n’y est pas »', 48000, ev, ph.map(([m]) => m));
   LEVEL = 0.01; NOISE = 0.00003;
 }
+{
+  // Pomme de reinette, 2e phrase : Sol3 Sol4 Sol3 Sol4 (sauts d'octave), au piano lié et à la flûte détachée
+  const ph = [[55, 0.5], [67, 0.5], [55, 0.5], [67, 0.5], [64, 1], [60, 1]], b = 60 / 88;
+  const mk = (timbre, ring, decay) => { let t0 = 0.2; return ph.map(([m, d]) => { const e = { m, t: t0, d: d * b * ring, decay, timbre }; t0 += d * b; return e; }); };
+  for (const lv of [0.01, 1]) {
+    LEVEL = lv; NOISE = lv === 1 ? 0.004 : 0.00003;
+    const who = lv === 1 ? 'ordi' : 'tél.';
+    scenario(`${who} : piano, sauts d'octave (Pomme de reinette)`, 48000, mk('piano/scie', 1.05, 0.6), ph.map(([m]) => m));
+    scenario(`${who} : flûte, sauts d'octave (Pomme de reinette)`, 48000, mk('flûte à bec', 0.85), ph.map(([m]) => m));
+  }
+  LEVEL = 0.01; NOISE = 0.00003;
+}
+{
+  // À la pêche aux moules, 1re phrase : Do Mi Do Mi Sol Sol Sol Sol (doubles croches) Sol Sol, à 88 à la noire
+  const ph = [[60, 0.5], [64, 0.5], [60, 0.5], [64, 0.5], [67, 0.25], [67, 0.25], [67, 0.25], [67, 0.25], [67, 0.5], [67, 0.5]], b = 60 / 88;
+  const mk = (timbre, ring, decay, hammer, g = [1]) => { let t0 = 0.2; return ph.map(([m, d], i) => { const e = { m, t: t0, d: d * b * ring, decay, timbre, hammer, gain: g[i % g.length] }; t0 += d * b; return e; }); };
+  const want = ph.map(([m]) => m);
+  for (const lv of [0.01, 1]) {
+    LEVEL = lv; NOISE = lv === 1 ? 0.004 : 0.00003;
+    const who = lv === 1 ? 'ordi' : 'tél.';
+    scenario(`${who} : piano, notes répétées (pêche aux moules)`, 48000, mk('piano/scie', 1.05, 0.6, 0.6), want);
+    {
+      // avec la pédale, les notes s'additionnent (accord) : comme pendant un essai, la page sait quelle note vient.
+      // On demande toutes les notes dans l'ordre, avec au plus 2 notes en trop (ce que le juge du rythme tolère ici)
+      const got = listen(48000, render(48000, mk('piano/scie', 1.8, 0.8, 0.6)), want);
+      let k = 0; for (const r of got) if (k < want.length && r % 12 === want[k] % 12) k++;
+      const ok = k === want.length && got.length - want.length <= 2; if (!ok) fails++;
+      console.log(`${ok ? '✓' : '✗'} ${who} : piano avec pédale, notes répétées → ${names(got)}${ok ? '' : '   (attendu ' + names(want) + ')'}`);
+    }
+    scenario(`${who} : piano, notes répétées sans bruit de marteau`, 48000, mk('piano/scie', 1.05, 0.6, 0), want);
+    scenario(`${who} : flûte, notes répétées liées (coups de langue)`, 48000, mk('flûte à bec', 0.88, 0, 0.15), want);
+    // pendant un essai, la page sait que la même note est attendue : une note rejouée plus doucement compte aussi
+    // (l'étouffoir retombe un instant avant la nouvelle frappe)
+    scenario(`${who} : piano, notes répétées, une forte une douce`, 48000, mk('piano/scie', 0.9, 0.6, 0.6, [1, 0.6]), want, want);
+  }
+  LEVEL = 0.01; NOISE = 0.00003;
+}
 scenario('tél. : glockenspiel, coups brefs', 48000, [72, 76, 79, 84].map((m, i) => ({ m, t: 0.2 + i * 0.35, d: 0.3, decay: 0.12, timbre: 'glockenspiel' })), [72, 76, 79, 84]);
 {
   // et rien dans le silence d'un téléphone (souffle du micro seul)
@@ -159,6 +201,13 @@ function renderFn(sr, dur, fn) { const y = new Float32Array(Math.ceil(dur * sr))
   const got = listen(sr, y, 7); const ok = got.join() === '67'; if (!ok) fails++;
   console.log(`${ok ? '✓' : '✗'} flûte tenue avec trémolo → ${names(got)}`);
 }
+// un bruit sec (objet posé, toux) pendant une note tenue, alors que cette même note est attendue ensuite : une seule note
+{
+  const sr = 48000;
+  const y = renderFn(sr, 1.6, (t) => (t < 0.2 || t > 1.4 ? 0 : 0.2 * Math.min(1, (t - 0.2) / 0.04) * TIMBRES['flûte à bec'](hz(67), t)) + (t > 0.8 && t < 0.815 ? 0.12 * Math.exp(-(t - 0.8) / 0.003) * rand() : 0));
+  const got = listen(sr, y, [67, 67]); const ok = got.join() === '67'; if (!ok) fails++;
+  console.log(`${ok ? '✓' : '✗'} bruit sec pendant une note tenue → ${names(got)}`);
+}
 // micro de téléphone : fondamentale presque absente, la hauteur trouvée saute d'une octave d'une trame à l'autre
 {
   const T = makeTracker(); const got = [];
@@ -173,18 +222,31 @@ function renderFn(sr, dur, fn) { const y = new Float32Array(Math.ceil(dur * sr))
   const got = listen(sr, y, 0); const ok = got.length === 1 && got[0] % 12 === 0; if (!ok) fails++;
   console.log(`${ok ? '✓' : '✗'} grave sans fondamentale (Do3) → ${names(got)}`);
 }
+{
+  // la note attendue n'est jamais « entendue » à la place d'une autre jouée seule
+  // (toutes les paires de notes de la gamme, la note attendue à trois octaves, trois timbres)
+  const scale = [60, 62, 64, 65, 67, 69, 71]; let bad = 0, n = 0; const wrongs = [];
+  for (const timbre of ['flûte à bec', 'clarinette', 'piano/scie']) for (const p of scale) for (const e of scale) for (const o of [-12, 0, 12]) {
+    if (p === e) continue;
+    const got = listen(48000, render(48000, [{ m: p, t: 0.3, d: 0.5, timbre, decay: timbre === 'piano/scie' ? 0.6 : 0 }]), (e + o) % 12);
+    n++; if (got.length !== 1 || got[0] % 12 !== p % 12) { bad++; if (wrongs.length < 6) wrongs.push(`${timbre} ${names([p])} (attendu ${names([e + o])}) → ${names(got)}`); }
+  }
+  const ok = bad === 0; if (!ok) fails++;
+  console.log(`${ok ? '✓' : '✗'} note attendue jamais prise pour une autre : ${n - bad}/${n}${wrongs.length ? '\n    ' + wrongs.join('\n    ') : ''}`);
+}
 console.log(fails ? `\n${fails} échec(s) au total` : '\nCas difficiles : tout passe.');
 
 // ---- la page vient de jouer : l'écoute reprend avant la fin de sa dernière note ----
 // gateUntil : fin de la coupure ; ring : hauteurs de la page qui résonnent [{ pc, until }]
 function listenAfterPage(sr, y, gateUntil, ring) {
   const T = makeTracker();
-  const hop = Math.round(0.028 * sr), got = [];
+  const hop = Math.round(0.028 * sr), got = [], onset = makeOnset(sr);
   let nf = NF0, gated = true;
   for (let s = 0; s + N <= y.length; s += hop) {
     const x = y.subarray(s, s + N), now = (s + N) / sr;
     let ss = 0; for (let i = 0; i < N; i++) ss += x[i] * x[i];
     const rms = Math.sqrt(ss / N);
+    const ago = onset(y.subarray(s === 0 ? 0 : s + N - hop, s + N), gateOf(nf));
     if (now < gateUntil) { T.hold(null, rms); continue; }
     if (gated) { gated = false; T.hold(null, rms); }
     const live = ring.filter((r) => r.until > now);
@@ -192,7 +254,7 @@ function listenAfterPage(sr, y, gateUntil, ring) {
     const gate = gateOf(nf);
     const res = rms > gate ? yin(x, sr) : null;
     if (!res) nf = floorOf(nf, rms);
-    const hit = T.push(res, rms, gate, now);
+    const hit = T.push(res, rms, gate, now, ago == null ? null : now - ago);
     if (hit) got.push(hit);
   }
   return got;
