@@ -1077,7 +1077,10 @@ const Suivi = (() => {
       out.push(`${starIcons(b)}${ep.fins.length > 1 ? ` <span class="x">${ep.fins.length} fois</span>` : ''}`);
       out.push(`<small>${NF2.format(r)} ${unit(r, lv)} · ${dur(ep.fins.reduce((a, d) => a + num(d.duree), 0) / ep.fins.length)}</small>`);
     } else if (b) out.push(`${starIcons(b)}<small>avant le suivi</small>`);
-    if (ep && ep.bilans.some((d) => d.reussi)) out.push(`<small class="ok">✓ toute la comptine en rythme${ep.bilans.some((d) => d.parfait) ? ', parfaite' : ''}</small>`);
+    // toute la comptine d'un coup : les notes seules, sans aide (niveau 1, « notes ») ou en rythme (niveau 2)
+    const plain = ep ? ep.bilans.filter((d) => d.notes) : [], rhythm = ep ? ep.bilans.filter((d) => !d.notes) : [];
+    if (plain.some((d) => d.reussi)) out.push('<small class="ok">✓ toute la comptine d’un coup, sans erreur</small>');
+    if (rhythm.some((d) => d.reussi)) out.push(`<small class="ok">✓ toute la comptine en rythme${rhythm.some((d) => d.parfait) ? ', parfaite' : ''}</small>`);
     if (ep && ep.sorties.length) {
       const last = ep.sorties[ep.sorties.length - 1].d;
       out.push(`<small class="warn">${plural(ep.sorties.length, 'abandon', 'abandons')}${!ep.fins.length && num(last.sur) ? ` (arrêté à ${NF0.format(num(last.fait))}/${NF0.format(num(last.sur))} ${lv === 2 ? 'phrases' : 'notes'})` : ''}</small>`);

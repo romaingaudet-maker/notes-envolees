@@ -499,3 +499,9 @@ a { color: inherit; }
   .xylo { --kh: 90px; gap: 3px; }
   .key .kn { font-size: 13px; }
 }
+
+/* jouer la comptine : phrase par phrase, ou toute la comptine d'un coup (puis les phrases à revoir) */
+.card .seg-play { align-self: stretch; display: flex; }
+.seg-play button { flex: 1 1 0; justify-content: center; min-width: 0; white-space: nowrap; }
+.pill.is-redo { outline: 3px dashed #E5484D; outline-offset: 2px; }
+.song[data-stage="whole"] #b-to { display: none; }

@@ -83,7 +83,9 @@
   const SET_KEY = (window.NE_NS || '') + 'notes-envolees-reglages', REC_KEY = (window.NE_NS || '') + 'notes-envolees-etoiles';
   function load(k, dflt) { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v && typeof v === 'object' ? Object.assign(dflt, v) : dflt; } catch (e) { return dflt; } }
   function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } }
-  const settings = load(SET_KEY, { mode: 'xylo', inst: 'none', level: 1 });
+  // play : 'phrases' (phrase par phrase, avec de l'aide) ou 'whole' (toute la comptine d'un coup, puis les phrases à revoir)
+  const settings = load(SET_KEY, { mode: 'xylo', inst: 'none', level: 1, play: 'phrases' });
+  settings.play = settings.play === 'whole' ? 'whole' : 'phrases';
   if (OLD_INST[settings.inst]) settings.inst = OLD_INST[settings.inst];
   if (!INSTS[settings.inst]) settings.inst = 'none';
   if (settings.mode !== 'mic') settings.mode = 'xylo';
@@ -218,6 +220,7 @@
             <li><p>Écoute-la en entier, ou phrase par phrase avec le bouton rond. « Jusqu’à la note » rejoue le début de la phrase et s’arrête sur la note à trouver.</p></li>
             <li><p>La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec ton instrument, la page t’écoute au micro et te dit si la note est juste.</p></li>
             <li><p>Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée se pose à sa hauteur et le décor s’anime.</p></li>
+            <li><p>« Phrase par phrase » pour t’entraîner avec de l’aide, ou « Toute la comptine » d’un coup, sans aide : à la fin, la page te ramène sur les phrases à revoir.</p></li>
             <li><p>Niveau 2 : écoute l’exemple, puis « À toi ! ». Après le décompte (1, 2, 3, 4), joue toute la phrase en rythme ; la page vérifie ensuite chaque note et la place de chaque note dans le temps. Une phrase réussie, la suivante démarre toute seule, avec son décompte.</p></li>
           </ol>
           <div class="side-cards">
@@ -323,10 +326,13 @@
       slow: !!keepSlow, playing: null, done: false, keys: keysFor(song), lastStars: 0,
       // niveau 2
       passed: new Set(), fails: 0, tries: song.phrases.map(() => 0), take: null, results: [], moveTo: null, keepMic: false, fullRes: null,
+      // stage : 'whole' (toute la comptine d'un coup), 'review' (ensuite, les phrases à revoir), 'train' (phrase par phrase)
+      // miss : notes manquées pendant la comptine entière (niveau 1) ; queue : phrases à revoir ; acts : gestes de l'élève
+      stage: settings.play === 'whole' ? 'whole' : 'train', miss: new Set(), queue: [], acts: 0,
       // suivi : début de la partie (temps page visible), « lentement » utilisé, résultat déjà envoyé
       t0: Suivi.clock(), usedSlow: !!keepSlow, tracked: false,
     };
-    track('debut', { c: song.id, niveau: G.level });
+    track('debut', Object.assign({ c: song.id, niveau: G.level }, G.stage === 'whole' ? { entiere: true } : {}));
     const idx = LIB.indexOf(song);
     const next = LIB[(idx + 1) % LIB.length];
     const span = song.maxStep - song.minStep;
@@ -342,12 +348,12 @@
     const pills = song.phrases.map((ph, p) => `<li><button class="pill" type="button" data-p="${p}" aria-label="Phrase ${p + 1}">${p + 1}</button></li>`).join('');
     const keys = G.keys.map((k, i) => `<button class="key" type="button" data-i="${i}" data-l="${k.letter}" style="--k:${(1 - i * 0.042).toFixed(3)}" aria-label="${k.fr}${k.octave === 3 ? ' grave' : k.octave === 5 ? ' aigu' : ''}"><span class="kn${k.octave === 3 ? ' low' : k.octave === 5 ? ' high' : ''}">${k.fr}</span><span class="kk" aria-hidden="true">${keyLabels[i] || ''}</span></button>`).join('');
     const listen = lv2
-      ? `<button class="btn-big" id="b-go" type="button" aria-pressed="false"><span class="ic">${ICON.metro}</span><span class="lbl">À toi, en rythme !</span></button>
-          <button class="btn" id="b-all" type="button"><span class="ic">${ICON.play}</span><span class="lbl">Toute la comptine</span></button>`
-      : `<button class="btn-big" id="b-all" type="button"><span class="ic">${ICON.play}</span><span class="lbl">Toute la comptine</span></button>
+      ? `<button class="btn-big" id="b-go" type="button" aria-pressed="false"><span class="ic">${ICON.metro}</span><span class="lbl">${goLabel()}</span></button>
+          <button class="btn" id="b-all" type="button"><span class="ic">${ICON.play}</span><span class="lbl">${LISTEN_ALL}</span></button>`
+      : `<button class="btn-big" id="b-all" type="button"><span class="ic">${ICON.play}</span><span class="lbl">${LISTEN_ALL}</span></button>
           <button class="btn" id="b-to" type="button"><span class="q" aria-hidden="true">?</span><span class="lbl">Jusqu’à la note</span></button>`;
     app.innerHTML = `
-    <main class="song" data-mode="${settings.mode}" data-level="${G.level}">
+    <main class="song" data-mode="${settings.mode}" data-level="${G.level}" data-stage="${G.stage}">
       <section class="stage grain" aria-label="Décor : ${esc(nb(song.title))}">
         ${D.markup(song, info())}
         <div class="stage-bar">
@@ -368,6 +374,10 @@
           <button class="btn icon" id="b-slow" type="button" aria-pressed="${G.slow}" aria-label="Lentement" title="Lentement">${ICON.turtle}<span class="lbl">Lentement</span></button>
         </div>
         <section class="card" aria-label="Phrase en cours">
+          <div class="seg seg-play" role="radiogroup" aria-label="Jouer la comptine">
+            <button type="button" role="radio" data-play="phrases" aria-checked="${G.stage !== 'whole'}">Phrase par phrase</button>
+            <button type="button" role="radio" data-play="whole" aria-checked="${G.stage === 'whole'}">Toute la comptine</button>
+          </div>
           <div class="card-top">
             <ol class="strip" aria-label="Phrases">${pills}</ol>
             <p class="count" id="count"></p>
@@ -485,7 +495,9 @@
     const f = ph.notes.filter((m) => G.found.has(m)).length;
     const pill = el.pills[p];
     pill.style.setProperty('--f', (f / ph.notes.length).toFixed(3));
-    pill.classList.toggle('is-done', G.level === 2 ? G.passed.has(p) : f === ph.notes.length);
+    const complete = G.level === 2 ? G.passed.has(p) : f === ph.notes.length;
+    pill.classList.toggle('is-done', complete);
+    pill.classList.toggle('is-redo', G.queue.includes(p) && !complete);
     pill.classList.toggle('is-view', p === G.view);
     pill.setAttribute('aria-current', p === G.view ? 'step' : 'false');
   }
@@ -506,6 +518,7 @@
     hintSeq++;
     const h = el.hint;
     if (!h) return;
+    delete h.dataset.whole;
     h.className = 'hint' + (cls ? ' ' + cls : '');
     h.innerHTML = html;
     void h.offsetWidth;
@@ -515,6 +528,7 @@
   function cursorHint() {
     if (G.level === 2) { hint2(); return; }
     if (G.cursor == null) return;
+    if (G.stage === 'whole') { wholeHint(); return; }
     const note = G.song.notes[G.cursor];
     const mic = settings.mode === 'mic';
     if (G.song.given.has(G.cursor) || G.revealed.has(G.cursor)) {
@@ -567,6 +581,113 @@
     Ear.expect(mod12(G.song.notes[G.cursor].midi + inst().off));
   }
 
+  /* ---------- comptine entière, niveau 1 : toutes les notes dans l'ordre, sans aide ----------
+     Une note juste se pose ; une fausse note est comptée et on passe à la suivante.
+     À la fin : bilan par phrase, puis les phrases à revoir, l'une après l'autre (avec l'aide habituelle). */
+  const whichPh = (qs) => (qs.length === 1 ? 'la phrase ' + (qs[0] + 1) : 'les phrases ' + qs.slice(0, -1).map((q) => q + 1).join(', ') + ' et ' + (qs[qs.length - 1] + 1));
+
+  function wholeHint() {
+    const n = G.cursor, N = G.song.notes.length;
+    const html = n === 0 && !G.miss.size && !G.found.size
+      ? `Toute la comptine, sans aide : joue les ${N} notes dans l’ordre.`
+      : `Toute la comptine : note ${n + 1} sur ${N}`;
+    const h = el.hint;
+    if (h && h.dataset.whole) { hintSeq++; h.className = 'hint'; h.innerHTML = html; return; }
+    setHint(html, '');
+    if (h) h.dataset.whole = '1';
+  }
+
+  function wholeNote(ok, fromEl) {
+    const n = G.cursor, note = G.song.notes[n], bead = el.beads[n];
+    if (ok) {
+      G.found.add(n);
+      if (fromEl) retrigger(fromEl, 'is-good');
+      paintBead(n);
+      bead.style.opacity = '0';
+      flyTo(fromEl, bead, note, () => { bead.style.opacity = ''; retrigger(bead, 'pop'); });
+    } else {
+      G.errors++;
+      G.miss.add(n);
+      if (fromEl) retrigger(fromEl, 'is-wrong');
+      bead.classList.add('r-wrong');
+    }
+    paintCount();
+    paintPill(note.phrase);
+    const st = info();
+    D.update(el.stage, st);
+    if (ok) D.react(el.stage, 'correct', st);
+    if (n + 1 < G.song.notes.length) { setCursor(n + 1, true, true); return; }
+    setCursor(null);
+    endWhole();
+  }
+
+  function endWhole() {
+    const song = G.song, N = song.notes.length;
+    const status = song.phrases.map((ph) => (ph.notes.some((m) => G.miss.has(m)) ? 'bad' : 'ok'));
+    const bad = status.map((st, q) => (st === 'bad' ? q : -1)).filter((q) => q >= 0);
+    const right = N - G.miss.size;
+    const text = bad.length ? `${right} notes justes sur ${N}. À revoir : ${whichPh(bad)}.` : 'Toute la comptine, sans une erreur !';
+    G.fullRes = { pass: !bad.length, text, status, sum: bad.length ? `Toute la comptine d’un coup : ${right} notes justes sur ${N}.` : 'Toute la comptine d’un coup, sans une erreur !' };
+    track('bilan', { c: song.id, niveau: 1, notes: true, reussi: !bad.length, parfait: !bad.length, justes: right, sur: N, phrases: status.map((st) => (st === 'ok' ? 2 : 0)) });
+    G.queue = bad;
+    song.phrases.forEach((_, q) => paintPill(q));
+    setHint(text, bad.length ? 'up' : 'ok');
+    if (!bad.length) { D.react(el.stage, 'complete', info()); later(() => { if (G && !G.done) finish(); }, 900); return; }
+    // on part tout de suite sur la première note manquée ; le message du bilan reste un moment
+    setStage('review');
+    const n = song.phrases[bad[0]].notes.find((m) => !G.found.has(m));
+    setCursor(n, true, false);
+    laterHint(() => { if (G && G.cursor === n) { setHint(`À revoir : la phrase ${bad[0] + 1}`, ''); laterHint(() => { if (G && G.cursor === n) cursorHint(); }, 1500); } }, 2600);
+  }
+
+  /* niveau 2 : après toute la comptine, la première phrase à revoir démarre toute seule (décompte compris),
+     sauf si l'élève a fait autre chose entre-temps */
+  function enterReview(q, tok) {
+    if (!G || G.done || G.take || G.playing || G.stage !== 'review' || G.acts !== tok) return;
+    showPhrase(q);
+    startTake();
+  }
+
+  function setStage(stage) {
+    G.stage = stage;
+    el.main.dataset.stage = stage;
+    app.querySelectorAll('.seg-play [role="radio"]').forEach((b) => b.setAttribute('aria-checked', String((b.dataset.play === 'whole') === (stage === 'whole'))));
+    if (!G.take) setGoUI(false);
+  }
+
+  // nouvelle partie de la même comptine (go : au niveau 2, la comptine entière démarre tout de suite)
+  function newRound(kind, go) {
+    settings.play = kind;
+    save(SET_KEY, settings);
+    stopAll();
+    renderSong(G.song);
+    if (go && G.level === 2 && G.stage === 'whole') startTake();
+  }
+
+  // « Phrase par phrase » / « Toute la comptine »
+  function choosePlay(kind) {
+    if (!G || G.done) return;
+    if (kind === 'whole') {
+      if (G.stage === 'whole') return;
+      const fresh = !G.found.size && !G.passed.size && !G.errors && !G.fails && !G.revealed.size && !G.miss.size;
+      if (!fresh) { newRound('whole'); return; } // déjà commencée : la comptine entière repart de zéro
+      settings.play = 'whole';
+      save(SET_KEY, settings);
+      stopAll();
+      setStage('whole');
+      if (G.level === 2) hint2(); else setCursor(0);
+      return;
+    }
+    settings.play = 'phrases';
+    save(SET_KEY, settings);
+    if (G.stage === 'train') return;
+    const wasWhole = G.stage === 'whole';
+    if (wasWhole) stopAll(); // en pleine comptine entière : on garde ce qui est fait
+    setStage('train');
+    if (G.level === 2) { hint2(); return; }
+    if (wasWhole) setCursor(nextUnfound(G.cursor != null ? G.cursor : 0));
+  }
+
   /* ---------------- réponses ---------------- */
   function pressKey(i) {
     if (!G || !G.keys[i]) return;
@@ -581,6 +702,7 @@
     settle(false);
     if (G.cursor == null || G.done) return;
     const target = G.song.notes[G.cursor];
+    if (G.stage === 'whole') { wholeNote(key.midi === target.midi, k); return; }
     if (key.midi === target.midi) good(k, target);
     else {
       const up = target.midi > key.midi;
@@ -603,6 +725,12 @@
     settle(false);
     const written = hit.r - inst().off;
     const target = G.song.notes[G.cursor];
+    if (G.stage === 'whole') {
+      const ok = mod12(written) === mod12(target.midi);
+      if (ok) Ear.nudge(hit.cents);
+      wholeNote(ok, el.heard);
+      return;
+    }
     if (mod12(written) === mod12(target.midi)) {
       Ear.nudge(hit.cents);
       good(el.heard, target);
@@ -629,6 +757,7 @@
   function good(fromEl, target) {
     const n = G.cursor;
     G.found.add(n);
+    el.beads[n].classList.remove(...R_CLASSES); // manquée pendant la comptine entière, retrouvée maintenant
     el.keys.forEach((k) => k.classList.remove('is-hint'));
     if (fromEl && fromEl.classList.contains('key')) retrigger(fromEl, 'is-good');
     if (fromEl === el.heard) retrigger(el.heard, 'is-good');
@@ -808,7 +937,7 @@
     if (kind === 'all') {
       if (el.bAll) {
         el.bAll.querySelector('.ic').innerHTML = on ? ICON.stop : ICON.play;
-        el.bAll.querySelector('.lbl').textContent = on ? 'Arrêter' : 'Toute la comptine';
+        el.bAll.querySelector('.lbl').textContent = on ? 'Arrêter' : LISTEN_ALL;
       }
       const dp = el.done && el.done.querySelector('#d-play .lbl');
       if (dp) dp.textContent = on ? 'Arrêter' : 'Réécouter';
@@ -821,6 +950,7 @@
     }
   }
 
+  const LISTEN_ALL = 'Tout écouter';
   function playAll() { playEvents(G.song.events, 'all'); }
   function playPhrase(p, onEnd) { playEvents(G.song.phrases[p].events, 'p' + p, onEnd); }
   function playToMystery() {
@@ -879,12 +1009,14 @@
 
   function hint2() {
     if (!G || G.level !== 2 || G.done || G.take) return;
+    if (G.stage === 'whole') { setHint(settings.mode === 'mic' && !Ear.active() ? 'Allume le micro, puis « À toi ! »' : 'Écoute la comptine si tu veux, puis « À toi : toute la comptine ! »', ''); return; }
+    if (G.stage === 'review' && G.queue.includes(G.view) && !G.passed.has(G.view)) { setHint(`Phrase ${G.view + 1} à revoir : écoute-la (▶), puis « À toi ! »`, 'up'); return; }
     if (G.passed.has(G.view)) { setHint(`Phrase ${G.view + 1} déjà réussie : rejoue-la, ou choisis-en une autre.`, 'ok'); return; }
     setHint(settings.mode === 'mic' && !Ear.active() ? 'Allume le micro, puis « À toi ! »' : 'Écoute la phrase (▶), puis « À toi ! »', '');
   }
 
-  const goLabel = () => (G && G.done ? 'Toute la comptine, en rythme !' : 'À toi, en rythme !');
-  // pendant une prise, le bouton principal devient « Arrêter » (au niveau 1 : « Toute la comptine »)
+  const goLabel = () => (G && (G.done || G.stage === 'whole') ? 'À toi : toute la comptine !' : 'À toi, en rythme !');
+  // pendant une prise, le bouton principal devient « Arrêter »
   function setGoUI(on) {
     if (el.bGo) {
       el.bGo.setAttribute('aria-pressed', String(on));
@@ -892,7 +1024,7 @@
       el.bGo.querySelector('.lbl').textContent = on ? 'Arrêter' : goLabel();
     } else if (el.bAll) {
       el.bAll.querySelector('.ic').innerHTML = on ? ICON.stop : ICON.play;
-      el.bAll.querySelector('.lbl').textContent = on ? 'Arrêter' : 'Toute la comptine';
+      el.bAll.querySelector('.lbl').textContent = on ? 'Arrêter' : LISTEN_ALL;
     }
   }
 
@@ -909,8 +1041,8 @@
      la comptine (full) quand toutes les phrases sont réussies. */
   function startTake(opts = {}) {
     if (!G) return;
-    const full = !!opts.full || G.done;
-    if (!full && G.level !== 2) return;
+    const full = !!opts.full || G.done || G.stage === 'whole';
+    if (G.level !== 2) return;
     if (G.take) { cancelTake(); return; }
     stopPlayback(true); // une écoute en cours : on revient d'abord à la phrase où l'on en était
     if (!full && G.moveTo != null) moveOn(); // phrase réussie à l'instant : on part sur la suivante
@@ -1056,7 +1188,7 @@
     later(() => { if (G && G.moveTo === nx && !G.take && !G.done && !G.playing) startTake(); }, 1300);
   }
 
-  // toute la comptine jouée d'un coup : bilan phrase par phrase
+  // toute la comptine jouée d'un coup (niveau 2) : bilan phrase par phrase, puis les phrases à revoir
   function endFullTake(tk, r) {
     const song = G.song;
     const status = song.phrases.map((_, q) => {
@@ -1065,27 +1197,33 @@
       return res ? res.status : 'bad';
     });
     song.phrases.forEach((_, q) => showResult(q));
-    const bad = status.map((st, q) => (st === 'bad' ? q + 1 : 0)).filter(Boolean);
-    const which = bad.length === 1 ? 'la phrase ' + bad[0] : 'les phrases ' + bad.slice(0, -1).join(', ') + ' et ' + bad[bad.length - 1];
-    let text;
-    if (!r.played) text = 'Je n’ai rien entendu… Recommence après le décompte.';
-    else if (r.pass && r.perfect) text = 'Toute la comptine, juste et en rythme : parfait !';
-    else if (r.pass) text = bad.length ? `Bravo, toute la comptine y est ! Encore un peu de travail sur ${which}.` : `Bravo : toute la comptine en rythme ! ${r.inPlace} notes sur ${r.total} bien en place.`;
-    else if (r.drift) text = `Toutes les notes y sont, mais tu as ${r.drift === 'faster' ? 'accéléré' : 'ralenti'} en route.`;
-    else text = bad.length ? `Presque ! À revoir : ${which}.` : 'Presque ! Encore une fois ?';
-    G.fullRes = { pass: r.pass, text, status };
-    if (r.played) {
-      track('bilan', {
-        c: song.id, niveau: G.level, reussi: !!r.pass, parfait: !!r.perfect, justes: r.right, enPlace: r.inPlace, sur: r.total,
-        phrases: status.map((st) => (st === 'ok' ? 2 : st === 'near' ? 1 : 0)), derive: r.drift || '',
-      });
-    }
-    if (r.pass) D.react(el.stage, 'complete', info());
-    G.keepMic = false;
-    pauseMicDone();
     setGoUI(false);
-    setHint(text, r.pass ? 'ok' : 'up');
-    later(() => { if (G && G.done && !G.take) { el.card.hidden = true; showDone(); } }, 2200);
+    if (!r.played) { setHint('Je n’ai rien entendu… Recommence après le décompte.', 'up'); return; }
+    const bad = status.map((st, q) => (st === 'bad' ? q : -1)).filter((q) => q >= 0);
+    let text;
+    if (!bad.length) text = r.perfect ? 'Toute la comptine, juste et en rythme : parfait !' : `Bravo : toute la comptine en rythme ! ${r.inPlace} notes sur ${r.total} bien en place.`;
+    else if (r.drift) text = `Tu as ${r.drift === 'faster' ? 'accéléré' : 'ralenti'} en route. À revoir : ${whichPh(bad)}.`;
+    else text = `${r.pass ? 'Bravo, toute la comptine y est !' : 'Presque !'} À revoir : ${whichPh(bad)}.`;
+    G.fullRes = { pass: !bad.length, text, status, sum: !bad.length ? text : `Toute la comptine d’un coup : ${r.inPlace} notes sur ${r.total} bien en place.` };
+    track('bilan', {
+      c: song.id, niveau: G.level, reussi: !!r.pass, parfait: !!r.perfect, justes: r.right, enPlace: r.inPlace, sur: r.total,
+      phrases: status.map((st) => (st === 'ok' ? 2 : st === 'near' ? 1 : 0)), derive: r.drift || '',
+    });
+    // les notes justes sont retrouvées ; les phrases sans faute grave comptent comme réussies
+    r.notes.forEach((x) => { if (x.kind === 'right') G.found.add(tk.exp[x.i].n); });
+    status.forEach((st, q) => { if (st === 'bad') G.fails++; else G.passed.add(q); });
+    G.queue = bad;
+    song.notes.forEach((_, n) => paintBead(n));
+    song.phrases.forEach((_, q) => paintPill(q));
+    paintCount();
+    const st = info();
+    D.update(el.stage, st);
+    D.react(el.stage, bad.length ? 'phrase' : 'complete', st);
+    setHint(text, bad.length ? 'up' : 'ok');
+    if (st.done) { G.keepMic = false; later(() => { if (G && !G.take && !G.done) finish(); }, 1800); return; }
+    setStage('review');
+    const tok = G.acts;
+    later(() => enterReview(bad[0], tok), 2600);
   }
 
   const R_CLASSES = ['r-ok', 'r-near', 'r-far', 'r-wrong', 'r-miss'];
@@ -1144,7 +1282,7 @@
     if (stars > (+records[key] || 0)) { records[key] = stars; save(REC_KEY, records); }
     track('fin', {
       c: G.song.id, niveau: G.level, etoiles: stars, erreurs: lv2 ? G.fails : G.errors, sur: lv2 ? G.song.phrases.length : G.song.notes.length,
-      montrees: G.revealed.size, lent: !!G.usedSlow, duree: secsSince(G.t0),
+      montrees: G.revealed.size, lent: !!G.usedSlow, duree: secsSince(G.t0), entiere: !!G.fullRes,
     });
     G.tracked = true;
     D.update(el.stage, info());
@@ -1168,24 +1306,24 @@
       : (e === 0 ? 'Sans une seule erreur. Quelle oreille !' : `Avec ${e} essai${e > 1 ? 's' : ''} de trop. ${more}`);
     const fr = G.fullRes;
     const full = fr
-      ? `<div class="full-res${fr.pass ? ' is-ok' : ''}"><p>${esc(fr.text)}</p><ol class="full-ph" aria-label="Phrase par phrase">${fr.status.map((st, q) => `<li class="${st}" title="Phrase ${q + 1}">${q + 1}</li>`).join('')}</ol></div>`
-      : `<p class="full-ask">${lv2 ? 'Toutes les phrases sont réussies. Et maintenant, toute la comptine d’un coup, en rythme ?' : 'Et maintenant, toute la comptine d’un coup, en rythme ?'}</p>`;
+      ? `<div class="full-res${fr.pass ? ' is-ok' : ''}"><p>${esc(fr.sum || fr.text)}</p><ol class="full-ph" aria-label="Phrase par phrase">${fr.status.map((st, q) => `<li class="${st}" title="Phrase ${q + 1}">${q + 1}</li>`).join('')}</ol></div>`
+      : `<p class="full-ask">Et maintenant, toute la comptine d’un coup${lv2 ? ', en rythme' : ', sans aide'} ?</p>`;
     el.done.innerHTML = `
       <div class="done-head"><div class="done-stars" aria-label="${stars} étoile${stars > 1 ? 's' : ''} sur 3">${[1, 2, 3].map((k) => star(k <= stars, 38)).join('')}</div>
       <h2>${lv2 ? 'Juste et en rythme&#160;!' : 'Toutes les notes sont revenues&#160;!'}</h2></div>
       <p>${msg}</p>
       ${full}
       <div class="done-actions">
-        <button class="btn-big" type="button" id="d-full"><span class="ic">${ICON.metro}</span><span>${fr ? 'Rejouer' : 'Jouer'} toute la comptine</span></button>
+        <button class="btn-big" type="button" id="d-whole"><span class="ic">${lv2 ? ICON.metro : ICON.note}</span><span>${fr ? 'Rejouer' : 'Jouer'} toute la comptine</span></button>
         ${lv2 ? '' : `<button class="btn" type="button" id="d-lv2">${ICON.metro}<span class="long">Niveau 2 : le rythme</span><span class="short">Niveau 2</span></button>`}
         <a class="btn next-link" href="#${next.id}"><span class="long">Comptine suivante</span><span class="short">Suivante</span> →</a>
-        <button class="btn" type="button" id="d-again" aria-label="Recommencer" title="Recommencer">${ICON.reset}<span class="long">Recommencer</span></button>
+        <button class="btn" type="button" id="d-phrases" aria-label="Recommencer phrase par phrase" title="Recommencer phrase par phrase">${ICON.reset}<span class="long">Phrase par phrase</span></button>
       </div>`;
     el.card.hidden = true;
     el.done.hidden = false;
     el.main.classList.add('fin');
-    el.done.querySelector('#d-full').addEventListener('click', () => startTake({ full: true }));
-    el.done.querySelector('#d-again').addEventListener('click', reset);
+    el.done.querySelector('#d-whole').addEventListener('click', () => newRound('whole', true));
+    el.done.querySelector('#d-phrases').addEventListener('click', () => newRound('phrases'));
     const lvBtn = el.done.querySelector('#d-lv2');
     if (lvBtn) lvBtn.addEventListener('click', () => setLevel(2));
     fitDone();
@@ -1337,7 +1475,8 @@
 
   /* ---------------- événements ---------------- */
   function bindSong() {
-    if (el.bAll) el.bAll.addEventListener('click', () => { if (G.take) { cancelTake(); return; } toggle('all', playAll)(); });
+    if (el.bAll) el.bAll.addEventListener('click', () => { G.acts++; if (G.take) { cancelTake(); return; } toggle('all', playAll)(); });
+    app.querySelectorAll('.seg-play [role="radio"]').forEach((b) => b.addEventListener('click', () => choosePlay(b.dataset.play)));
     if (el.bTo) el.bTo.addEventListener('click', toggle('to', playToMystery));
     if (el.bGo) el.bGo.addEventListener('click', () => startTake());
     el.bSlow.addEventListener('click', () => {
@@ -1347,6 +1486,8 @@
     });
     app.querySelector('#b-reset').addEventListener('click', reset);
     el.pills.forEach((pill, p) => pill.addEventListener('click', () => {
+      G.acts++;
+      if (G.level === 1 && G.stage === 'whole') { showPhrase(p); return; } // on regarde, le curseur ne bouge pas
       if (G.level === 2) {
         if (G.take) return;
         G.moveTo = null;
@@ -1360,6 +1501,7 @@
       if (n != null && !G.done) setCursor(n); else showPhrase(p);
     }));
     el.panels.forEach((panel, p) => {
+      panel.querySelector('.ph-play').addEventListener('click', () => { G.acts++; });
       panel.querySelector('.ph-play').addEventListener('click', toggle('p' + p, () => (G.level === 2 && !G.done ? playDemo(p) : playPhrase(p))));
       panel.querySelector('.ph-body').addEventListener('click', (e) => {
         const b = e.target.closest('.bead');
@@ -1370,7 +1512,7 @@
           if (G.song.given.has(n) || G.revealed.has(n)) { Sound.tap(voiceNow(), G.song.notes[n].midi, 0.5); retrigger(b, 'pop'); }
           return;
         }
-        if (!G.done) setCursor(n);
+        if (!G.done && G.stage !== 'whole') setCursor(n);
       });
     });
     let fromPointer = false;
