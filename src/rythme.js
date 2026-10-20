@@ -77,6 +77,16 @@ const Rhythm = (() => {
       rp = rightPairs();
     }
 
+    // au micro, une « note en trop » collée à une note jouée (moins de 90 ms, plus court que la plus
+    // brève note des comptines) est la même attaque entendue deux fois, pas une note jouée
+    let dup = 0;
+    if (mic && A.extra.length) {
+      const played = A.pairs.filter((j) => j >= 0).map((j) => got[j].t);
+      const kept = A.extra.filter((j) => !played.some((t) => Math.abs(got[j].t - t) < 0.09));
+      dup = A.extra.length - kept.length;
+      A = { pairs: A.pairs, extra: kept };
+    }
+
     const notes = exp.map((e, i) => {
       const j = A.pairs[i];
       if (j < 0) return { i, kind: 'missed' };
@@ -102,7 +112,7 @@ const Rhythm = (() => {
     const pitchOk = wrong <= okWrong && missed <= okMissed;
     const rhythmOk = tempoOk && farOff <= okFar && inPlace >= Math.ceil(0.6 * right.length);
     return {
-      notes, extra: A.extra, off, k, slope: raw, entry: off / beat, drift,
+      notes, extra: A.extra, dup, off, k, slope: raw, entry: off / beat, drift,
       right: right.length, wrong, missed, inPlace, farOff, total: n,
       pitchOk, rhythmOk, pass: pitchOk && rhythmOk && A.extra.length <= okExtra,
       perfect: right.length === n && inPlace === n && !A.extra.length,

@@ -111,6 +111,16 @@ scenario('tél. : piano, même note frappée deux fois', 48000, [{ m: 64, t: 0.2
   const ph = [67, 67, 64, 60, 67, 67, 64], q = 60 / 96 / 2;
   scenario('tél. : piano, « qui picore du pain dur »', 48000, ph.map((m, i) => ({ m, t: 0.2 + i * q, d: i === ph.length - 1 ? 0.9 : q * 1.08, decay: 0.6, timbre: 'piano/scie' })), ph);
 }
+{
+  // Promenons-nous, dernière phrase, au piano lié : les notes longues (une noire) finissent très bas,
+  // l'attaque de la suivante ne doit pas passer pour la même note rejouée (« note en trop »)
+  const ph = [[60, 0.5], [60, 0.5], [60, 1], [62, 1], [64, 1], [62, 0.5], [60, 0.5], [62, 1], [67, 1], [60, 1]], b = 60 / 108;
+  let t0 = 0.2; const ev = ph.map(([m, d]) => { const e = { m, t: t0, d: d * b * 1.05, decay: 0.5, timbre: 'piano/scie' }; t0 += d * b; return e; });
+  scenario('tél. : piano, « mais comme il n’y est pas »', 48000, ev, ph.map(([m]) => m));
+  LEVEL = 1; NOISE = 0.004;
+  scenario('ordi : piano, « mais comme il n’y est pas »', 48000, ev, ph.map(([m]) => m));
+  LEVEL = 0.01; NOISE = 0.00003;
+}
 scenario('tél. : glockenspiel, coups brefs', 48000, [72, 76, 79, 84].map((m, i) => ({ m, t: 0.2 + i * 0.35, d: 0.3, decay: 0.12, timbre: 'glockenspiel' })), [72, 76, 79, 84]);
 {
   // et rien dans le silence d'un téléphone (souffle du micro seul)

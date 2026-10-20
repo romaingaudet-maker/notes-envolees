@@ -14,9 +14,9 @@ const play = (list, lat = 0.12) => list.map(([p, t]) => ({ p, t: t + lat }));
 const perfect = exp.map((e) => [e.p, e.t]);
 
 let fails = 0, total = 0;
-function check(name, got, expectFn) {
+function check(name, got, expectFn, mic = false) {
   total++;
-  const r = evaluate({ exp, got, beat, same });
+  const r = evaluate({ exp, got, beat, same, mic });
   let ok = false, why = '';
   try { ok = expectFn(r); } catch (e) { why = e.message; }
   if (!ok) fails++;
@@ -32,6 +32,11 @@ check('une note en avance (0,5 temps)', play(perfect.map(([p, t], i) => [p, i ==
 check('une fausse note', play(perfect.map(([p, t], i) => [i === 2 ? 65 : p, t])), (r) => !r.pass && r.notes[2].kind === 'wrong' && r.right === 7);
 check('une note oubliée', play(perfect.filter((_, i) => i !== 5)), (r) => !r.pass && r.notes[5].kind === 'missed' && r.right === 7);
 check('une note en trop', play([...perfect.slice(0, 3), [67, 1.5 * beat], ...perfect.slice(3)]), (r) => r.pass && r.extra.length === 1 && r.right === 8);
+// micro : la même attaque entendue deux fois (40 ms d'écart, hauteur de la note d'avant) n'est pas une note en trop
+const doubled = [...perfect.slice(0, 3), [62, perfect[3][1] - 0.04], ...perfect.slice(3, 6), [62, perfect[6][1] + 0.03], ...perfect.slice(6), [64, perfect[7][1] - 0.05]].sort((a, b) => a[1] - b[1]);
+check('micro : attaques entendues deux fois', play(doubled), (r) => r.pass && r.perfect && r.extra.length === 0 && r.dup === 3, true);
+check('xylophone : les mêmes touches comptent', play(doubled), (r) => r.extra.length === 3);
+check('micro : vraie note en trop, loin des autres', play([...perfect.slice(0, 3), [67, 1.5 * beat], ...perfect.slice(3)]), (r) => r.extra.length === 1, true);
 check('accélère (tempo × 0,8)', play(perfect.map(([p, t]) => [p, t * 0.8])), (r) => !r.pass && r.drift === 'faster');
 check('ralentit (tempo × 1,25)', play(perfect.map(([p, t]) => [p, t * 1.25])), (r) => !r.pass && r.drift === 'slower');
 check('part un temps trop tard, puis régulier', play(perfect.map(([p, t]) => [p, t + beat])), (r) => r.pass && Math.abs(r.entry - (1 + 0.12 / beat)) < 0.05);

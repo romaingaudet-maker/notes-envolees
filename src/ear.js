@@ -119,31 +119,44 @@ const PitchKit = (() => {
           return { r, cents: T.cand.c, f: res.f, t: now };
         }
         h.peak = Math.max(h.peak, rms);
-        // piano, xylophone… : le son ne fait que décroître ; s'il remonte nettement d'un coup,
-        // c'est la même note frappée de nouveau, même si la première résonne encore
-        // (au moins 5 trames qui décroissent, ~140 ms, la même hauteur à la même octave, confirmée
-        //  à la trame suivante : le trémolo d'une flûte ou l'attaque d'une autre note ne comptent pas)
+        if (h.r == null) h.r = r;
         const k = h.lv || (h.lv = []), L = k.length;
+        // Une remontée du volume ne compte qu'une fois confirmée sur les 2 trames suivantes (même hauteur,
+        // même octave, volume toujours haut) : à la première trame d'une NOUVELLE note, la fenêtre d'analyse
+        // entend encore surtout la note d'avant, avec un volume qui monte. Sans cette attente, la fin d'une
+        // note longue de piano suivie d'une autre note passait pour la même note rejouée (« note en trop »).
         if (h.re) {
-          const re = h.re;
-          h.re = null;
-          if (h.r === r && rms > re.base * 1.2) { T.held = { pc, r, peak: rms, min: rms, armed: false }; return { r, cents: T.cand.c, f: res.f, t: re.t }; }
+          if (h.r === r && rms > h.re.base * 1.15) {
+            if (++h.re.n >= 2) {
+              const t0 = h.re.t;
+              T.held = { pc, r, peak: rms, min: rms, armed: false };
+              return { r, cents: T.cand.c, f: res.f, t: t0 };
+            }
+          } else h.re = null;
         }
-        let run = 0;
-        for (let i = L - 2; i > 0 && k[i - 1] > k[i] * 1.005; i--) run++;
-        if (!h.ring && h.r === r && run >= 5 && L >= 2 && rms > Math.min(k[L - 2], k[L - 1]) * 1.3 && rms > gate * 1.3) h.re = { t: now, base: Math.min(k[L - 2], k[L - 1]) };
+        if (!h.re && h.r === r) {
+          // piano, xylophone… : le son ne fait que décroître (au moins 5 trames, ~140 ms) ; s'il remonte
+          // nettement d'un coup, c'est peut-être la même note frappée de nouveau, même si elle résonne encore
+          let run = 0;
+          for (let q = L - 2; q > 0 && k[q - 1] > k[q] * 1.005; q--) run++;
+          const lo = L >= 2 ? Math.min(k[L - 2], k[L - 1]) : 0;
+          const restrike = !h.ring && run >= 5 && rms > lo * 1.3 && rms > gate * 1.3;
+          // flûte, voix… : un creux puis une remontée (coup de langue, nouvelle attaque)
+          if (!h.armed && rms < h.peak * 0.55) { h.armed = true; h.min = rms; }
+          if (h.armed) h.min = Math.min(h.min, rms);
+          const dip = h.armed && rms > h.min * 1.8 && rms > gate * 1.3;
+          if (restrike || dip) h.re = { t: now, base: restrike ? lo : h.min, n: 0 };
+        } else if (!h.re) {
+          if (!h.armed && rms < h.peak * 0.55) { h.armed = true; h.min = rms; }
+          if (h.armed) h.min = Math.min(h.min, rms);
+        }
         k.push(rms); if (k.length > 9) k.shift();
-        if (!h.armed && rms < h.peak * 0.55) { h.armed = true; h.min = rms; }
-        if (h.armed) h.min = Math.min(h.min, rms);
-        if (h.armed && rms > h.min * 1.8 && rms > gate * 1.3) {
-          T.held = { pc, r, peak: rms, min: rms, armed: false };
-          return { r, cents: T.cand.c, f: res.f, t: now };
-        }
         return null;
       }
       T.silent++;
       const h = T.held;
       if (h) {
+        h.re = null;
         if (!h.armed && rms < h.peak * 0.55) { h.armed = true; h.min = rms; }
         else if (h.armed) h.min = Math.min(h.min, rms);
       }
