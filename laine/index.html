@@ -21530,21 +21530,22 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   };
   /* Instruments proposés. `play` = transposition des sons de la page (hauteur
      réelle des notes écrites, dans le registre de l'instrument) ; `voice` = timbre
-     qui joue les phrases (null : chaque comptine garde le sien). */
+     qui joue les phrases (null : chaque comptine garde le sien) ; `free` : c'est l'élève qui
+     fait la justesse de la note (voix, cordes, coulisse), la page est plus tolérante (FREE_TOL). */
   const INSTS = {
     none: { name: 'Sans instrument', the: '', at: '', fam: 'C', play: 0, voice: null },
     // la voix : on chante les notes en disant leur nom ; la page vérifie la hauteur et le nom (src/ear.js)
-    voix: { name: 'Voix', the: 'la voix', at: 'à la voix', fam: 'C', play: 0, voice: null, sing: true },
+    voix: { name: 'Voix', the: 'la voix', at: 'à la voix', fam: 'C', play: 0, voice: null, sing: true, free: true },
     piano: { name: 'Piano', the: 'le piano', at: 'au piano', fam: 'C', play: 0, voice: 'piano' },
     flute: { name: 'Flûte', the: 'la flûte', at: 'à la flûte', fam: 'C', play: 12, voice: 'flute' },
     clarinette: { name: 'Clarinette en si♭', the: 'la clarinette en si♭', at: 'à la clarinette', fam: 'Bb', play: -2, voice: 'clarinet' },
     saxalto: { name: 'Saxophone alto', the: 'le saxophone alto', at: 'au saxophone alto', fam: 'Eb', play: -9, voice: 'sax' },
     trompette: { name: 'Trompette en si♭', the: 'la trompette en si♭', at: 'à la trompette', fam: 'Bb', play: -2, voice: 'trumpet' },
-    trombone: { name: 'Trombone', the: 'le trombone', at: 'au trombone', fam: 'C', play: -12, voice: 'trombone' },
+    trombone: { name: 'Trombone', the: 'le trombone', at: 'au trombone', fam: 'C', play: -12, voice: 'trombone', free: true },
     cor: { name: 'Cor en fa', the: 'le cor en fa', at: 'au cor', fam: 'F', play: -7, voice: 'horn' },
-    violon: { name: 'Violon', the: 'le violon', at: 'au violon', fam: 'C', play: 0, voice: 'violin' },
-    alto: { name: 'Alto', the: 'l’alto', at: 'à l’alto', fam: 'C', play: 0, voice: 'viola' },
-    violoncelle: { name: 'Violoncelle', the: 'le violoncelle', at: 'au violoncelle', fam: 'C', play: -12, voice: 'cello' },
+    violon: { name: 'Violon', the: 'le violon', at: 'au violon', fam: 'C', play: 0, voice: 'violin', free: true },
+    alto: { name: 'Alto', the: 'l’alto', at: 'à l’alto', fam: 'C', play: 0, voice: 'viola', free: true },
+    violoncelle: { name: 'Violoncelle', the: 'le violoncelle', at: 'au violoncelle', fam: 'C', play: -12, voice: 'cello', free: true },
     xylophone: { name: 'Xylophone', the: 'le xylophone', at: 'au xylophone', fam: 'C', play: 12, voice: 'xylo' },
   };
   const OLD_INST = { C: 'piano', Bb: 'clarinette', Eb: 'saxalto', F: 'cor' };
@@ -21587,16 +21588,17 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   const instOptions = () => Object.entries(INSTS).map(([k, v]) => `<option value="${k}"${settings.inst === k ? ' selected' : ''}>${v.name}</option>`).join('');
   // le timbre qui joue la musique de la page : celui de l'instrument choisi, sinon celui de la comptine
   const voiceNow = () => inst().voice || (G && G.song.voice);
+  const FREE_NOTE = ' Comme c’est toi qui fais la justesse de la note, la page accepte une note un peu trop haute ou trop basse.';
   const instNote = () => {
     const i = inst();
-    if (i.sing) return 'Chante chaque note en disant son nom (do, ré, mi…) : la page écoute au micro la hauteur et le nom. Une voix grave peut chanter une octave plus bas. Les phrases gardent le timbre de chaque comptine.';
+    if (i.sing) return 'Chante chaque note en disant son nom (do, ré, mi…) : la page écoute au micro la hauteur et le nom. Une voix grave peut chanter une octave plus bas. Les phrases gardent le timbre de chaque comptine.' + FREE_NOTE;
     if (!i.voice) return 'Chaque comptine garde son propre timbre ; les notes sonnent comme elles sont écrites.';
     const of = i.the.startsWith('l’') ? 'de ' + i.the : i.the.startsWith('le ') ? 'du ' + i.the.slice(3) : 'de ' + i.the;
     const sound = ` Les phrases sont jouées avec le son enregistré ${of}.`;
     if (i.fam !== 'C') return `Instrument ${i.short} : ${i.how}.${sound}`;
     if (i.voice === 'xylo') return `Le xylophone sonne une octave plus haut que ce qui est écrit : la page aussi.${sound}`;
     const reg = i.play === -12 ? 'la page joue une octave plus bas, dans son registre.' : i.play === 12 ? 'la page joue une octave plus haut, dans son registre.' : 'les notes sonnent comme elles sont écrites.';
-    return `Instrument en do : ${reg}${sound}`;
+    return `Instrument en do : ${reg}${sound}${i.free ? FREE_NOTE : ''}`;
   };
   function instrLine(song) {
     const i = inst();
@@ -21632,6 +21634,21 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     save(SET_KEY, settings);
     if (G && view === 'song') { stopAll(); renderSong(G.song); }
   }
+
+  /* ---------------- la justesse ----------------
+     La note entendue (r : demi-ton le plus proche, cents : écart à ce demi-ton, son réel) est-elle la note
+     écrite attendue, à l'octave près ? Pour un instrument à touches, à pistons, à clés : le demi-ton le plus
+     proche (±0,5 demi-ton). Quand l'élève fait lui-même la justesse (voix, violon, alto, violoncelle,
+     trombone), jusqu'à FREE_TOL demi-ton d'écart : une note un peu trop haute ou trop basse est acceptée,
+     mais pas la note voisine jouée juste (à 1 demi-ton). */
+  const FREE_TOL = 0.7;
+  const offTarget = (hit, midi) => { // écart à la note attendue la plus proche (en demi-tons, dans [-6, 6[)
+    const m = hit.r + (hit.cents || 0) / 100 - inst().off;
+    return ((((m - midi) % 12) + 18) % 12) - 6;
+  };
+  const rightPitch = (hit, midi) => mod12(hit.r - inst().off) === mod12(midi) || (!!inst().free && Math.abs(offTarget(hit, midi)) <= FREE_TOL);
+  // l'oreille suit l'accord d'un instrument un peu haut ou bas ; pas quand l'élève fait la justesse (elle suivrait ses erreurs)
+  const tuneTo = (hit, midi) => { if (!inst().free) Ear.nudge(Math.round(offTarget(hit, midi) * 100)); };
 
   /* ---------------- la voix : chanter les notes en disant leur nom ----------------
      L'oreille (src/ear.js) reconnaît la syllabe chantée au début de chaque note, sur cet appareil :
@@ -22468,7 +22485,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     // seulement un nom dont la reconnaissance est sûre (nettement plus proche que tous les autres)
     if (hit.syl) heardSyl = PitchKit.SYL.every((s) => s === hit.syl.best || PitchKit.sayMatch(hit.syl, s, hit.syl.user) === 'non') ? { s: hit.syl.best, pc: mod12(hit.r), t: performance.now() } : null;
     if (G.cal) { calHit(hit); return; }
-    if (G.take) { recordNote({ t: (hit.t != null ? hit.t : Sound.now()) - Sound.outLatency() - 0.03, written: hit.r - inst().off, syl: hit.syl }); return; }
+    if (G.take) { recordNote({ t: (hit.t != null ? hit.t : Sound.now()) - Sound.outLatency() - 0.03, written: hit.r - inst().off, hit, syl: hit.syl }); return; }
     if (G.done || G.level === 2 || !G.live || G.cnt) return;
     if (G.cursor == null) return;
     if (G.playing) {
@@ -22478,20 +22495,20 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     }
     const written = hit.r - inst().off;
     const target = G.song.notes[G.cursor];
-    const pitchOk = mod12(written) === mod12(target.midi);
+    const pitchOk = rightPitch(hit, target.midi);
     const said = singing() ? nameSaid(hit.syl, target.midi) : null;
     if (G.stage === 'whole') {
-      if (pitchOk) Ear.nudge(hit.cents);
+      if (pitchOk) tuneTo(hit, target.midi);
       wholeNote(pitchOk && said !== 'non', el.heard);
       return;
     }
     if (pitchOk && said === 'non') {
       // la bonne hauteur, mais un autre nom
-      Ear.nudge(hit.cents);
+      tuneTo(hit, target.midi);
       retrigger(el.heard, 'is-wrong');
       bad(`Bonne hauteur${NB}! Mais j’entends «${NB}${SYL_FR[hit.syl.best]}${NB}»${NB}: chante «${NB}${SYL_FR[sylOf(target.midi)]}${NB}»`, null);
     } else if (pitchOk) {
-      Ear.nudge(hit.cents);
+      tuneTo(hit, target.midi);
       good(el.heard, target);
     } else {
       // l'octave ne compte pas : on guide vers la bonne note la plus proche
@@ -22814,7 +22831,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     if (!tk) return;
     const t = n.t - tk.T0;
     if (t < -0.6 * tk.beatSec) return; // joué pendant le décompte : pas compté
-    tk.got.push({ t, midi: n.midi, written: n.written, syl: n.syl });
+    tk.got.push({ t, midi: n.midi, written: n.written, hit: n.hit, syl: n.syl });
     if (tk.mic) Ear.expect(mod12(tk.exp[Math.min(tk.got.length, tk.exp.length - 1)].midi + inst().off));
   }
 
@@ -22866,7 +22883,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     el.main.classList.remove('is-taking');
     if (tk.mic) Ear.expect(null);
     // la voix : la bonne hauteur ET le bon nom (sauf si la reconnaissance hésite)
-    const same = tk.mic ? (e, g) => mod12(g.written) === mod12(e.midi) && !(tk.sing && nameSaid(g.syl, e.midi) === 'non') : (e, g) => g.midi === e.midi;
+    const same = tk.mic ? (e, g) => rightPitch(g.hit, e.midi) && !(tk.sing && nameSaid(g.syl, e.midi) === 'non') : (e, g) => g.midi === e.midi;
     const r = Rhythm.evaluate({ exp: tk.exp, got: tk.got, beat: tk.beatSec, same, mic: tk.mic });
     if (tk.full) { endFullTake(tk, r); return; }
     setGoUI(false);
@@ -22884,7 +22901,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     let v = Rhythm.verdict(r, (i) => `La ${i ? i + 1 + 'e' : '1re'} note`);
     if (tk.sing && !r.pass && r.wrong && !r.missed) {
       // les seules fausses notes sont à la bonne hauteur : c'est le nom qui n'allait pas
-      const slips = r.notes.filter((x) => x.kind === 'wrong').map((x) => [tk.exp[x.i], tk.got[x.j]]).filter(([e2, g]) => mod12(g.written) === mod12(e2.midi));
+      const slips = r.notes.filter((x) => x.kind === 'wrong').map((x) => [tk.exp[x.i], tk.got[x.j]]).filter(([e2, g]) => rightPitch(g.hit, e2.midi));
       if (slips.length === r.wrong) {
         const [e2, g] = slips[0];
         v = { mood: 'down', text: slips.length === 1 ? `Bonne hauteur, mais j’entends «${NB}${SYL_FR[g.syl.best]}${NB}» au lieu de «${NB}${SYL_FR[sylOf(e2.midi)]}${NB}».` : `${slips.length} notes à la bonne hauteur, mais pas avec le bon nom.` };
