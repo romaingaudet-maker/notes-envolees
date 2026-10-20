@@ -6,7 +6,7 @@ import vm from 'node:vm';
 const root = new URL('../', import.meta.url);
 const app = fs.readFileSync(new URL('src/app.js', root), 'utf8');
 // table des instruments de la page : décalage de jeu et voix
-const insts = [...app.matchAll(/^\s+(\w+): \{ name: '[^']+',.*?play: (-?\d+), voice: '(\w+)' \}/gm)].map((m) => ({ key: m[1], play: +m[2], voice: m[3] }));
+const insts = [...app.matchAll(/^\s+(\w+): \{ name: '[^']+',.*?play: (-?\d+), voice: '(\w+)'(?:, [^}]*)? \}/gm)].map((m) => ({ key: m[1], play: +m[2], voice: m[3] }));
 // notes écrites : touches du xylophone de l'écran (sol grave à do aigu) et petite fanfare de fin
 const WRITTEN = [];
 for (let m = 55; m <= 72; m++) WRITTEN.push(m);
