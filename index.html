@@ -4516,10 +4516,11 @@ const Suivi = (() => {
   // 'oui', 'non' (un autre nom, nettement) ou null (pas de syllabe, ou la reconnaissance hésite)
   const nameSaid = (syl, midi) => (syl ? PitchKit.sayMatch(syl, sylOf(midi), syl.user) : null);
   let defVoice = null;
-  const hasMyVoice = () => { try { return !!localStorage.getItem(VOICE_KEY); } catch (e) { return false; } };
-  function myVoice() {
-    try { const v = JSON.parse(localStorage.getItem(VOICE_KEY) || 'null'); return v && v.m ? PitchKit.unpackModels(v) : null; } catch (e) { return null; }
-  }
+  // VOICE_V : la façon de résumer le timbre ; un réglage fait autrement (version précédente) est à refaire
+  const VOICE_V = 2;
+  function myVoiceRaw() { try { const v = JSON.parse(localStorage.getItem(VOICE_KEY) || 'null'); return v && v.m && v.v === VOICE_V ? v : null; } catch (e) { return null; } }
+  const hasMyVoice = () => !!myVoiceRaw();
+  function myVoice() { const v = myVoiceRaw(); return v ? PitchKit.unpackModels(v) : null; }
   function applyVoice() {
     if (!singing() || typeof VOIX_MODELES === 'undefined') { Ear.setVoice(null); return; }
     if (!defVoice) defVoice = PitchKit.unpackModels(VOIX_MODELES);
@@ -4588,7 +4589,7 @@ const Suivi = (() => {
     retrigger(el.heard, 'is-good');
     c.seqs[want] = hit.seq;
     if (++c.i < CAL_PCS.length) { later(() => { if (G && G.cal === c) calStep(); }, 650); return; }
-    try { localStorage.setItem(VOICE_KEY, JSON.stringify(PitchKit.packModels(Object.fromEntries(PitchKit.SYL.map((s) => [s, [c.seqs[s]]]))))); } catch (e) { /* stockage indisponible : réglage pour cette visite seulement */ }
+    try { localStorage.setItem(VOICE_KEY, JSON.stringify(Object.assign({ v: VOICE_V }, PitchKit.packModels(Object.fromEntries(PitchKit.SYL.map((s) => [s, [c.seqs[s]]])))))); } catch (e) { /* stockage indisponible : réglage pour cette visite seulement */ }
     G.cal = null;
     applyVoice();
     voiceUI();
