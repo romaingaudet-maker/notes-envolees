@@ -340,7 +340,8 @@
     const span = song.maxStep - song.minStep;
     const panels = song.phrases.map((ph, p) => `
       <div class="panel" data-p="${p}"${p ? ' hidden' : ''}>
-        <button class="ph-play" type="button" data-p="${p}" aria-label="Écouter la phrase ${p + 1}">${ICON.play}</button>
+        <button class="ph-play" type="button" data-p="${p}" aria-label="Écouter la phrase ${p + 1}">${ICON.play}</button>${lv2 ? '' : `
+        <button class="btn ph-to" type="button" disabled aria-label="Écouter jusqu’à la note à trouver" title="Jusqu’à la note"><span class="q" aria-hidden="true">?</span><span class="lbl">Jusqu’à la note</span></button>`}
         <div class="ph-body">
           <p class="ph-lyric">${ph.notes.map((n) => `<span class="syl" data-n="${n}">${esc(song.notes[n].syl)}</span>`).join('')}</p>
           <div class="beads" style="--span:${span};--cols:${ph.notes.map((n) => `${wOf(song.notes[n].dur)}fr`).join(' ')}">${ph.notes.map((n) => `<span class="bc"><button class="bead" type="button" data-n="${n}"><span>?</span></button></span>`).join('')}</div>
@@ -352,8 +353,7 @@
     // chaque bouton garde la largeur de son plus long libellé : « Arrêter » ne fait rien bouger
     const lbl2 = (idle) => `<span class="lbl lbl2"><span class="l-idle">${idle}</span><span class="l-busy">Arrêter</span></span>`;
     const listen = `<button class="btn-big" id="b-go" type="button" aria-pressed="false"><span class="ic">${ICON.metro}</span>${lbl2(GO)}</button>
-          <button class="btn" id="b-all" type="button"><span class="ic">${ICON.play}</span>${lbl2(LISTEN_ALL)}</button>${lv2 ? '' : `
-          <button class="btn" id="b-to" type="button"><span class="q" aria-hidden="true">?</span>${lbl2('Jusqu’à la note')}</button>`}`;
+          <button class="btn" id="b-all" type="button"><span class="ic">${ICON.play}</span>${lbl2(LISTEN_ALL)}</button>`;
     app.innerHTML = `
     <main class="song" data-mode="${settings.mode}" data-level="${G.level}" data-stage="${G.stage}">
       <section class="stage grain" aria-label="Décor : ${esc(nb(song.title))}">
@@ -373,7 +373,6 @@
         </header>
         <div class="listen">
           ${listen}
-          <button class="btn icon" id="b-slow" type="button" aria-pressed="${G.slow}" aria-label="Lentement" title="Lentement">${ICON.turtle}<span class="lbl">Lentement</span></button>
         </div>
         <section class="card" aria-label="Phrase en cours">
           <div class="seg seg-play" role="radiogroup" aria-label="Jouer la comptine">
@@ -419,6 +418,7 @@
             <button type="button" role="radio" data-mode="xylo" aria-checked="${settings.mode === 'xylo'}" aria-label="Xylophone" title="Xylophone">${ICON.xylo}<span>Xylophone</span></button>
             <button type="button" role="radio" data-mode="mic" aria-checked="${settings.mode === 'mic'}" aria-label="Mon instrument" title="Mon instrument">${ICON.mic}<span>Mon instrument</span></button>
           </div>
+          <div class="seg seg-slow"><button type="button" id="b-slow" aria-pressed="${G.slow}" aria-label="Lentement" title="Lentement">${ICON.turtle}</button></div>
         </div>
       </section>
     </main>`;
@@ -427,7 +427,7 @@
       main: app.querySelector('.song'),
       stage: app.querySelector('.stage'),
       bAll: app.querySelector('#b-all'),
-      bTo: app.querySelector('#b-to'),
+      bTos: [...app.querySelectorAll('.ph-to')],
       bGo: app.querySelector('#b-go'),
       bSlow: app.querySelector('#b-slow'),
       instr: app.querySelector('#instr'),
@@ -567,13 +567,19 @@
     G.cursor = n;
     G.attempts = 0;
     el.keys.forEach((k) => k.classList.remove('is-hint'));
-    if (el.bTo) el.bTo.disabled = n == null || G.stage === 'whole';
+    toUI();
     expectNext();
     if (n == null) return;
     el.beads[n].classList.add('is-cursor');
     el.syls[n].classList.add('is-cur');
     showPhrase(G.song.notes[n].phrase, animate);
     if (hint) cursorHint();
+  }
+
+  // « Jusqu'à la note » : seulement pendant un essai phrase par phrase, sur la phrase de la note cherchée
+  function toUI() {
+    const n = G.cursor, p = n == null ? -1 : G.song.notes[n].phrase;
+    el.bTos.forEach((b, q) => { b.disabled = n == null || G.stage === 'whole' || q !== p; });
   }
 
   function expectNext() {
@@ -788,7 +794,7 @@
     G.stage = stage;
     el.main.dataset.stage = stage;
     app.querySelectorAll('.seg-play [role="radio"]').forEach((b) => b.setAttribute('aria-checked', String((b.dataset.play === 'whole') === (stage === 'whole'))));
-    if (el.bTo) el.bTo.disabled = G.cursor == null || stage === 'whole';
+    toUI();
   }
 
   // nouvelle partie de la même comptine (go : l'essai démarre tout de suite)
@@ -1065,7 +1071,7 @@
       const dp = el.done && el.done.querySelector('#d-play .lbl');
       if (dp) dp.textContent = on ? 'Arrêter' : 'Réécouter';
     } else if (kind === 'to') {
-      if (el.bTo) el.bTo.classList.toggle('is-on', on);
+      el.bTos.forEach((b) => { b.classList.toggle('is-on', on); b.querySelector('.q').innerHTML = on ? ICON.stop : '?'; });
     } else if (kind.startsWith('p')) {
       const b = el.panels[+kind.slice(1)].querySelector('.ph-play');
       b.firstElementChild.outerHTML = on ? ICON.stop : ICON.play;
@@ -1559,7 +1565,7 @@
   function bindSong() {
     if (el.bAll) el.bAll.addEventListener('click', () => { G.acts++; if (prepping()) { cancelAttempt(); return; } toggle('all', playAll)(); });
     app.querySelectorAll('.seg-play [role="radio"]').forEach((b) => b.addEventListener('click', () => choosePlay(b.dataset.play)));
-    if (el.bTo) el.bTo.addEventListener('click', toggle('to', playToMystery));
+    el.bTos.forEach((b) => b.addEventListener('click', toggle('to', playToMystery)));
     if (el.bGo) el.bGo.addEventListener('click', goButton);
     el.bSlow.addEventListener('click', () => {
       G.slow = !G.slow;
