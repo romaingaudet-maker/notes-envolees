@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 const ctx = { Math, Float32Array, console, performance: { now: () => 0 }, navigator: {}, Sound: {} };
 vm.runInNewContext(fs.readFileSync(new URL('../src/ear.js', import.meta.url), 'utf8') + '\nthis.PitchKit = PitchKit;', ctx);
-const { yin, makeTracker } = ctx.PitchKit;
+const { yin, makeTracker, gateOf, floorOf, NF0 } = ctx.PitchKit;
 const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
 const N = 2048;
 let rnd = 1; const rand = () => ((rnd = (rnd * 1103515245 + 12345) % 2147483648) / 2147483648) * 2 - 1;
@@ -40,7 +40,9 @@ for (let k = 0; k < 20; k++) { const x = new Float32Array(N); for (let i = 0; i 
 console.log(`hauteurs : ${total - fails}/${total} justes ; bruit blanc pris pour une note : ${noisy}/20`);
 
 // ---- suivi : signal continu analysé toutes les 28 ms ----
+let LEVEL = 1, NOISE = 0.004, LEAD = 0; // niveau du jeu et du souffle (micro d'ordinateur ; voir plus bas pour le téléphone)
 function render(sr, events, tail = 0.4) {
+  events = events.map((e) => Object.assign({}, e, { t: e.t + LEAD })); // le micro est allumé un moment avant de jouer
   const dur = events.reduce((a, e) => Math.max(a, e.t + e.d), 0) + tail;
   const y = new Float32Array(Math.ceil(dur * sr));
   for (const e of events) {
@@ -49,22 +51,22 @@ function render(sr, events, tail = 0.4) {
     for (let i = i0; i < i1; i++) {
       const t = (i - i0) / sr;
       const env = e.decay ? Math.exp(-t / e.decay) : Math.min(1, t / 0.02) * Math.min(1, (e.t + e.d - i / sr) / 0.02);
-      y[i] += 0.25 * env * TIMBRES[e.timbre || 'flûte à bec'](f, t);
+      y[i] += 0.25 * LEVEL * env * TIMBRES[e.timbre || 'flûte à bec'](f, t);
     }
   }
-  for (let i = 0; i < y.length; i++) y[i] += 0.004 * rand();
+  for (let i = 0; i < y.length; i++) y[i] += NOISE * rand();
   return y;
 }
 function listen(sr, y, expectPc = null) {
   const T = makeTracker(); T.expectPc = expectPc;
   const hop = Math.round(0.028 * sr), got = [];
-  let nf = 0.003;
+  let nf = NF0;
   for (let s = 0; s + N <= y.length; s += hop) {
     const x = y.subarray(s, s + N);
     let ss = 0; for (let i = 0; i < N; i++) ss += x[i] * x[i];
-    const rms = Math.sqrt(ss / N), gate = Math.max(0.0025, nf * 2.5);
+    const rms = Math.sqrt(ss / N), gate = gateOf(nf);
     const res = rms > gate ? yin(x, sr) : null;
-    if (!res) nf = rms < nf ? nf * 0.9 + rms * 0.1 : Math.min(0.05, nf * 0.997 + rms * 0.003);
+    if (!res) nf = floorOf(nf, rms);
     const hit = T.push(res, rms, gate);
     if (hit) got.push(hit.r);
   }
@@ -97,6 +99,26 @@ scenario('clarinette, son réel', 48000, [{ m: 58, t: 0.2, d: 0.3, timbre: 'clar
 scenario('glockenspiel, coups brefs', 48000, [72, 76, 79, 84].map((m, i) => ({ m, t: 0.2 + i * 0.35, d: 0.3, decay: 0.12, timbre: 'glockenspiel' })), [72, 76, 79, 84]);
 console.log(fails ? `\n${fails} échec(s)` : '\nTous les tests passent.');
 
+// ---- micro de téléphone, sans gain automatique : le même jeu, 40 dB plus bas (piano à 1 m vers −55 dB) ----
+LEVEL = 0.01; NOISE = 0.00003; LEAD = 1;
+console.log('\nMicro de téléphone (−40 dB) :');
+scenario('tél. : flûte, notes répétées détachées', 48000, det, pont);
+scenario('tél. : legato', 48000, leg, [60, 62, 64, 65, 67]);
+scenario('tél. : piano, même note frappée deux fois', 48000, [{ m: 64, t: 0.2, d: 0.6, decay: 0.5, timbre: 'piano/scie' }, { m: 64, t: 0.8, d: 0.8, decay: 0.5, timbre: 'piano/scie' }], [64, 64]);
+{
+  // Une poule sur un mur, 2e phrase, au piano, croches à 96 à la noire, jouées liées :
+  // chaque touche est relâchée juste après l'attaque de la suivante
+  const ph = [67, 67, 64, 60, 67, 67, 64], q = 60 / 96 / 2;
+  scenario('tél. : piano, « qui picore du pain dur »', 48000, ph.map((m, i) => ({ m, t: 0.2 + i * q, d: i === ph.length - 1 ? 0.9 : q * 1.08, decay: 0.6, timbre: 'piano/scie' })), ph);
+}
+scenario('tél. : glockenspiel, coups brefs', 48000, [72, 76, 79, 84].map((m, i) => ({ m, t: 0.2 + i * 0.35, d: 0.3, decay: 0.12, timbre: 'glockenspiel' })), [72, 76, 79, 84]);
+{
+  // et rien dans le silence d'un téléphone (souffle du micro seul)
+  const got = listen(48000, render(48000, [], 1.5)); const ok = !got.length; if (!ok) fails++;
+  console.log(`${ok ? '✓' : '✗'} tél. : silence → ${got.length ? names(got) : 'aucune note'}`);
+}
+LEVEL = 1; NOISE = 0.004; LEAD = 0;
+
 // ---- cas difficiles ----
 function renderFn(sr, dur, fn) { const y = new Float32Array(Math.ceil(dur * sr)); for (let i = 0; i < y.length; i++) y[i] = fn(i / sr) + 0.004 * rand(); return y; }
 // voix d'enfant avec vibrato (±35 cents, 5,5 Hz) sur Sol4 tenu 1,5 s
@@ -120,6 +142,13 @@ function renderFn(sr, dur, fn) { const y = new Float32Array(Math.ceil(dur * sr))
   const got = listen(sr, y); const ok = got.length === 0; if (!ok) fails++;
   console.log(`${ok ? '✓' : '✗'} souffle et bruits → ${got.length ? names(got) : 'aucune note'}`);
 }
+// flûte tenue avec un trémolo marqué (volume ±20 %, 5 Hz) : une seule note
+{
+  const sr = 48000;
+  const y = renderFn(sr, 2, (t) => (t < 0.2 || t > 1.8 ? 0 : 0.2 * Math.min(1, (t - 0.2) / 0.04) * (1 + 0.2 * Math.sin(2 * Math.PI * 5 * t)) * TIMBRES['flûte à bec'](hz(67), t)));
+  const got = listen(sr, y, 7); const ok = got.join() === '67'; if (!ok) fails++;
+  console.log(`${ok ? '✓' : '✗'} flûte tenue avec trémolo → ${names(got)}`);
+}
 // micro de téléphone : fondamentale presque absente, la hauteur trouvée saute d'une octave d'une trame à l'autre
 {
   const T = makeTracker(); const got = [];
@@ -141,7 +170,7 @@ console.log(fails ? `\n${fails} échec(s) au total` : '\nCas difficiles : tout p
 function listenAfterPage(sr, y, gateUntil, ring) {
   const T = makeTracker();
   const hop = Math.round(0.028 * sr), got = [];
-  let nf = 0.003, gated = true;
+  let nf = NF0, gated = true;
   for (let s = 0; s + N <= y.length; s += hop) {
     const x = y.subarray(s, s + N), now = (s + N) / sr;
     let ss = 0; for (let i = 0; i < N; i++) ss += x[i] * x[i];
@@ -150,9 +179,9 @@ function listenAfterPage(sr, y, gateUntil, ring) {
     if (gated) { gated = false; T.hold(null, rms); }
     const live = ring.filter((r) => r.until > now);
     T.ring = live.length ? { pcs: new Set(live.map((r) => r.pc)), body: live.some((r) => now < r.end) } : null;
-    const gate = Math.max(0.0025, nf * 2.5);
+    const gate = gateOf(nf);
     const res = rms > gate ? yin(x, sr) : null;
-    if (!res) nf = rms < nf ? nf * 0.9 + rms * 0.1 : Math.min(0.05, nf * 0.997 + rms * 0.003);
+    if (!res) nf = floorOf(nf, rms);
     const hit = T.push(res, rms, gate, now);
     if (hit) got.push(hit);
   }
