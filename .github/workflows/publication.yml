@@ -1,0 +1,67 @@
+# Publication sur GitHub Pages, en un seul site :
+#   - production    : la branche main, telle quelle, à la racine
+#                     https://romaingaudet-maker.github.io/notes-envolees/
+#   - qualification : la branche qualif, construite avec « node build.mjs --qualif », sous /qualif/
+#                     https://romaingaudet-maker.github.io/notes-envolees/qualif/
+#                     (suivi des élèves coupé, stockage à part, bandeau « Qualification »)
+# Déclenchée par un envoi sur main, ou par une vérification réussie de la branche qualif.
+name: Publication
+
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: [Verification]
+    types: [completed]
+    branches: [qualif]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  construire:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Production (branche main)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: prod
+      - name: Qualification (branche qualif)
+        uses: actions/checkout@v4
+        with:
+          ref: qualif
+          path: qualif
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Construire la qualification
+        working-directory: qualif
+        run: node build.mjs --qualif
+      - name: Assembler le site
+        run: |
+          mkdir -p _site/qualif
+          rsync -a --exclude .git --exclude .github --exclude dist --exclude _qualif prod/ _site/
+          cp -R qualif/_qualif/. _site/qualif/
+          touch _site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  publier:
+    needs: construire
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - id: deploiement
+        uses: actions/deploy-pages@v4

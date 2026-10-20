@@ -38,6 +38,20 @@ Tout le code est dans `src/` ; `index.html` est fabriqué à partir de ces fichi
 - `node tests/rythme.test.mjs` : teste le juge du rythme du niveau 2 (latence, note en retard, fausse note, accélération, rythme pointé, phrases longues, comptine entière…).
 - `node --no-warnings tests/suivi.test.mjs` : teste le Worker du suivi (sites autorisés, clé, nettoyage des données, effacement d'un élève) et l'envoi côté jeu.
 
+## Production et qualification
+
+Deux versions du site sont publiées sur GitHub Pages, par les GitHub Actions du dépôt (`.github/workflows/`) :
+
+| | Branche | Adresse |
+|---|---|---|
+| **Production** (les élèves) | `main` | https://romaingaudet-maker.github.io/notes-envolees/ |
+| **Qualification** (les essais) | `qualif` | https://romaingaudet-maker.github.io/notes-envolees/qualif/ |
+
+- Les essais se font sur la branche `qualif`. À chaque envoi, `Verification` lance les tests ; s'ils passent, `Publication` met la qualification à jour (en une à deux minutes). La production n'est pas touchée.
+- La qualification est construite par `node build.mjs --qualif` (dans `_qualif/`, non suivi par git) : un bandeau rouge « Qualification » avec la version testée, **aucun envoi au suivi des élèves**, des réglages et des étoiles gardés à part de la production, pas d'indexation par les moteurs de recherche. La page de suivi de la qualification n'est donc pas reliée au Worker.
+- Pour passer en production ce qui est validé : fusionner `qualif` dans `main` (`git checkout main && git merge qualif && git push`).
+- Réglage à faire une fois sur GitHub : *Settings → Pages → Build and deployment → Source : GitHub Actions*.
+
 ## Sources des mélodies
 
 - J.-B. Weckerlin, *Chansons et rondes enfantines* (1870), sur Wikisource : Sur le pont d'Avignon, Il était une bergère.

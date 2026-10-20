@@ -30,7 +30,7 @@
   const ECRAN = { telephone: 'téléphone', tablette: 'tablette', ordinateur: 'ordinateur' };
   const MIC_CODE = { denied: 'refusé', nomic: 'aucun micro', busy: 'micro déjà utilisé', unsupported: 'navigateur incompatible', noaudio: 'son indisponible', other: 'erreur' };
   const songTitle = (id) => (BY_ID[id] ? nb(BY_ID[id].title) : nb(id));
-  const KEY_STORE = 'notes-envolees-prof-cle';
+  const KEY_STORE = (window.NE_NS || '') + 'notes-envolees-prof-cle';
   const DAY = 864e5;
 
   /* ---------------- formats ---------------- */

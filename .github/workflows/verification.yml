@@ -1,0 +1,29 @@
+# Vérification : à chaque envoi sur qualif (ou main), les tests passent
+# et les pages construites correspondent aux sources.
+# Sur la branche qualif, une vérification réussie déclenche la publication (publication.yml).
+name: Verification
+
+on:
+  push:
+    branches: [qualif, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Comptines (syllabes et mesures)
+        run: node validate.mjs
+      - name: Tests (rythme, oreille, sons, suivi)
+        run: for t in tests/*.test.mjs; do node --no-warnings "$t" || exit 1; done
+      - name: Pages construites à jour (node build.mjs)
+        run: |
+          node build.mjs
+          git diff --exit-code -- index.html suivi.html mentions-legales.html laine/index.html manifest.webmanifest laine/manifest.webmanifest

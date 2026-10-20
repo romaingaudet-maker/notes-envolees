@@ -1,4 +1,16 @@
 import fs from 'node:fs';
+import { execSync } from 'node:child_process';
+/* node build.mjs           : production (fichiers à la racine du dépôt, publiés depuis main)
+   node build.mjs --qualif  : qualification, dans _qualif/ (publiée sous /qualif/ depuis la branche qualif) :
+                              suivi coupé, stockage à part, bandeau « Qualification », pas d'indexation */
+const QUALIF = process.argv.includes('--qualif');
+const ROOT = QUALIF ? './_qualif/' : './';
+const write = (rel, content) => {
+  const u = new URL(ROOT + rel, import.meta.url);
+  fs.mkdirSync(new URL('./', u), { recursive: true });
+  fs.writeFileSync(u, content);
+  console.log((QUALIF ? '_qualif/' : '') + rel, (content.length / 1024).toFixed(1) + ' Ko');
+};
 const r = (f) => fs.readFileSync(new URL('./src/' + f, import.meta.url), 'utf8');
 const rl = (f) => fs.readFileSync(new URL('./laine/' + f, import.meta.url), 'utf8');
 /* polices livrées avec la page (polices/, licence SIL OFL) : aucune visite ne contacte un serveur extérieur */
@@ -15,7 +27,7 @@ const page = fill(shell);
 const cut = shell.indexOf('<svg'); // le gabarit lui-même : en-tête avant, corps après
 const headPart = fill(shell.slice(0, cut)).trim(), bodyPart = fill(shell.slice(cut)).trim();
 fs.mkdirSync(new URL('./dist/', import.meta.url), { recursive: true });
-const out = (name, html) => { fs.writeFileSync(new URL('./dist/' + name, import.meta.url), html); console.log('dist/' + name, (html.length / 1024).toFixed(1) + ' Ko'); };
+const out = (name, html) => { if (QUALIF) return; fs.writeFileSync(new URL('./dist/' + name, import.meta.url), html); console.log('dist/' + name, (html.length / 1024).toFixed(1) + ' Ko'); };
 
 // 1) fragment publié comme artifact (l'hôte ajoute le squelette du document)
 out('notes-envolees.html', page);
@@ -23,6 +35,11 @@ out('notes-envolees.html', page);
 // 2) document autonome : la page publiée sur GitHub Pages (index.html), qu'on peut aussi ouvrir telle quelle
 const iconOf = (bg, ink) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="${bg}"/><path d="M27 15v25.5a8 8 0 1 0 5 7.4V24l12 4v-9z" fill="${ink}"/></svg>`)}`;
 const icon = iconOf('#F6C744', '#1D2350');
+let rev = ''; // la version testée, affichée dans le bandeau
+if (QUALIF) { try { rev = execSync('git rev-parse --short HEAD', { cwd: new URL('./', import.meta.url) }).toString().trim(); } catch (e) { /* hors dépôt */ } }
+const STAMP = !QUALIF ? '' : `<meta name="robots" content="noindex">
+<script>window.NE_SUIVI_URL = ''; window.NE_NS = 'qualif-';</script>
+<style>html::after { content: "Qualification${rev ? ' · ' + rev : ''}"; position: fixed; left: max(8px, env(safe-area-inset-left, 0px)); bottom: max(8px, env(safe-area-inset-bottom, 0px)); z-index: 2147483647; padding: 4px 10px; border-radius: 999px; background: #D93D43; color: #FFFFFF; font: 700 11px/1.3 system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; box-shadow: 0 2px 6px rgba(0, 0, 0, .3); pointer-events: none; }</style>`;
 const doc = (head, body, color, ico = icon, extra = '') => `<!doctype html>
 <html lang="fr">
 <head>
@@ -30,6 +47,7 @@ const doc = (head, body, color, ico = icon, extra = '') => `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="${color}">
 <link rel="icon" href="${ico}">
+${STAMP}
 ${extra}
 ${head}
 </head>
@@ -39,11 +57,10 @@ ${body}
 </html>
 `;
 // icône d'installation sur téléphone (écran d'accueil) : icone-180/192/512.png à la racine, manifest.webmanifest
-const INSTALL_V1 = '<link rel="apple-touch-icon" href="icone-180.png">\n<link rel="manifest" href="manifest.webmanifest">\n<meta name="apple-mobile-web-app-title" content="Notes Envolées">';
-const INSTALL_V2 = '<link rel="apple-touch-icon" href="../icone-180.png">\n<link rel="manifest" href="manifest.webmanifest">\n<meta name="apple-mobile-web-app-title" content="Notes en laine">';
+const INSTALL_V1 = `<link rel="apple-touch-icon" href="icone-180.png">\n<link rel="manifest" href="manifest.webmanifest">\n<meta name="apple-mobile-web-app-title" content="${QUALIF ? 'Qualif Notes' : 'Notes Envolées'}">`;
+const INSTALL_V2 = `<link rel="apple-touch-icon" href="../icone-180.png">\n<link rel="manifest" href="manifest.webmanifest">\n<meta name="apple-mobile-web-app-title" content="${QUALIF ? 'Qualif laine' : 'Notes en laine'}">`;
 const index = doc(headPart, bodyPart, '#F6C744', icon, INSTALL_V1);
-fs.writeFileSync(new URL('./index.html', import.meta.url), index);
-console.log('index.html', (index.length / 1024).toFixed(1) + ' Ko');
+write('index.html', index);
 
 // 3) la page de suivi des élèves, pour le professeur (suivi.html, non liée depuis le jeu)
 const pShell = r('suivi-page.html');
@@ -51,8 +68,7 @@ const pCss = font('Gluten', 700, 'gluten-latin-700-normal.woff2') + '\n' + r('_s
 const pJs = ['songs.js', 'suivi.js', 'suivi-page.js'].map(r).join('\n');
 const pCut = pShell.indexOf('<div id="app"');
 const prof = doc(fill(pShell.slice(0, pCut), pCss, pJs).trim(), fill(pShell.slice(pCut), pCss, pJs).trim(), '#F6C744');
-fs.writeFileSync(new URL('./suivi.html', import.meta.url), prof);
-console.log('suivi.html', (prof.length / 1024).toFixed(1) + ' Ko');
+write('suivi.html', prof);
 
 // 4) mentions légales et confidentialité (mentions-legales.html, liée depuis l'accueil des deux versions)
 {
@@ -61,8 +77,7 @@ console.log('suivi.html', (prof.length / 1024).toFixed(1) + ' Ko');
   const mJs = ['suivi.js', 'mentions.js'].map(r).join('\n');
   const mCut = mShell.indexOf('<header');
   const legal = doc(fill(mShell.slice(0, mCut), mCss, mJs).trim(), fill(mShell.slice(mCut), mCss, mJs).trim(), '#F6C744');
-  fs.writeFileSync(new URL('./mentions-legales.html', import.meta.url), legal);
-  console.log('mentions-legales.html', (legal.length / 1024).toFixed(1) + ' Ko');
+  write('mentions-legales.html', legal);
 }
 
 /* 5) seconde version : décors en laine, en 3D image par image.
@@ -88,8 +103,7 @@ console.log('suivi.html', (prof.length / 1024).toFixed(1) + ' Ko');
   const pre = `window.NE_ONLINE_URL = ${JSON.stringify(ONLINE)}; window.SONS_BASE = '../sons/'; window.NE_LEGAL_URL = '../mentions-legales.html';`;
   const lcut = lshell.indexOf('<svg');
   const ldoc = doc(lfill(lshell.slice(0, lcut), pre).trim(), lfill(lshell.slice(lcut), pre).trim(), '#2B2350', iconOf('#2B2350', '#F2C14E'), INSTALL_V2);
-  fs.writeFileSync(new URL('./laine/index.html', import.meta.url), ldoc);
-  console.log('laine/index.html', (ldoc.length / 1024).toFixed(1) + ' Ko');
+  write('laine/index.html', ldoc);
 }
 
 /* 6) manifestes d'installation : nom, nom court et icônes pour l'écran d'accueil du téléphone.
@@ -100,7 +114,14 @@ console.log('suivi.html', (prof.length / 1024).toFixed(1) + ' Ko');
     background_color: bg, theme_color: theme,
     icons: [192, 512].map((n) => ({ src: `${prefix}icone-${n}.png`, sizes: `${n}x${n}`, type: 'image/png' })),
   }, null, 2) + '\n';
-  fs.writeFileSync(new URL('./manifest.webmanifest', import.meta.url), manifest('Les Notes Envolées', 'Notes Envolées', '#F6C744', '#FFFBF0', ''));
-  fs.writeFileSync(new URL('./laine/manifest.webmanifest', import.meta.url), manifest('Les Notes Envolées en laine', 'Notes en laine', '#2B2350', '#2B2350', '../'));
-  console.log('manifest.webmanifest + laine/manifest.webmanifest');
+  const q = QUALIF ? ' (qualification)' : '';
+  write('manifest.webmanifest', manifest('Les Notes Envolées' + q, QUALIF ? 'Qualif Notes' : 'Notes Envolées', '#F6C744', '#FFFBF0', ''));
+  write('laine/manifest.webmanifest', manifest('Les Notes Envolées en laine' + q, QUALIF ? 'Qualif laine' : 'Notes en laine', '#2B2350', '#2B2350', '../'));
+}
+
+// 7) qualification : les sons et les icônes à côté des pages
+if (QUALIF) {
+  fs.cpSync(new URL('./sons/', import.meta.url), new URL(ROOT + 'sons/', import.meta.url), { recursive: true });
+  for (const n of [180, 192, 512]) fs.copyFileSync(new URL(`./icone-${n}.png`, import.meta.url), new URL(ROOT + `icone-${n}.png`, import.meta.url));
+  console.log('_qualif/sons/ + icônes');
 }

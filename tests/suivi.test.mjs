@@ -75,7 +75,7 @@ await check('clé trop courte dans le Worker : 503', async () => (await call('/d
 await check('base absente : 503', async () => (await call('/e', { method: 'POST', body: '{}', headers: { Origin: SITE } }, { CLE_PROF: KEY })).status === 503);
 
 console.log('— Jeu : envoi des résultats —');
-function loadClient(url, store = {}) {
+function loadClient(url, store = {}, ns) {
   const beacons = [];
   const localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } };
   const sandbox = {
@@ -85,11 +85,18 @@ function loadClient(url, store = {}) {
     matchMedia: () => ({ matches: true }), window: {}, fetch: () => Promise.resolve(),
   };
   sandbox.window.matchMedia = sandbox.matchMedia;
-  let src = fs.readFileSync(new URL('../src/suivi.js', import.meta.url), 'utf8');
-  src = src.replace(/const SUIVI_URL = '[^']*';/, `const SUIVI_URL = '${url}';`);
+  // comme la version de qualification : l'adresse du Worker et le préfixe du stockage viennent de la page
+  sandbox.window.NE_SUIVI_URL = url;
+  if (ns) sandbox.window.NE_NS = ns;
+  const src = fs.readFileSync(new URL('../src/suivi.js', import.meta.url), 'utf8');
   vm.runInNewContext(src + '\nthis.Suivi = Suivi;', sandbox);
   return { Suivi: sandbox.Suivi, beacons, store };
 }
+await check('qualification : clés du stockage à part (préfixe NE_NS)', () => {
+  const c = loadClient('https://suivi.example.workers.dev', {}, 'qualif-');
+  c.Suivi.send('visite', {});
+  return c.beacons.length === 1 && 'qualif-notes-envolees-id' in c.store && !('notes-envolees-id' in c.store);
+});
 await check('sans adresse de Worker, rien ne part', () => { const c = loadClient(''); c.Suivi.send('visite', {}); return !c.beacons.length && c.Suivi.id() === null; });
 await check('avec l’adresse, un envoi part vers /e avec identifiant', () => {
   const c = loadClient('https://suivi.example.workers.dev');

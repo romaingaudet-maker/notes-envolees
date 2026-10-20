@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2B2350">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%2230%22%20fill%3D%22%232B2350%22%2F%3E%3Cpath%20d%3D%22M27%2015v25.5a8%208%200%201%200%205%207.4V24l12%204v-9z%22%20fill%3D%22%23F2C14E%22%2F%3E%3C%2Fsvg%3E">
+
 <link rel="apple-touch-icon" href="../icone-180.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="apple-mobile-web-app-title" content="Notes en laine">
@@ -7779,9 +7780,12 @@ const Scenes = (() => {
 ------------------------------------------------------------------- */
 const Suivi = (() => {
   // adresse du Worker Cloudflare, sans « / » à la fin (vide : suivi coupé)
-  const SUIVI_URL = 'https://notes-envolees-suivi.romain-gaudet.workers.dev';
-  const ID_KEY = 'notes-envolees-id';       // identifiant de ce navigateur
-  const OFF_KEY = 'notes-envolees-suivi-off'; // '1' : appareil du professeur, à ne pas suivre
+  // (la version de qualification passe window.NE_SUIVI_URL = '' : ses essais ne partent pas dans le suivi)
+  const W = typeof window !== 'undefined' ? window : {};
+  const SUIVI_URL = W.NE_SUIVI_URL != null ? W.NE_SUIVI_URL : 'https://notes-envolees-suivi.romain-gaudet.workers.dev';
+  const NS = W.NE_NS || ''; // préfixe des clés du stockage local (qualification : 'qualif-')
+  const ID_KEY = NS + 'notes-envolees-id';       // identifiant de ce navigateur
+  const OFF_KEY = NS + 'notes-envolees-suivi-off'; // '1' : appareil du professeur, à ne pas suivre
 
   const get = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const put = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* stockage indisponible */ } };
@@ -21010,7 +21014,8 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   const chip = (letter, name) => `<span class="nchip" data-l="${letter}">${name}</span>`;
 
   /* ---------------- réglages et étoiles (sur cet appareil) ---------------- */
-  const SET_KEY = 'notes-envolees-reglages', REC_KEY = 'notes-envolees-etoiles';
+  // préfixe NE_NS : la version de qualification garde ses réglages et ses étoiles à part
+  const SET_KEY = (window.NE_NS || '') + 'notes-envolees-reglages', REC_KEY = (window.NE_NS || '') + 'notes-envolees-etoiles';
   function load(k, dflt) { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v && typeof v === 'object' ? Object.assign(dflt, v) : dflt; } catch (e) { return dflt; } }
   function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } }
   const settings = load(SET_KEY, { mode: 'xylo', inst: 'none', level: 1 });

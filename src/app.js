@@ -79,7 +79,8 @@
   const chip = (letter, name) => `<span class="nchip" data-l="${letter}">${name}</span>`;
 
   /* ---------------- réglages et étoiles (sur cet appareil) ---------------- */
-  const SET_KEY = 'notes-envolees-reglages', REC_KEY = 'notes-envolees-etoiles';
+  // préfixe NE_NS : la version de qualification garde ses réglages et ses étoiles à part
+  const SET_KEY = (window.NE_NS || '') + 'notes-envolees-reglages', REC_KEY = (window.NE_NS || '') + 'notes-envolees-etoiles';
   function load(k, dflt) { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v && typeof v === 'object' ? Object.assign(dflt, v) : dflt; } catch (e) { return dflt; } }
   function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } }
   const settings = load(SET_KEY, { mode: 'xylo', inst: 'none', level: 1 });

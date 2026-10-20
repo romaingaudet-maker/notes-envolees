@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#F6C744">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%2230%22%20fill%3D%22%23F6C744%22%2F%3E%3Cpath%20d%3D%22M27%2015v25.5a8%208%200%201%200%205%207.4V24l12%204v-9z%22%20fill%3D%22%231D2350%22%2F%3E%3C%2Fsvg%3E">
 
+
 <title>Suivi des élèves · Les Notes Envolées</title>
 <meta name="robots" content="noindex, nofollow">
 <style>
@@ -643,9 +644,12 @@ function buildSong(src) {
 ------------------------------------------------------------------- */
 const Suivi = (() => {
   // adresse du Worker Cloudflare, sans « / » à la fin (vide : suivi coupé)
-  const SUIVI_URL = 'https://notes-envolees-suivi.romain-gaudet.workers.dev';
-  const ID_KEY = 'notes-envolees-id';       // identifiant de ce navigateur
-  const OFF_KEY = 'notes-envolees-suivi-off'; // '1' : appareil du professeur, à ne pas suivre
+  // (la version de qualification passe window.NE_SUIVI_URL = '' : ses essais ne partent pas dans le suivi)
+  const W = typeof window !== 'undefined' ? window : {};
+  const SUIVI_URL = W.NE_SUIVI_URL != null ? W.NE_SUIVI_URL : 'https://notes-envolees-suivi.romain-gaudet.workers.dev';
+  const NS = W.NE_NS || ''; // préfixe des clés du stockage local (qualification : 'qualif-')
+  const ID_KEY = NS + 'notes-envolees-id';       // identifiant de ce navigateur
+  const OFF_KEY = NS + 'notes-envolees-suivi-off'; // '1' : appareil du professeur, à ne pas suivre
 
   const get = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const put = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* stockage indisponible */ } };
@@ -730,7 +734,7 @@ const Suivi = (() => {
   const ECRAN = { telephone: 'téléphone', tablette: 'tablette', ordinateur: 'ordinateur' };
   const MIC_CODE = { denied: 'refusé', nomic: 'aucun micro', busy: 'micro déjà utilisé', unsupported: 'navigateur incompatible', noaudio: 'son indisponible', other: 'erreur' };
   const songTitle = (id) => (BY_ID[id] ? nb(BY_ID[id].title) : nb(id));
-  const KEY_STORE = 'notes-envolees-prof-cle';
+  const KEY_STORE = (window.NE_NS || '') + 'notes-envolees-prof-cle';
   const DAY = 864e5;
 
   /* ---------------- formats ---------------- */

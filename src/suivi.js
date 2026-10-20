@@ -10,9 +10,12 @@
 ------------------------------------------------------------------- */
 const Suivi = (() => {
   // adresse du Worker Cloudflare, sans « / » à la fin (vide : suivi coupé)
-  const SUIVI_URL = 'https://notes-envolees-suivi.romain-gaudet.workers.dev';
-  const ID_KEY = 'notes-envolees-id';       // identifiant de ce navigateur
-  const OFF_KEY = 'notes-envolees-suivi-off'; // '1' : appareil du professeur, à ne pas suivre
+  // (la version de qualification passe window.NE_SUIVI_URL = '' : ses essais ne partent pas dans le suivi)
+  const W = typeof window !== 'undefined' ? window : {};
+  const SUIVI_URL = W.NE_SUIVI_URL != null ? W.NE_SUIVI_URL : 'https://notes-envolees-suivi.romain-gaudet.workers.dev';
+  const NS = W.NE_NS || ''; // préfixe des clés du stockage local (qualification : 'qualif-')
+  const ID_KEY = NS + 'notes-envolees-id';       // identifiant de ce navigateur
+  const OFF_KEY = NS + 'notes-envolees-suivi-off'; // '1' : appareil du professeur, à ne pas suivre
 
   const get = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const put = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* stockage indisponible */ } };

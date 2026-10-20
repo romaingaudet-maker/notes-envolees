@@ -18,3 +18,4 @@ for (const raw of ctx.SONGS) {
   if (Math.abs(lastPartial) > 1e-9 && !(s.pickup > 0)) { console.log('  ✗ mesure finale incomplète :', lastPartial); bad++; }
 }
 console.log(bad ? `\n${bad} problème(s)` : '\nTout est cohérent.');
+process.exitCode = bad ? 1 : 0;
