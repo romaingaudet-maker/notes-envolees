@@ -92,6 +92,7 @@ const Engine = (() => {
 
   function show(v) {
     view = v;
+    if (v.scene) saneScene(v.scene); // normales calculées autrement (fils, formes tournées…)
     frame0 = Math.floor(performance.now() / 1000 * FPS);
     lastFrame = -1;
     dirty = true;
@@ -161,6 +162,7 @@ const Engine = (() => {
     if (!init()) return null;
     snapPost = snapPost || makePost(renderer);
     snapPost.setSize(w, h);
+    if (v.scene) saneScene(v.scene);
     if (v.resize) v.resize(w, h);
     const out = frames.map((f) => {
       FUZZ_U.uFzBoil.value = hashi(f >> 1, 99) * 0.014;

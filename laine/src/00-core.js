@@ -21,6 +21,29 @@ const v3 = (x = 0, y = 0, z = 0) => new T.Vector3(x, y, z);
 const v2 = (x = 0, y = 0) => new T.Vector2(x, y);
 const col = (c) => (c && c.isColor ? c.clone() : new T.Color(c));
 
+/* Normales nulles. Une pièce extrudée (les lettres en feutrine du titre…) contient des triangles aplatis
+   dont la normale est nulle ; quand la scène bouge, il arrive qu'un tel triangle couvre un pixel :
+   normalize(0) donne NaN dans le shader, et le halo étalait ce pixel NaN en carré noir (accueil,
+   « Envolées », par intermittence). Toute normale nulle (ou NaN) reçoit une direction quelconque. */
+function saneNormals(g) {
+  const n = g && g.attributes && g.attributes.normal;
+  if (!n) return g;
+  let fixed = 0;
+  for (let i = 0; i < n.count; i++) {
+    if (!(Math.hypot(n.getX(i), n.getY(i), n.getZ(i)) > 1e-6)) { n.setXYZ(i, 0, 0, 1); fixed++; }
+  }
+  if (fixed) n.needsUpdate = true;
+  return g;
+}
+const SANE_GEO = new WeakSet();
+function saneScene(scene) {
+  scene.traverse((o) => { if (o.geometry && !SANE_GEO.has(o.geometry)) { SANE_GEO.add(o.geometry); saneNormals(o.geometry); } });
+}
+{ // toutes les normales calculées passent par là (ExtrudeGeometry les calcule à sa création)
+  const cvn = T.BufferGeometry.prototype.computeVertexNormals;
+  T.BufferGeometry.prototype.computeVertexNormals = function () { cvn.call(this); saneNormals(this); };
+}
+
 /* hasards reproductibles */
 function rng(seed) {
   let s = seed >>> 0;
