@@ -188,6 +188,13 @@ const DEPTH_FN = `
 uniform float uNear; uniform float uFar; uniform float uFocus; uniform float uAper; uniform float uMaxBlur;
 float linz(float d){ return (uNear * uFar) / (uFar - (uFar - uNear) * d); }
 float cocOf(float z){ return min(uMaxBlur, uAper * abs(1.0 - uFocus / max(z, 0.001))); }`;
+/* Couleur saine : un pixel de la scène peut dépasser ce que garde la mémoire en demi-flottants (reflet très
+   vif → infini) ou valoir NaN (normale nulle sur un téléphone). Le halo (seuil, puis flou séparé en
+   largeur et en hauteur, en quart et huitième de définition) l'étalait en CARRÉ NOIR, par intermittence.
+   NaN et négatifs → 0 (la comparaison avec NaN est fausse), infini → 64. */
+const SANE_FN = `
+float sane1(float x){ return x >= 0.0 ? min(x, 64.0) : 0.0; }
+vec3 sane(vec3 c){ return vec3(sane1(c.r), sane1(c.g), sane1(c.b)); }`;
 
 function makePost(renderer) {
   const tri = new T.BufferGeometry();
@@ -215,17 +222,18 @@ function makePost(renderer) {
     uniforms: Object.assign({ tColor: { value: null }, tDepth: { value: null }, uTexel: { value: v2() } }, shared),
     fragmentShader: `varying vec2 vUv; uniform sampler2D tColor; uniform sampler2D tDepth; uniform vec2 uTexel;
 ${DEPTH_FN}
+${SANE_FN}
 const float GA = 2.39996323;
 void main(){
   float cz = linz(texture2D(tDepth, vUv).x);
   float cs = cocOf(cz);
-  vec3 c = texture2D(tColor, vUv).rgb;
+  vec3 c = sane(texture2D(tColor, vUv).rgb);
   float tot = 1.0, r = 0.6, mxc = cs;
   float ang = 0.0;
   for (int i = 0; i < 140; i++) {
     if (r >= uMaxBlur) break;
     vec2 tc = vUv + vec2(cos(ang), sin(ang)) * uTexel * r;
-    vec3 sc = texture2D(tColor, tc).rgb;
+    vec3 sc = sane(texture2D(tColor, tc).rgb);
     float sz = linz(texture2D(tDepth, tc).x);
     float ss = cocOf(sz);
     if (sz > cz) ss = clamp(ss, 0.0, cs * 2.0);
@@ -244,12 +252,13 @@ void main(){
     vertexShader: POST_VS,
     uniforms: { tSrc: { value: null }, uTexel: { value: v2() }, uThr: { value: 1.0 } },
     fragmentShader: `varying vec2 vUv; uniform sampler2D tSrc; uniform vec2 uTexel; uniform float uThr;
+${SANE_FN}
 void main(){
-  vec3 c = (texture2D(tSrc, vUv + uTexel * vec2(-1.0,-1.0)).rgb + texture2D(tSrc, vUv + uTexel * vec2(1.0,-1.0)).rgb
-          + texture2D(tSrc, vUv + uTexel * vec2(-1.0,1.0)).rgb + texture2D(tSrc, vUv + uTexel * vec2(1.0,1.0)).rgb) * 0.25;
+  vec3 c = (sane(texture2D(tSrc, vUv + uTexel * vec2(-1.0,-1.0)).rgb) + sane(texture2D(tSrc, vUv + uTexel * vec2(1.0,-1.0)).rgb)
+          + sane(texture2D(tSrc, vUv + uTexel * vec2(-1.0,1.0)).rgb) + sane(texture2D(tSrc, vUv + uTexel * vec2(1.0,1.0)).rgb)) * 0.25;
   float l = max(c.r, max(c.g, c.b));
   float k = max(0.0, l - uThr) / max(l, 1e-4);
-  gl_FragColor = vec4(c * k, 1.0);
+  gl_FragColor = vec4(sane(c * k), 1.0);
 }`,
     depthTest: false, depthWrite: false,
   });
@@ -257,11 +266,12 @@ void main(){
     vertexShader: POST_VS,
     uniforms: { tSrc: { value: null }, uDir: { value: v2() } },
     fragmentShader: `varying vec2 vUv; uniform sampler2D tSrc; uniform vec2 uDir;
+${SANE_FN}
 void main(){
   vec3 c = texture2D(tSrc, vUv).rgb * 0.227027;
   c += (texture2D(tSrc, vUv + uDir * 1.3846).rgb + texture2D(tSrc, vUv - uDir * 1.3846).rgb) * 0.316216;
   c += (texture2D(tSrc, vUv + uDir * 3.2308).rgb + texture2D(tSrc, vUv - uDir * 3.2308).rgb) * 0.070270;
-  gl_FragColor = vec4(c, 1.0);
+  gl_FragColor = vec4(sane(c), 1.0);
 }`,
     depthTest: false, depthWrite: false,
   });
@@ -278,6 +288,7 @@ uniform sampler2D tColor; uniform sampler2D tDof; uniform sampler2D tDepth; unif
 uniform vec2 uRes; uniform float uExposure; uniform float uBloom; uniform float uGrain; uniform float uVig; uniform float uFrame;
 uniform float uFlicker; uniform float uSat; uniform vec3 uLift; uniform vec3 uGain; uniform float uDofOn; uniform float uFlip; uniform float uPunch;
 ${DEPTH_FN}
+${SANE_FN}
 vec3 agxC(vec3 x){ vec3 x2 = x*x; vec3 x4 = x2*x2; return 15.5*x4*x2 - 40.14*x4*x + 31.96*x4 - 6.868*x2*x + 0.4298*x2 + 0.1191*x - 0.00232; }
 vec3 agx(vec3 c){
   const mat3 toR = mat3(vec3(0.6274,0.0691,0.0164), vec3(0.3293,0.9195,0.0880), vec3(0.0433,0.0113,0.8956));
@@ -298,13 +309,13 @@ vec3 toSRGB(vec3 c){ return mix(c * 12.92, 1.055 * pow(c, vec3(1.0/2.4)) - 0.055
 float hash(vec2 p){ p = fract(p * vec2(443.897, 441.423)); p += dot(p, p.yx + 19.19); return fract((p.x + p.y) * p.x); }
 void main(){
   vec2 uv = vUv;
-  vec3 c = texture2D(tColor, uv).rgb;
+  vec3 c = sane(texture2D(tColor, uv).rgb);
   if (uDofOn > 0.5) {
     float coc = cocOf(linz(texture2D(tDepth, uv).x));
     vec4 d = texture2D(tDof, uv);
-    c = mix(c, d.rgb, smoothstep(0.3, 1.4, max(coc, d.a)));
+    c = mix(c, sane(d.rgb), smoothstep(0.3, 1.4, max(coc, d.a)));
   }
-  c += (texture2D(tB1, uv).rgb * 0.75 + texture2D(tB2, uv).rgb * 0.55) * uBloom;
+  c += (sane(texture2D(tB1, uv).rgb) * 0.75 + sane(texture2D(tB2, uv).rgb) * 0.55) * uBloom;
   c *= uExposure * (1.0 + uFlicker);
   c = agx(c);
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
