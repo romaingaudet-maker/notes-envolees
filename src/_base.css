@@ -1,7 +1,7 @@
 /* Layout : couverture safran pour l'accueil, chemin de portée qui relie les comptines.
    Chaque comptine tient sur un seul écran comme une double page d'album en papier découpé :
    décor animé à gauche (en haut sur téléphone), pupitre à droite avec la phrase en cours
-   mise en avant, et en bas l'endroit où l'on joue (xylophone ou micro). Le décor reste
+   mise en avant, et en bas l'écoute du micro. Le décor reste
    toujours visible pendant le jeu. Chaque comptine a sa propre palette (pas de variante
    sombre/claire : un seul univers visuel par page, par choix). */
 :root {
@@ -316,38 +316,10 @@ a { color: inherit; }
 @keyframes hint-pop { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .nchip { display: inline-grid; place-items: center; min-width: 50px; height: 36px; padding: 0 10px; border-radius: 10px; background: var(--nc, var(--panel)); color: var(--nt, var(--text)); border: 2px solid var(--nc, var(--line-strong)); font-family: var(--font-text); font-weight: 700; font-size: 18px; box-shadow: 0 3px 0 color-mix(in srgb, var(--nc, #888) 60%, #000); }
 
-.xylo { --kh: 120px; position: relative; display: flex; align-items: center; justify-content: center; gap: 6px; height: calc(var(--kh) + 8px); width: 100%; max-width: 640px; margin: 0 auto; }
-.xylo::before, .xylo::after { content: ""; position: absolute; left: 0; right: 0; height: 12px; border-radius: 6px; background: var(--frame); box-shadow: 0 3px 0 color-mix(in srgb, var(--frame) 60%, #000); z-index: 0; }
-.xylo::before { top: 34%; }
-.xylo::after { top: 64%; }
-[data-mode="mic"] .xylo { display: none; }
-.key {
-  position: relative; z-index: 1;
-  flex: 1 1 0; min-width: 0; max-width: 64px;
-  height: calc(var(--kh) * var(--k));
-  border: 0; border-radius: 12px;
-  background: var(--nc); color: var(--nt);
-  display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-  padding: 0 0 9px;
-  cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none;
-  box-shadow: 0 5px 0 color-mix(in srgb, var(--nc) 58%, #000), 0 9px 14px rgba(0, 0, 0, .16);
-  transition: transform .07s, box-shadow .07s;
-}
-.key::before, .key::after { content: ""; position: absolute; left: 50%; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: color-mix(in srgb, var(--nc) 55%, #000); opacity: .55; }
-.key::before { top: 9px; }
-.key::after { bottom: 36px; }
-.key .kn { position: relative; font-weight: 700; font-size: 15px; line-height: 1; }
-.key .kn.low::after { content: ""; position: absolute; left: 50%; bottom: -7px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: currentColor; }
-.key .kn.high::before { content: ""; position: absolute; left: 50%; top: -8px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: currentColor; }
-.key .kk { display: none; margin-top: 8px; font-size: 11px; opacity: .75; font-weight: 700; }
-@media (hover: hover) and (pointer: fine) { .key .kk { display: block; } }
-.key.is-down { transform: translateY(4px); box-shadow: 0 1px 0 color-mix(in srgb, var(--nc) 58%, #000), 0 3px 6px rgba(0, 0, 0, .18); }
-.key.is-wrong, .heard.is-wrong { animation: wobble .4s; }
-.key.is-good, .heard.is-good { animation: glow .6s; }
-.key.is-hint { animation: beckon 1.1s ease-in-out infinite; }
+.heard.is-wrong { animation: wobble .4s; }
+.heard.is-good { animation: glow .6s; }
 @keyframes wobble { 0%, 100% { translate: 0 0; } 25% { translate: -6px 0; } 75% { translate: 6px 0; } }
 @keyframes glow { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
-@keyframes beckon { 0%, 100% { translate: 0 0; filter: brightness(1); } 50% { translate: 0 -8px; filter: brightness(1.25); } }
 
 /* le micro */
 .ear-off { display: grid; gap: 10px; justify-items: center; text-align: center; padding: 2px 0 4px; }
@@ -361,7 +333,9 @@ a { color: inherit; }
 .ear-msg { max-width: 38em; display: grid; gap: 8px; justify-items: center; padding: 10px 14px; border-radius: 14px; background: var(--panel); border: 2px solid var(--line); font-size: 15px; }
 .ear-msg p { margin: 0; }
 .ear-msg a { font-weight: 700; }
-.ear-on { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 4px 2px 6px; }
+.ear-on { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; padding: 4px 2px 6px; }
+/* le micro s'allume tout seul : pas de bouton pendant ce temps */
+.ear-off.is-starting .ear-row { display: none; }
 .heard {
   --lvl: 0;
   width: 92px; height: 92px; border-radius: 50%;
@@ -385,7 +359,6 @@ a { color: inherit; }
 .tuner .t-lo { left: 0; }
 .tuner .t-mid { left: 50%; transform: translateX(-50%); }
 .tuner .t-hi { right: 0; }
-.ear-side { display: grid; gap: 8px; justify-items: end; }
 .mini { height: 36px; padding: 0 12px; border-radius: 999px; border: 2px solid var(--line-strong); background: var(--panel); color: var(--text); font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; }
 
 .seg { align-self: center; display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--panel); border: 2px solid var(--line); }
@@ -397,7 +370,7 @@ a { color: inherit; }
 .confetti { position: fixed; z-index: 44; top: -20px; width: 10px; height: 16px; border-radius: 3px; pointer-events: none; animation: confetti-fall var(--t, 2.6s) cubic-bezier(.3, .1, .7, 1) forwards; }
 @keyframes confetti-fall { to { transform: translate(var(--dx, 0px), 110vh) rotate(var(--rot, 540deg)); } }
 
-/* bureau : la carte et le xylophone grandissent avec la hauteur de l'écran */
+/* bureau : la carte grandit avec la hauteur de l'écran */
 @media (min-width: 900px) {
   .card { padding: clamp(14px, 2vh, 22px) clamp(16px, 1.6vw, 24px) clamp(18px, 2.4vh, 26px); gap: clamp(12px, 1.7vh, 18px); }
   .pill { width: clamp(34px, 4.2vh, 40px); height: clamp(34px, 4.2vh, 40px); font-size: 15px; }
@@ -407,7 +380,6 @@ a { color: inherit; }
   .ph-lyric { font-size: clamp(19px, 2.65vh, 26px); }
   .beads { --stp: clamp(8px, 1.3vh, 13px); --bs: clamp(32px, 4.5vh, 46px); gap: clamp(4px, .6vh, 7px); }
   .bead { font-size: clamp(13px, 1.65vh, 16px); }
-  .xylo { --kh: clamp(100px, 13.4vh, 140px); }
 }
 
 /* bureau étroit (tablette à l'horizontale, petit portable) : plus de place pour le jeu */
@@ -430,7 +402,6 @@ a { color: inherit; }
   .play { gap: 10px; padding-block: 16px 8px; }
   .play-head h1 { font-size: clamp(28px, 3vw, 40px); }
   .play-head .instr { display: none; }
-  .xylo { --kh: 100px; }
   .hint { min-height: 34px; font-size: 19px; }
 }
 
@@ -438,7 +409,6 @@ a { color: inherit; }
   .play { gap: 8px; padding-block: 12px 6px; }
   .play-head .kicker { display: none; }
   .play-head h1 { font-size: clamp(24px, 2.2vw, 30px); }
-  .xylo { --kh: 86px; }
   .hint { min-height: 30px; font-size: 18px; }
   .dock { gap: 4px; padding-block: 6px 8px; }
   .seg button { height: 30px; }
@@ -468,16 +438,10 @@ a { color: inherit; }
   .pill { width: 30px; height: 30px; font-size: 13px; }
   .hint { font-size: 18px; min-height: 34px; }
   .nchip { min-width: 44px; height: 32px; font-size: 16px; }
-  .xylo { --kh: 98px; gap: 4px; }
-  .key { border-radius: 10px; padding-bottom: 7px; }
-  .key .kn { font-size: 14px; }
-  .key::after { bottom: 30px; }
   .seg button { height: 32px; padding: 0 12px; font-size: 13px; }
   .heard { width: 76px; height: 76px; }
   .heard-n { font-size: 23px; }
-  .ear-on { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 12px; padding: 2px 0 4px; }
-  .ear-side { gap: 6px; justify-items: stretch; }
-  .ear-side .mini { height: 34px; padding: 0 10px; }
+  .ear-on { grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; padding: 2px 0 4px; }
   .lbl-l { display: none; }
   .ear-cap { font-size: 15px; line-height: 1.2; }
   .tuner { margin-top: 4px; }
@@ -496,8 +460,6 @@ a { color: inherit; }
 @media (max-width: 380px) {
   .btn-big .lbl { font-size: 15px; }
   .beads { --bs: 26px; }
-  .xylo { --kh: 90px; gap: 3px; }
-  .key .kn { font-size: 13px; }
 }
 
 /* jouer la comptine : phrase par phrase, ou toute la comptine d'un coup (puis les phrases à revoir) */
@@ -508,9 +470,9 @@ a { color: inherit; }
 .btn-big.is-ready { animation: go-ready 1.6s ease-in-out infinite; }
 @keyframes go-ready { 0%, 100% { box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 62%, #000), 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 62%, #000), 0 0 0 9px color-mix(in srgb, var(--accent) 0%, transparent); } }
 /* « Régler ma voix » pas encore fait : le petit bouton respire aussi */
-.mini.is-ready { border-color: var(--accent); color: var(--accent); animation: mini-ready 1.6s ease-in-out infinite; }
+.mini.is-ready, .seg-cal button.is-ready { color: var(--accent); animation: mini-ready 1.6s ease-in-out infinite; }
 @keyframes mini-ready { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 0%, transparent); } }
-@media (prefers-reduced-motion: reduce) { .btn-big.is-ready, .mini.is-ready { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .btn-big.is-ready, .mini.is-ready, .seg-cal button.is-ready { animation: none; } }
 /* libellé double (« Tout écouter » / « Arrêter ») : le bouton a la largeur du plus long, rien ne se décale */
 .lbl2 { display: inline-grid; }
 .lbl2 > span { grid-area: 1 / 1; text-align: center; }

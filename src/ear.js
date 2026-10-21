@@ -564,7 +564,9 @@ registerProcessor('ne-ear', NeEar);`;
       try { await track.applyConstraints(RAW); st = settingsOf(); } catch (e) { /* il le garde */ }
     }
     S.dg.proc = { ec: st.echoCancellation, ns: st.noiseSuppression, agc: st.autoGainControl, sr: st.sampleRate, label: track.label || '' };
-    try { if (ctx.state !== 'running') await ctx.resume(); } catch (e) { /* reprise plus tard */ }
+    // page pas encore touchée : le navigateur garde le son en pause jusqu'au premier geste (Sound.ensure le relance) ;
+    // on n'attend pas indéfiniment
+    try { if (ctx.state !== 'running') await Promise.race([ctx.resume(), new Promise((r) => setTimeout(r, 400))]); } catch (e) { /* reprise plus tard */ }
     const src = ctx.createMediaStreamSource(stream);
     const mute = ctx.createGain();
     mute.gain.value = 0;

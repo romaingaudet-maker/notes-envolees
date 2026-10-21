@@ -20,8 +20,6 @@
   /* Adresse de la version en ligne, où le micro est autorisé (vide si aucune) */
   const ONLINE_URL = window.NE_ONLINE_URL || 'https://romaingaudet-maker.github.io/notes-envolees/';
   const LEGAL_URL = window.NE_LEGAL_URL || 'mentions-legales.html'; // mentions légales et confidentialité
-  const KEY_CODES = ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote'];
-  let keyLabels = ['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'Ù'];
   const RM = window.matchMedia('(prefers-reduced-motion: reduce)');
   const FINE = window.matchMedia('(hover: hover) and (pointer: fine)');
   const NARROW = window.matchMedia('(max-width: 899px)');
@@ -46,7 +44,7 @@
      qui joue les phrases (null : chaque comptine garde le sien) ; `free` : c'est l'élève qui
      fait la justesse de la note (voix, cordes, coulisse), la page est plus tolérante (FREE_TOL). */
   const INSTS = {
-    none: { name: 'Sans instrument', the: '', at: '', fam: 'C', play: 0, voice: null },
+    none: { name: 'Autre instrument en do', the: '', at: '', fam: 'C', play: 0, voice: null },
     // la voix : on chante les notes en disant leur nom ; la page vérifie la hauteur et le nom (src/ear.js)
     voix: { name: 'Voix', the: 'la voix', at: 'à la voix', fam: 'C', play: 0, voice: null, sing: true, free: true },
     piano: { name: 'Piano', the: 'le piano', at: 'au piano', fam: 'C', play: 0, voice: 'piano' },
@@ -76,7 +74,6 @@
     metro: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 3.2h6.8l4.2 17.3H4.4z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M5.6 16.2h12.8" stroke="currentColor" stroke-width="2.2"/><path d="M12 16.2l5.2-11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="14.6" cy="10.7" r="2" fill="currentColor"/></svg>',
     note: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17.2V5.4l10.5-2.4v12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><ellipse cx="6.4" cy="17.4" rx="3" ry="2.4" fill="currentColor"/><ellipse cx="16.9" cy="15.1" rx="3" ry="2.4" fill="currentColor"/></svg>',
     chev: '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5l5.5 5.5 5.5-5.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    xylo: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="3.4" height="16" rx="1.4" fill="currentColor"/><rect x="7.6" y="5.5" width="3.4" height="13" rx="1.4" fill="currentColor"/><rect x="12.2" y="7" width="3.4" height="10" rx="1.4" fill="currentColor"/><rect x="16.8" y="8.5" width="3.4" height="7" rx="1.4" fill="currentColor"/></svg>',
   };
   const star = (on, size = 24) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.45 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z" fill="${on ? '#F5C32C' : 'none'}" stroke="${on ? '#C8901A' : 'currentColor'}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
   const chip = (letter, name) => `<span class="nchip" data-l="${letter}">${name}</span>`;
@@ -87,11 +84,12 @@
   function load(k, dflt) { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v && typeof v === 'object' ? Object.assign(dflt, v) : dflt; } catch (e) { return dflt; } }
   function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } }
   // play : 'phrases' (phrase par phrase, avec de l'aide) ou 'whole' (toute la comptine d'un coup, puis les phrases à revoir)
-  const settings = load(SET_KEY, { mode: 'xylo', inst: 'none', level: 1, play: 'phrases' });
+  // mode : toujours 'mic' (on joue sur un vrai instrument, la page écoute au micro ; plus de xylophone à l'écran)
+  const settings = load(SET_KEY, { mode: 'mic', inst: 'none', level: 1, play: 'phrases' });
   settings.play = settings.play === 'whole' ? 'whole' : 'phrases';
   if (OLD_INST[settings.inst]) settings.inst = OLD_INST[settings.inst];
   if (!INSTS[settings.inst]) settings.inst = 'none';
-  if (settings.mode !== 'mic') settings.mode = 'xylo';
+  settings.mode = 'mic';
   settings.level = settings.level === 2 ? 2 : 1;
   const records = load(REC_KEY, {});
   const inst = () => {
@@ -105,7 +103,7 @@
   const instNote = () => {
     const i = inst();
     if (i.sing) return 'Chante chaque note en disant son nom (do, ré, mi…) : la page écoute au micro la hauteur et le nom. Une voix grave peut chanter une octave plus bas. Les phrases gardent le timbre de chaque comptine.' + FREE_NOTE;
-    if (!i.voice) return 'Chaque comptine garde son propre timbre ; les notes sonnent comme elles sont écrites.';
+    if (!i.voice) return 'Pour un instrument en do qui n’est pas dans la liste : les notes sonnent comme elles sont écrites, et chaque comptine garde son propre timbre.';
     const of = i.the.startsWith('l’') ? 'de ' + i.the : i.the.startsWith('le ') ? 'du ' + i.the.slice(3) : 'de ' + i.the;
     const sound = ` Les phrases sont jouées avec le son enregistré ${of}.`;
     if (i.fam !== 'C') return `Instrument ${i.short} : ${i.how}.${sound}`;
@@ -122,10 +120,7 @@
   }
   function setInst(k) {
     if (!INSTS[k]) return;
-    const was = settings.inst;
     settings.inst = k;
-    const toMic = k === 'voix' && was !== 'voix' && settings.mode !== 'mic'; // on chante : la page écoute au micro
-    if (toMic) settings.mode = 'mic';
     save(SET_KEY, settings);
     Sound.setTranspose(inst().play);
     Sound.useSamples(inst().voice);
@@ -136,9 +131,7 @@
       if (prepping()) cancelAttempt();
       expectNext();
       if (el.instr) el.instr.textContent = instrLine(G.song);
-      if (el.instChip) el.instChip.textContent = inst().voice ? inst().name : 'en do';
       voiceUI();
-      if (toMic) applyMode(true);
     }
     applyVoice();
   }
@@ -189,15 +182,12 @@
   const earText = () => (inst().sing
     ? (G && G.level === 2 ? 'La page écoute ta voix avec le micro : chante chaque note en disant son nom, puis elle vérifie les notes et le rythme.' : 'La page écoute ta voix avec le micro : chante chaque note en disant son nom (do, ré, mi…).')
     : (G && G.level === 2 ? 'La page écoute ton instrument avec le micro, puis vérifie les notes et le rythme.' : 'La page écoute ton instrument avec le micro et te dit si la note est juste.'));
-  const micLabel = () => (inst().sing ? 'Ma voix' : 'Mon instrument');
-  // les libellés qui changent avec la voix
+  // les libellés qui changent avec la voix ; « Régler ma voix » seulement pour la voix
   function voiceUI() {
     if (!el.main || !document.contains(el.main)) return;
-    const v = !!inst().sing, mb = app.querySelector('.seg-mode [data-mode="mic"]');
-    if (mb) { mb.setAttribute('aria-label', micLabel()); mb.title = micLabel(); mb.lastElementChild.textContent = micLabel(); }
+    const v = !!inst().sing;
     if (el.earText) el.earText.textContent = earText();
-    el.instChip.hidden = v;
-    el.bCal.hidden = !v || (Ear.active() && !Ear.voiceOk());
+    el.bCal.parentElement.hidden = !v || (Ear.active() && !Ear.voiceOk());
     el.bCal.classList.toggle('is-ready', v && !hasMyVoice() && !(G && G.cal));
   }
 
@@ -310,7 +300,7 @@
     D.leave();
     D = PAPER;
     setWorld(null);
-    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, keyLabels, decorFor })) return;
+    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, decorFor, GO })) return;
     const medals = LIB.map((s, i) => {
       const best = +records[s.id] || 0, best2 = +records[s.id + '@2'] || 0;
       const badge = best ? `<span class="medal-badge" aria-label="Record : ${best} étoile${best > 1 ? 's' : ''}">${[1, 2, 3].map((k) => star(k <= best, 15)).join('')}</span>` : '';
@@ -336,7 +326,7 @@
         <header class="home-head">
           <p class="eyebrow">Jeu d’oreille · ${LIB.length} comptines en do majeur</p>
           <h1 class="home-title"><span class="w">Les Notes</span><span class="w">Envol<span class="lift c1">é</span><span class="lift c2">e</span><span class="lift c3">s</span><span class="flyaway" aria-hidden="true"><i style="--c:var(--n-do);--dl:-.3s"></i><i style="--c:var(--n-sol);--dl:-1.1s;translate:0 -.25em"></i><i style="--c:var(--n-la);--dl:-1.9s;translate:0 -.55em"></i></span></span></h1>
-          <p class="home-lede">Dans chaque comptine, les notes se sont envolées. <strong>Seule la première note de chaque phrase est restée.</strong> Joue-la, puis retrouve les suivantes à l’oreille, sur le xylophone de l’écran ou sur ton propre instrument.</p>
+          <p class="home-lede">Dans chaque comptine, les notes se sont envolées. <strong>Seule la première note de chaque phrase est restée.</strong> Joue-la sur ton instrument (ou chante-la), puis retrouve les suivantes à l’oreille : la page t’écoute avec le micro.</p>
         </header>
         <section class="score" aria-label="Les comptines, de la plus facile à la plus difficile">
           <svg class="staff" aria-hidden="true"></svg>
@@ -347,7 +337,7 @@
           <ol class="steps">
             <li><p>Choisis une comptine. Les plus faciles sont au début du chemin.</p></li>
             <li><p>Écoute-la en entier, ou phrase par phrase avec le bouton rond. « Jusqu’à la note » rejoue le début de la phrase et s’arrête sur la note à trouver.</p></li>
-            <li><p>Touche « À toi de jouer ! » : la page joue la phrase, compte « 1, 2, 3, 4 », puis c’est à toi. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec ton instrument, la page t’écoute au micro et te dit si la note est juste. Avec la voix, chante chaque note en disant son nom : la page vérifie la hauteur et le nom.</p></li>
+            <li><p>Touche « À toi de jouer ! » : la page joue la phrase, compte « 1, 2, 3, 4 », puis c’est à toi. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. La page t’écoute au micro et te dit si la note est juste. Avec la voix, chante chaque note en disant son nom : la page vérifie la hauteur et le nom.</p></li>
             <li><p>Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée se pose à sa hauteur et le décor s’anime.</p></li>
             <li><p>« Phrase par phrase » pour t’entraîner avec de l’aide, ou « Toute la comptine » d’un coup, sans aide : à la fin, la page te ramène sur les phrases à revoir. Tu peux rejouer autant de fois que tu veux.</p></li>
             <li><p>Niveau 2 : après le décompte, joue toute la phrase en rythme ; la page vérifie chaque note et sa place dans le temps. Une phrase réussie, la suivante démarre toute seule.</p></li>
@@ -373,7 +363,7 @@
         </section>
         <p class="home-foot">${Suivi.configured
           ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré sans nom, avec l’adresse IP de la connexion, et effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
-          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Sur ordinateur, les touches ${keyLabels.slice(0, 9).join(' ')} jouent les lames, la barre d’espace lance l’écoute (au niveau 2, le décompte). Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0). Reconnaissance des noms chantés : modèles tirés des voix de synthèse Kokoro (licence Apache 2.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
+          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Le micro s’allume tout seul dans une comptine (le navigateur demande d’abord l’autorisation). Sur ordinateur, la barre d’espace lance «${NB}${GO}${NB}». Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0). Reconnaissance des noms chantés : modèles tirés des voix de synthèse Kokoro (licence Apache 2.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
       </div>
     </main>`;
     app.querySelector('#home-inst').addEventListener('change', (e) => setInst(e.target.value));
@@ -435,13 +425,6 @@
   const PRAISE = ['Bravo !', 'Oui !', 'Super !', 'Bien joué !', 'Exactement !', 'Quelle oreille !', 'C’est ça !', 'Génial !'];
   let el = {};
 
-  function keysFor(song) {
-    const lo = Math.max(25, song.minStep - 1), hi = Math.min(35, song.maxStep + 1);
-    const out = [];
-    for (let s = lo; s <= hi; s++) out.push(parsePitch('CDEFGAB'[s % 7] + Math.floor(s / 7)));
-    return out;
-  }
-
   function renderSong(song) {
     trackLeave(G && G.song === song ? 'recommence' : 'autre');
     view = 'song';
@@ -452,7 +435,7 @@
     const lv2 = settings.level === 2;
     G = {
       song, level: lv2 ? 2 : 1, found: new Set(), revealed: new Set(), errors: 0, attempts: 0, cursor: null, view: 0,
-      slow: !!keepSlow, playing: null, done: false, keys: keysFor(song), lastStars: 0,
+      slow: !!keepSlow, playing: null, done: false, lastStars: 0,
       // niveau 2
       passed: new Set(), fails: 0, tries: song.phrases.map(() => 0), take: null, results: [], moveTo: null, keepMic: false, fullRes: null,
       // stage : 'whole' (toute la comptine d'un coup), 'review' (ensuite, les phrases à revoir), 'train' (phrase par phrase)
@@ -478,7 +461,6 @@
         </div>
       </div>`).join('');
     const pills = song.phrases.map((ph, p) => `<li><button class="pill" type="button" data-p="${p}" aria-label="Phrase ${p + 1}">${p + 1}</button></li>`).join('');
-    const keys = G.keys.map((k, i) => `<button class="key" type="button" data-i="${i}" data-l="${k.letter}" style="--k:${(1 - i * 0.042).toFixed(3)}" aria-label="${k.fr}${k.octave === 3 ? ' grave' : k.octave === 5 ? ' aigu' : ''}"><span class="kn${k.octave === 3 ? ' low' : k.octave === 5 ? ' high' : ''}">${k.fr}</span><span class="kk" aria-hidden="true">${keyLabels[i] || ''}</span></button>`).join('');
     // chaque bouton garde la largeur de son plus long libellé : « Arrêter » ne fait rien bouger
     const lbl2 = (idle) => `<span class="lbl lbl2"><span class="l-idle">${idle}</span><span class="l-busy">Arrêter</span></span>`;
     const listen = `<button class="btn-big" id="b-go" type="button" aria-pressed="false"><span class="ic">${ICON.metro}</span>${lbl2(GO)}</button>
@@ -519,9 +501,8 @@
       </section>
       <section class="dock" aria-label="Jouer les notes">
         <p class="hint" id="hint" aria-live="polite"></p>
-        <div class="xylo" role="group" aria-label="Xylophone : choisis la note">${keys}</div>
-        <div class="ear" id="ear" hidden>
-          <div class="ear-off" id="ear-off">
+        <div class="ear" id="ear">
+          <div class="ear-off is-starting" id="ear-off">
             <p class="ear-text" id="ear-text">${earText()}</p>
             <div class="ear-row"><button class="btn-big" id="mic-on" type="button"><span class="ic">${ICON.mic}</span><span>Allumer le micro</span></button></div>
             <div class="ear-msg" id="ear-msg" hidden></div>
@@ -532,11 +513,6 @@
               <p class="ear-cap" id="ear-cap">J’écoute…</p>
               <div class="tuner" aria-hidden="true"><i class="tz"></i><b class="needle" id="needle"></b><span class="t-lo">bas</span><span class="t-mid">juste</span><span class="t-hi">haut</span></div>
             </div>
-            <div class="ear-side">
-              <button class="mini" id="inst-chip" type="button" title="Changer d’instrument"${inst().sing ? ' hidden' : ''}>${esc(inst().voice ? inst().name : 'en do')}</button>
-              <button class="mini" id="b-cal" type="button" title="La page apprend comment tu chantes do, ré, mi…"${inst().sing ? '' : ' hidden'}>Régler<span class="lbl-l"> ma voix</span></button>
-              <button class="mini" id="mic-off" type="button" aria-label="Couper le micro">Couper<span class="lbl-l"> le micro</span></button>
-            </div>
           </div>
         </div>
         <div class="dock-bar">
@@ -544,10 +520,7 @@
             <button type="button" role="radio" data-level="1" aria-checked="${!lv2}"><b class="lv">1</b><span class="long">Les notes</span><span class="short">Notes</span></button>
             <button type="button" role="radio" data-level="2" aria-checked="${lv2}"><b class="lv">2</b><span class="long">Notes et rythme</span><span class="short">Rythme</span></button>
           </div>
-          <div class="seg seg-mode" role="radiogroup" aria-label="Jouer avec">
-            <button type="button" role="radio" data-mode="xylo" aria-checked="${settings.mode === 'xylo'}" aria-label="Xylophone" title="Xylophone">${ICON.xylo}<span>Xylophone</span></button>
-            <button type="button" role="radio" data-mode="mic" aria-checked="${settings.mode === 'mic'}" aria-label="${micLabel()}" title="${micLabel()}">${ICON.mic}<span>${micLabel()}</span></button>
-          </div>
+          <div class="seg seg-cal"${inst().sing ? '' : ' hidden'}><button type="button" id="b-cal" title="La page apprend comment tu chantes do, ré, mi…">Régler<span class="lbl-l"> ma voix</span></button></div>
           <div class="seg seg-slow"><button type="button" id="b-slow" aria-pressed="${G.slow}" aria-label="Lentement" title="Lentement">${ICON.turtle}</button></div>
         </div>
       </section>
@@ -566,7 +539,6 @@
       done: app.querySelector('#done'),
       hint: app.querySelector('#hint'),
       dock: app.querySelector('.dock'),
-      keys: [...app.querySelectorAll('.key')],
       beads: [...app.querySelectorAll('.bead')].sort((a, b) => a.dataset.n - b.dataset.n),
       syls: [...app.querySelectorAll('.syl')].sort((a, b) => a.dataset.n - b.dataset.n),
       panels: [...app.querySelectorAll('.panel')],
@@ -580,7 +552,6 @@
       earCap: app.querySelector('#ear-cap'),
       needle: app.querySelector('#needle'),
       instSel: app.querySelector('#inst-sel'),
-      instChip: app.querySelector('#inst-chip'),
       bCal: app.querySelector('#b-cal'),
       earText: app.querySelector('#ear-text'),
     };
@@ -591,7 +562,7 @@
     D.update(el.stage, info());
     bindSong();
     setCursor(null);
-    applyMode(false);
+    applyMode();
     idleHint();
   }
 
@@ -699,7 +670,6 @@
     }
     G.cursor = n;
     G.attempts = 0;
-    el.keys.forEach((k) => k.classList.remove('is-hint'));
     toUI();
     expectNext();
     if (n == null) return;
@@ -752,7 +722,7 @@
     setHint(html, cls);
     if (el.bGo) el.bGo.classList.toggle('is-ready', ready);
   }
-  // une touche jouée hors essai : elle sonne, et on rappelle comment commencer
+  // une note jouée hors essai : on rappelle comment commencer
   function nudge() {
     if (G.nudged || G.done) return;
     G.nudged = true;
@@ -968,30 +938,7 @@
     idleHint();
   }
 
-  /* ---------------- réponses ---------------- */
-  function pressKey(i) {
-    if (!G || !G.keys[i]) return;
-    const key = G.keys[i], k = el.keys[i];
-    Sound.tap(voiceNow(), key.midi, 0.6);
-    k.classList.add('is-down');
-    later(() => k.classList.remove('is-down'), 130);
-    // une prise en cours : on enregistre l'instant de la frappe (le son entendu a la latence du haut-parleur)
-    if (G.take) { recordNote({ t: Sound.now() - Sound.outLatency(), midi: key.midi }); return; }
-    if (prepping()) return; // pendant l'écoute et le décompte qui précèdent l'essai, la touche sonne, c'est tout
-    if (G.playing) stopPlayback(true);
-    if (!G.live) { nudge(); return; } // hors essai : on cherche librement
-    if (G.cursor == null || G.done) return;
-    const target = G.song.notes[G.cursor];
-    if (G.stage === 'whole') { wholeNote(key.midi === target.midi, k); return; }
-    if (key.midi === target.midi) good(k, target);
-    else {
-      const up = target.midi > key.midi;
-      const same = key.letter === target.letter;
-      retrigger(k, 'is-wrong');
-      bad(same ? (up ? 'Bonne note, mais plus aiguë' : 'Bonne note, mais plus grave') : (up ? 'Plus aigu' : 'Plus grave'), up, 'vers la droite', 'vers la gauche');
-    }
-  }
-
+  /* ---------------- réponses (au micro) ---------------- */
   let heardSyl = null; // la dernière syllabe reconnue, montrée un instant sous la note entendue
   function heardNote(hit) {
     if (!G || settings.mode !== 'mic') return;
@@ -999,7 +946,9 @@
     if (hit.syl) heardSyl = PitchKit.SYL.every((s) => s === hit.syl.best || PitchKit.sayMatch(hit.syl, s, hit.syl.user) === 'non') ? { s: hit.syl.best, pc: mod12(hit.r), t: performance.now() } : null;
     if (G.cal) { calHit(hit); return; }
     if (G.take) { recordNote({ t: (hit.t != null ? hit.t : Sound.now()) - Sound.outLatency() - 0.03, written: hit.r - inst().off, hit, syl: hit.syl }); return; }
-    if (G.done || G.level === 2 || !G.live || G.cnt) return;
+    if (G.done) return;
+    if (!G.live && !prepping() && !G.playing) { if (G.moveTo == null) nudge(); return; }
+    if (G.level === 2 || !G.live || G.cnt) return;
     if (G.cursor == null) return;
     if (G.playing) {
       // l'élève peut jouer un peu avant la fin de la dernière note de la page
@@ -1047,8 +996,6 @@
     const n = G.cursor;
     G.found.add(n);
     el.beads[n].classList.remove(...R_CLASSES); // manquée pendant la comptine entière, retrouvée maintenant
-    el.keys.forEach((k) => k.classList.remove('is-hint'));
-    if (fromEl && fromEl.classList.contains('key')) retrigger(fromEl, 'is-good');
     if (fromEl === el.heard) retrigger(el.heard, 'is-good');
     setHint(PRAISE[Math.floor(Math.random() * PRAISE.length)], 'ok');
     paintBead(n);
@@ -1080,8 +1027,6 @@
     setHint(html, up == null ? 'down' : up ? 'up' : 'down');
     if (G.attempts >= 3 && G.cursor != null) {
       const target = G.song.notes[G.cursor];
-      const t = G.keys.findIndex((k) => k.midi === target.midi);
-      if (t >= 0) el.keys[t].classList.add('is-hint');
       if (!G.revealed.has(G.cursor) && !G.song.given.has(G.cursor)) {
         G.revealed.add(G.cursor);
         G.helped++;
@@ -1568,8 +1513,8 @@
     fitDone();
   }
 
-  /* Carte de fin : si elle ne tient pas à l'écran, le xylophone (ou le micro)
-     se replie le temps de la lire ; il revient dès qu'on rejoue. */
+  /* Carte de fin : si elle ne tient pas à l'écran, l'écoute du micro se replie
+     le temps de la lire ; elle revient dès qu'on rejoue. */
   function fitDone() {
     if (!G || !el.main) return;
     el.main.classList.remove('tight');
@@ -1623,33 +1568,21 @@
     }, 400);
   }
 
-  /* ---------------- micro ---------------- */
+  /* ---------------- micro ----------------
+     On joue toujours sur un vrai instrument (ou à la voix) : le micro s'allume tout seul en ouvrant une
+     comptine (le navigateur demande l'autorisation la première fois). Il se coupe quand la comptine est
+     finie, au retour à l'accueil et quand la page passe en arrière-plan, et se rallume quand on rejoue
+     ou qu'on revient sur la page. */
   let micBusy = false;
-  // micWanted : l'élève a allumé le micro ; on le coupe quand la comptine est finie
-  // (ou quand on quitte la page) et on le rallume dès qu'il doit rejouer
-  let micWanted = false;
   function pauseMicDone() {
     if (!Ear.active()) return;
     Ear.stop();
     showEar(false, '<p>Micro coupé : la comptine est finie. Il se rallumera tout seul quand tu rejoueras.</p>');
   }
-  function applyMode(userAction) {
-    const mic = settings.mode === 'mic';
-    if (!mic && G.cal) G.cal = null;
+  function applyMode() {
     applyVoice();
-    el.main.dataset.mode = settings.mode;
-    app.querySelectorAll('.seg-mode [role="radio"]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.mode === settings.mode)));
-    el.ear.hidden = !mic;
-    if (!mic) {
-      if (Ear.active()) Ear.stop();
-      if (G.take && G.take.mic) cancelTake(true);
-      cursorHint();
-      return;
-    }
-    if (G.take && !G.take.mic) cancelTake(true);
-    if (Ear.active() || (micWanted && !G.done && !micBlocked())) { startMic(); return; }
+    if (Ear.active() || (!G.done && !micBlocked())) { startMic(); return; }
     if (micBlocked()) showEar(false, micMsgHtml('denied'), true); else showEar(false);
-    if (userAction) cursorHint();
   }
 
   // dans un cadre qui n'a pas le droit au micro (claude.ai), on prévient tout de suite
@@ -1666,17 +1599,18 @@
         ? `Ici, dans claude.ai, le micro n’est pas disponible. Pour jouer avec ton instrument, ouvre la <a href="${esc(ONLINE_URL)}" target="_blank" rel="noopener">version en ligne</a>.`
         : 'Ici, dans claude.ai, le micro n’est pas disponible. Ouvre la page en dehors de claude.ai pour jouer avec ton instrument.')
       : MIC_MSG[code] || MIC_MSG.other;
-    return `<p>${text}</p><button class="mini" type="button" data-act="xylo">Jouer au xylophone</button>`;
+    return `<p>${text}</p>`;
   }
 
   // blocked : le micro ne pourra pas marcher ici, inutile de proposer de l'allumer
-  function showEar(on, msgHtml, blocked) {
+  // starting : le micro est en train de s'allumer (pas de bouton)
+  function showEar(on, msgHtml, blocked, starting) {
     el.earOn.hidden = !on;
     el.earOff.hidden = on;
     el.earOff.classList.toggle('is-blocked', !on && !!blocked);
+    el.earOff.classList.toggle('is-starting', !on && !!starting);
     el.earMsg.hidden = !msgHtml;
     el.earMsg.innerHTML = msgHtml || '';
-    if (on) el.instChip.textContent = inst().voice ? inst().name : 'en do';
     voiceUI();
   }
   const FATAL = (code) => (code === 'denied' && framed) || code === 'unsupported' || code === 'noaudio';
@@ -1689,19 +1623,23 @@
     noaudio: 'Le son n’est pas disponible dans ce navigateur.',
     other: 'Le micro n’a pas pu démarrer. Réessaie.',
     ended: 'Le micro s’est arrêté. Touche « Allumer le micro » pour reprendre.',
-    paused: 'Micro en pause. Touche « Allumer le micro » pour reprendre.',
+    paused: 'Micro en pause : il reprend tout seul quand tu reviens sur la page.',
   };
 
   async function startMic() {
     if (micBusy) return;
     micBusy = true;
     applyVoice();
+    if (!Ear.active() && el.ear && document.contains(el.ear)) showEar(false, '', false, true);
     try {
       await Ear.start({ onNote: heardNote, onFrame: heardFrame, onEnded: () => { if (el.ear) showEar(false, MIC_MSG.ended); } });
-      micWanted = true;
       if (G && G.done && !G.keepMic) { pauseMicDone(); return; }
-      if (settings.mode === 'mic' && el.ear && document.contains(el.ear)) {
-        showEar(true); expectNext(); cursorHint();
+      if (view === 'song' && el.ear && document.contains(el.ear)) {
+        showEar(true); expectNext();
+        if (G && G.live) cursorHint();
+        // page ouverte sans avoir encore été touchée : le navigateur attend un geste pour laisser passer le son
+        const ctx = Sound.ensure();
+        if (ctx && ctx.state !== 'running') el.earCap.textContent = 'Touche l’écran pour que je t’écoute.';
         if (singing() && !Ear.voiceOk()) setHint('Ce navigateur ne me laisse pas reconnaître les noms chantés : je vérifie seulement la hauteur.', '');
       }
     } catch (e) {
@@ -1780,27 +1718,8 @@
         if (G.found.has(n) || G.song.given.has(n) || G.revealed.has(n)) { Sound.tap(voiceNow(), G.song.notes[n].midi, 0.5); retrigger(b, 'pop'); }
       });
     });
-    let fromPointer = false;
-    el.keys.forEach((k, i) => {
-      k.addEventListener('pointerdown', (e) => {
-        if (e.button > 0) return;
-        fromPointer = true;
-        pressKey(i);
-      });
-      k.addEventListener('click', () => {
-        if (fromPointer) { fromPointer = false; return; }
-        pressKey(i);
-      });
-    });
     app.querySelectorAll('.seg-level [role="radio"]').forEach((b) => b.addEventListener('click', () => {
       if (+b.dataset.level !== G.level) setLevel(+b.dataset.level);
-    }));
-    app.querySelectorAll('.seg-mode [role="radio"]').forEach((b) => b.addEventListener('click', () => {
-      if (settings.mode === b.dataset.mode) return;
-      settings.mode = b.dataset.mode;
-      save(SET_KEY, settings);
-      applyMode(true);
-      fitDone();
     }));
     app.querySelector('#mic-on').addEventListener('click', startMic);
     el.bCal.addEventListener('click', () => calStart(false));
@@ -1808,12 +1727,7 @@
       if (ev.target.closest('[data-act="cal-stop"]')) { G.acts++; calStop(); }
       else if (ev.target.closest('[data-act="cal-again"]') && G && G.cal) calStep();
     });
-    app.querySelector('#mic-off').addEventListener('click', () => { micWanted = false; Ear.stop(); showEar(false); });
     el.instSel.addEventListener('change', () => setInst(el.instSel.value));
-    el.instChip.addEventListener('click', () => { try { el.instSel.showPicker(); } catch (e) { el.instSel.focus(); } });
-    el.earMsg.addEventListener('click', (e) => {
-      if (e.target.closest('[data-act="xylo"]')) { settings.mode = 'xylo'; save(SET_KEY, settings); applyMode(true); }
-    });
     if (FINE.matches) {
       let raf = 0;
       el.stage.addEventListener('pointermove', (e) => {
@@ -1829,13 +1743,6 @@
   document.addEventListener('keydown', (e) => {
     if (view !== 'song' || !G || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.target.closest && e.target.closest('select, input')) return;
-    const i = KEY_CODES.indexOf(e.code);
-    if (i >= 0 && i < G.keys.length) {
-      if (e.repeat) return;
-      e.preventDefault();
-      pressKey(i);
-      return;
-    }
     if (e.code === 'Space' && !(e.target.closest && e.target.closest('button, a'))) {
       e.preventDefault();
       goButton();
@@ -1854,16 +1761,9 @@
       Ear.stop();
       if (el.ear && document.contains(el.ear)) showEar(false, `<p>${MIC_MSG.paused}</p>`);
     }
-    // retour sur la page : le micro reprend si l'élève l'avait allumé
-    if (!document.hidden && micWanted && view === 'song' && G && !G.done && settings.mode === 'mic' && el.ear && document.contains(el.ear)) startMic();
+    // retour sur la page : le micro reprend
+    if (!document.hidden && view === 'song' && G && !G.done && el.ear && document.contains(el.ear) && !micBlocked()) startMic();
   });
-
-  if (navigator.keyboard && navigator.keyboard.getLayoutMap) {
-    navigator.keyboard.getLayoutMap().then((m) => {
-      const h = KEY_CODES.map((c) => (m.get(c) || '').toUpperCase());
-      if (h.slice(0, 9).every(Boolean)) keyLabels = h;
-    }).catch(() => { /* carte du clavier indisponible */ });
-  }
 
   /* ---------------- navigation ---------------- */
   let lastPointer = null;

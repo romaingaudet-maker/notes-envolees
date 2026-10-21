@@ -27,7 +27,7 @@
 .inst-pill .chev, .home-select .chev { position: absolute; right: 10px; top: 50%; width: 18px; height: 18px; margin-top: -9px; pointer-events: none; }
 .inst-pill select option, .home-select select option { color: #1D2350; background: #FFFFFF; }
 
-/* ============ niveau et façon de jouer, sous le xylophone ============ */
+/* ============ niveau, lentement (et « Régler ma voix »), sous l'écoute du micro ============ */
 .dock-bar { align-self: stretch; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 10px; }
 .dock-bar .seg { align-self: auto; }
 .seg .lv { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; line-height: 1; background: var(--line); color: inherit; }
@@ -80,11 +80,6 @@
 .medal-r2 svg { width: 13px; height: 13px; margin-right: 2px; color: var(--ink-soft); }
 
 /* ============ tailles d'écran ============ */
-/* xylophone ou micro en icônes quand la colonne de jeu n'est pas très large : la barre des réglages tient sur une ligne */
-@media (max-width: 1499px) {
-  .seg-mode button span { display: none; }
-  .seg-mode button { padding: 0 12px; }
-}
 @media (max-width: 899px) {
   .seg .long { display: none; }
   .seg .short { display: inline; }
@@ -131,7 +126,6 @@
 
 /* petits téléphones (iPhone SE…) : on gagne quelques pixels pour garder le décor */
 @media (max-width: 899px) and (max-height: 700px) {
-  .xylo { --kh: 84px; }
   .rstrip { height: 14px; margin-top: -6px; }
   .rstrip .rline { top: 6px; }
   .rstrip .tk, .rstrip .dot { top: 1px; }
@@ -183,10 +177,9 @@
 }
 
 /* carte de fin affichée : l'indication du bas (redite du titre) et le pied de page s'effacent ;
-   s'il manque encore de la place, le xylophone (ou le micro) se replie jusqu'à ce qu'on rejoue */
+   s'il manque encore de la place, l'écoute du micro se replie jusqu'à ce qu'on rejoue */
 .song:has(#done:not([hidden])) .dock > .hint,
 .song:has(#done:not([hidden])) .play-foot { display: none; }
-.song.tight:has(#done:not([hidden])) .dock > .xylo,
 .song.tight:has(#done:not([hidden])) .dock > .ear { display: none; }
 .done-actions .short { display: none; }
 @media (max-width: 899px) {
@@ -199,7 +192,7 @@
 
 /* ============ rangement : la phrase et ses écoutes, les réglages en bas ============
    carte : ▶ (la phrase) | paroles | ? (jusqu'à la note, niveau 1) ;
-   sous le xylophone : niveau · xylophone ou micro · lentement */
+   sous l'écoute du micro : niveau · lentement (· régler ma voix) */
 .ph-play { grid-column: 1; grid-row: 1; }
 .ph-lyric { grid-column: 2; grid-row: 1; }
 .ph-to { grid-column: 3; grid-row: 1; height: 42px; padding: 0 14px 0 8px; font-size: 14px; }
@@ -207,6 +200,7 @@
 .ph-to .q svg { width: 12px; height: 12px; }
 .song[data-level="1"] .panel { grid-template-columns: 46px minmax(0, 1fr) auto; }
 .seg-slow button { padding: 0 12px; }
+.seg-cal[hidden] { display: none; }
 .seg-slow button svg { width: 22px; height: 22px; }
 .seg button[aria-pressed="true"] { background: var(--text); color: var(--panel); }
 @media (min-width: 900px) {
@@ -231,7 +225,7 @@
 @media (max-width: 380px) {
   .listen .btn { padding: 0 10px; }
   .listen .btn .ic svg { width: 16px; height: 16px; }
-  .seg button, .seg-level button, .seg-slow button, .seg-mode button { padding: 0 8px; }
+  .seg button, .seg-level button, .seg-slow button { padding: 0 8px; }
   .dock-bar { gap: 6px; }
 }
 /* diagnostic du micro (?diag) */

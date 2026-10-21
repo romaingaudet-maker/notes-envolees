@@ -91,17 +91,17 @@ dd { margin: 0; min-width: 0; }
     <h2 id="t-donnees">Données personnelles</h2>
     <h3>Ce qui reste sur l’appareil</h3>
     <ul>
-      <li><strong>Le son du micro</strong>, si l’élève choisit de jouer avec le micro : le navigateur demande d’abord l’autorisation, puis le son est analysé dans la page pour reconnaître la hauteur des notes et, si l’élève chante avec la voix, la syllabe chantée (do, ré, mi…), et aussitôt oublié. Il n’est jamais enregistré ni envoyé. Le micro s’éteint quand l’élève l’arrête, à la fin de la comptine, au retour à l’accueil et dès que la page passe en arrière-plan (il se rallume au retour si l’élève jouait avec).</li>
+      <li><strong>Le son du micro</strong> : on joue sur un vrai instrument (ou à la voix) et la page écoute au micro, qui s’allume tout seul en ouvrant une comptine. Le navigateur demande d’abord l’autorisation, puis le son est analysé dans la page pour reconnaître la hauteur des notes et, si l’élève chante avec la voix, la syllabe chantée (do, ré, mi…), et aussitôt oublié. Il n’est jamais enregistré ni envoyé. Le micro s’éteint à la fin de la comptine, au retour à l’accueil et dès que la page passe en arrière-plan (il se rallume au retour).</li>
       <li><strong>Le réglage de la voix</strong>, seulement si l’élève touche « Régler ma voix » : pour chaque nom de note, un résumé chiffré du timbre de la syllabe chantée, qui aide à reconnaître les noms. Ce n’est pas un enregistrement : ni le son ni la hauteur de la voix n’y sont gardés. Il reste dans le navigateur et n’est jamais envoyé.
         <span class="voice-wipe" id="voice-wipe" hidden><button type="button" id="voice-forget">Effacer le réglage de la voix</button> <span id="voice-state"></span></span></li>
-      <li><strong>Les réglages</strong> (instrument, niveau, xylophone ou micro) et <strong>le meilleur nombre d’étoiles</strong> de chaque comptine, gardés dans le navigateur (stockage local). Le site n’utilise aucun cookie.</li>
+      <li><strong>Les réglages</strong> (instrument, niveau) et <strong>le meilleur nombre d’étoiles</strong> de chaque comptine, gardés dans le navigateur (stockage local). Le site n’utilise aucun cookie.</li>
     </ul>
     <h3>Le suivi des parties, pour le professeur</h3>
     <dl>
       <dt>Responsable</dt>
       <dd>Romain Gaudet, le professeur.</dd>
       <dt>Ce qui est envoyé</dt>
-      <dd>Un identifiant tiré au hasard et gardé dans le navigateur (ni nom, ni adresse, ni photo), le type d’écran (téléphone, tablette ou ordinateur), l’instrument choisi, xylophone ou micro, le niveau, les étoiles déjà gagnées et, pour chaque comptine jouée : le résultat (étoiles, erreurs, notes justes et en place au niveau 2), les notes montrées, l’usage du mode lent, la durée, l’endroit où l’élève s’est arrêté s’il quitte avant la fin, et les éventuels problèmes de micro. Le serveur y ajoute la date et l’adresse IP de la connexion.</dd>
+      <dd>Un identifiant tiré au hasard et gardé dans le navigateur (ni nom, ni adresse, ni photo), le type d’écran (téléphone, tablette ou ordinateur), l’instrument choisi, le niveau, les étoiles déjà gagnées et, pour chaque comptine jouée : le résultat (étoiles, erreurs, notes justes et en place au niveau 2), les notes montrées, l’usage du mode lent, la durée, l’endroit où l’élève s’est arrêté s’il quitte avant la fin, et les éventuels problèmes de micro. Le serveur y ajoute la date et l’adresse IP de la connexion.</dd>
       <dt>Pourquoi</dt>
       <dd>Permettre au professeur de suivre les progrès de ses élèves et d’améliorer le jeu. L’adresse IP l’aide à reconnaître quel appareil est celui de quel élève.</dd>
       <dt>Sur quelle base</dt>
