@@ -125,6 +125,7 @@ write('suivi.html', prof);
 // 7) qualification : les sons et les icônes à côté des pages
 if (QUALIF) {
   fs.cpSync(new URL('./sons/', import.meta.url), new URL(ROOT + 'sons/', import.meta.url), { recursive: true });
+  if (fs.existsSync(new URL('./laine/portraits/', import.meta.url))) fs.cpSync(new URL('./laine/portraits/', import.meta.url), new URL(ROOT + 'laine/portraits/', import.meta.url), { recursive: true });
   for (const n of [180, 192, 512]) fs.copyFileSync(new URL(`./icone-${n}.png`, import.meta.url), new URL(ROOT + `icone-${n}.png`, import.meta.url));
-  console.log('_qualif/sons/ + icônes');
+  console.log('_qualif/sons/ + portraits + icônes');
 }

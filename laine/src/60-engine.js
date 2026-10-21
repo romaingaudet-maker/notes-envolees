@@ -90,6 +90,13 @@ const Engine = (() => {
     return true;
   }
 
+  /* Préparer une scène avant de l'afficher : ses programmes (shaders) sont compilés en arrière-plan
+     (KHR_parallel_shader_compile) au lieu de geler la page à la première image. */
+  async function prepare(v) {
+    if (!init()) return;
+    if (v.scene) saneScene(v.scene);
+    try { await Promise.all([renderer.compileAsync(v.scene, v.camera), post.compile()]); } catch (e) { /* compilation à la première image */ }
+  }
   function show(v) {
     view = v;
     if (v.scene) saneScene(v.scene); // normales calculées autrement (fils, formes tournées…)
@@ -174,7 +181,7 @@ const Engine = (() => {
   }
 
   return {
-    supported, init, attach, detach, show, poke, once, snapshot, stop, start, manual,
+    supported, init, attach, detach, show, prepare, poke, once, snapshot, stop, start, manual,
     get renderer() { return renderer; },
     get view() { return view; },
     get size() { return [W, H]; },
@@ -404,5 +411,12 @@ void main(){
     return null;
   }
 
-  return { setSize, render };
+  // compiler à l'avance les programmes du développement (sans bloquer la page, si le navigateur le permet)
+  function compile() {
+    const s = new T.Scene();
+    [dofMat, brightMat, blurMat, finalMat].forEach((m) => { const q = new T.Mesh(tri, m); q.frustumCulled = false; s.add(q); });
+    return renderer.compileAsync(s, ocam);
+  }
+
+  return { setSize, render, compile };
 }

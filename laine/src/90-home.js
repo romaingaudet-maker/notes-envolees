@@ -269,7 +269,12 @@ function buildHero(V, o = {}) {
 
 const HomeSkin = (() => {
   let hero = null; // { V, H } : la scène de l'accueil, gardée d'une visite à l'autre
-  const portraits = new Map(); // thème → url d'une bande de 4 images
+  const portraits = new Map(); // thème → url d'une bande de 4 images fabriquée ici (si le fichier manque)
+  /* Les portraits des décors sont fabriqués à l'avance (outils/portraits.mjs → laine/portraits/{thème}.webp) :
+     les fabriquer sur le téléphone, vingt décors en 3D rendus quatre fois chacun, faisait ramer l'accueil.
+     Si un fichier manque (page ouverte seule, sans le dossier), on le fabrique ici, sans se presser. */
+  const PORTRAITS_BASE = window.PORTRAITS_BASE || 'portraits/';
+  let lastLIB = [];
   let queue = [], busy = false, root = null, io = null, heroIO = null;
   const MIDI = { C: 60, D: 62, E: 64, F: 65, G: 67, A: 69, B: 71 };
 
@@ -277,18 +282,19 @@ const HomeSkin = (() => {
     const { app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, GO } = ctx;
     const LEGAL_URL = ctx.LEGAL_URL || 'mentions-legales.html';
     const gl = Engine.supported();
+    lastLIB = LIB;
     const hoops = LIB.map((s, i) => {
       const best = +records[s.id] || 0, best2 = +records[s.id + '@2'] || 0;
       const c = (SCENES[s.theme] && SCENES[s.theme].color) || '#3A2A52';
       const stars = best ? `<span class="hoop-stars" aria-label="Record : ${best} étoile${best > 1 ? 's' : ''}">${[1, 2, 3].map((k) => star(k <= best, 14)).join('')}</span>` : '';
       const r2 = best2 ? `<span class="hoop-r2" aria-label="Niveau 2 : ${best2} étoile${best2 > 1 ? 's' : ''}">${ICON.metro}${'★'.repeat(best2)}</span>` : '';
-      const pic = portraits.get(s.theme);
+      const pic = portraits.get(s.theme) || (SCENES[s.theme] ? `${PORTRAITS_BASE}${s.theme}.webp` : '');
       return `<li class="hoop-li" data-i="${i}" data-theme="${s.theme}" style="--c:${c};--tilt:${((hashi(i, 3) - 0.5) * 7).toFixed(1)}deg">
-        <a class="hoop${pic ? ' has-pic' : ''}" href="#${s.id}">
+        <a class="hoop${portraits.has(s.theme) ? ' has-pic' : ''}" href="#${s.id}">
           <span class="hoop-ring">
             <span class="hoop-cloth">
               <span class="hoop-emb" aria-hidden="true">${typeof Scenes !== 'undefined' ? Scenes.emblem(s.theme) : ''}</span>
-              <span class="hoop-pic" aria-hidden="true">${pic ? `<img src="${pic}" alt="">` : ''}</span>
+              <span class="hoop-pic" aria-hidden="true">${pic ? `<img src="${pic}" alt="" loading="lazy" decoding="async">` : ''}</span>
             </span>
             <span class="hoop-screw" aria-hidden="true"><i></i></span>
             <span class="hoop-tag" aria-hidden="true">${s.level}</span>
@@ -370,9 +376,21 @@ const HomeSkin = (() => {
       p.scrollIntoView({ behavior: RM.matches ? 'auto' : 'smooth', block: 'start' });
     });
     layoutHoops();
+    // les portraits : le fichier, ou (s'il manque) fabriqué ici
+    queue = [];
+    app.querySelectorAll('.hoop-pic img').forEach((img) => {
+      const li = img.closest('.hoop-li'), song = LIB.find((s) => s.theme === li.dataset.theme);
+      const ok = () => li.querySelector('.hoop').classList.add('has-pic');
+      if (img.complete && img.naturalWidth) ok();
+      else {
+        img.addEventListener('load', ok, { once: true });
+        img.addEventListener('error', () => { img.remove(); if (gl && song) { queue.push(song); watchQueue(); } }, { once: true });
+      }
+    });
+    // la scène 3D démarre une fois la page affichée (le texte d'abord, sans attendre la construction du décor)
     if (gl) {
-      startHero(app.querySelector('.lh-stage'), () => (inst().voice || 'musicbox'));
-      queuePortraits(LIB);
+      const host = app.querySelector('.lh-stage');
+      requestAnimationFrame(() => setTimeout(() => { if (root && document.contains(host)) startHero(host, () => (inst().voice || 'musicbox')); }, 0));
     }
     return true;
   }
@@ -424,15 +442,28 @@ const HomeSkin = (() => {
   }
 
   /* la scène 3D de l'accueil */
+  /* La scène se construit par morceaux, entre deux images de la page : les textures de laine une par une,
+     puis le décor, puis la compilation des programmes en arrière-plan. La page reste fluide (on peut
+     défiler, toucher) ; la scène paraît quand elle est prête. */
+  const slice = () => new Promise((r) => (window.requestIdleCallback ? requestIdleCallback(() => r(), { timeout: 250 }) : setTimeout(r, 16)));
+  async function buildHeroSlowly() {
+    for (const k of Object.keys(PATTERN)) { pattern(k); await slice(); }
+    fiberTexture();
+    await slice();
+    const V = makeView({ bg: HOME_BG, fov: 25, rig: { target: [0, 40, 0], az: 0, el: 6, box: [124, 90] }, post: { exposure: 1.02, bloom: 0.55, aper: 5.5, maxBlur: 10, sat: 1.12, lift: '#0A0412', vignette: 0.55, punch: 1.28 } });
+    cueKit(V);
+    const H = buildHero(V);
+    V.alwaysMove = true;
+    hero.V = V; hero.H = H;
+    await slice();
+    await Engine.prepare(V);
+  }
   function startHero(host, voice) {
     if (!Engine.init()) return;
-    if (!hero) {
-      const V = makeView({ bg: HOME_BG, fov: 25, rig: { target: [0, 40, 0], az: 0, el: 6, box: [124, 90] }, post: { exposure: 1.02, bloom: 0.55, aper: 5.5, maxBlur: 10, sat: 1.12, lift: '#0A0412', vignette: 0.55, punch: 1.28 } });
-      cueKit(V);
-      const H = buildHero(V);
-      hero = { V, H };
-      V.alwaysMove = true;
-    }
+    if (!hero) hero = { ready: buildHeroSlowly() };
+    hero.ready.then(() => { if (root && document.contains(host)) showHero(host, voice); });
+  }
+  function showHero(host, voice) {
     const { V, H } = hero;
     // le texte d'introduction posé sur la scène (grand écran) : la guirlande se cadre au-dessus
     const intro = root.querySelector('.lh-hero-in');
@@ -494,8 +525,14 @@ const HomeSkin = (() => {
 
   /* portraits des décors : fabriqués un par un quand la page n'a rien d'autre à faire,
      en commençant par les tambours visibles */
-  function queuePortraits(LIB) {
-    queue = LIB.filter((s) => SCENES[s.theme] && !portraits.has(s.theme));
+  // portraits à fabriquer ici (fichiers manquants) : ceux qu'on voit d'abord, et pas avant que l'accueil soit calme
+  let queueT = 0;
+  function watchQueue() {
+    if (window.NE_PORTRAITS_TOOL) return; // outils/portraits.mjs les fabrique tous lui-même
+    clearTimeout(queueT);
+    queueT = setTimeout(() => { if (root && document.contains(root)) queuePortraits(); }, 2500);
+  }
+  function queuePortraits() {
     if (io) io.disconnect();
     if ('IntersectionObserver' in window) {
       io = new IntersectionObserver((es) => {
@@ -521,14 +558,14 @@ const HomeSkin = (() => {
       if (root && document.contains(root)) setTimeout(pump, 40);
     });
   }
-  async function portrait(song) {
+  // la bande de 4 images d'un décor (aussi pour outils/portraits.mjs)
+  async function strip(song) {
     const N = 320, frames = [0, 2, 4, 6];
     const { V, S } = Decor.build(song, true);
     V.rig.dolly = 0.86;
     const nph = song.phrases.length;
     if (S.update) S.update({ world: song.theme, total: song.notes.length, found: Math.round(song.notes.length * 0.7), p: 0.7, phrasesDone: Math.round(nph * 0.6), done: false }, true);
     try { await Engine.renderer.compileAsync(V.scene, V.camera); } catch (e) { /* compilation au rendu */ }
-    if (!root || !document.contains(root)) { disposeScene(V.scene); return; }
     const shots = Engine.snapshot(V, N, N, frames);
     disposeScene(V.scene);
     const cv = document.createElement('canvas');
@@ -539,15 +576,27 @@ const HomeSkin = (() => {
       for (let y = 0; y < N; y++) img.data.set(sh.px.subarray((N - 1 - y) * N * 4, (N - y) * N * 4), y * N * 4);
       g.putImageData(img, k * N, 0);
     });
+    return cv;
+  }
+  async function portrait(song) {
+    if (!root || !document.contains(root)) return;
+    const cv = await strip(song);
     const url = await new Promise((res) => cv.toBlob((b) => res(b ? URL.createObjectURL(b) : cv.toDataURL('image/jpeg', 0.86)), 'image/webp', 0.86));
     portraits.set(song.theme, url);
     const li = root && root.querySelector(`.hoop-li[data-theme="${song.theme}"]`);
     if (li) {
-      li.querySelector('.hoop-pic').innerHTML = `<img src="${url}" alt="">`;
+      li.querySelector('.hoop-pic').innerHTML = `<img src="${url}" alt="" decoding="async">`;
       requestAnimationFrame(() => li.querySelector('.hoop').classList.add('has-pic'));
     }
   }
 
-  return { render, color: HOME_BG };
+  // outils/portraits.mjs : { thème: image webp en data URL } pour toutes les comptines de l'accueil
+  async function strips() {
+    const out = {};
+    for (const s of lastLIB) if (SCENES[s.theme]) out[s.theme] = (await strip(s)).toDataURL('image/webp', 0.78);
+    return out;
+  }
+
+  return { render, strips, color: HOME_BG };
 })();
 window.HomeSkin = HomeSkin;
