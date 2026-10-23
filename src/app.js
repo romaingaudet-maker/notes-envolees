@@ -85,12 +85,17 @@
   function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } }
   // play : 'phrases' (phrase par phrase, avec de l'aide) ou 'whole' (toute la comptine d'un coup, puis les phrases à revoir)
   // mode : toujours 'mic' (on joue sur un vrai instrument, la page écoute au micro ; plus de xylophone à l'écran)
-  const settings = load(SET_KEY, { mode: 'mic', inst: 'none', level: 1, play: 'phrases' });
+  // prenom : facultatif (accueil) ; choisi : l'élève a choisi lui-même son instrument (sinon la page le lui demande)
+  const settings = load(SET_KEY, { mode: 'mic', inst: 'none', level: 1, play: 'phrases', prenom: '', choisi: false });
   settings.play = settings.play === 'whole' ? 'whole' : 'phrases';
   if (OLD_INST[settings.inst]) settings.inst = OLD_INST[settings.inst];
   if (!INSTS[settings.inst]) settings.inst = 'none';
   settings.mode = 'mic';
   settings.level = settings.level === 2 ? 2 : 1;
+  const cleanName = (s) => String(s || '').replace(/[^\p{L}\p{M}' \-’]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 30);
+  settings.prenom = cleanName(settings.prenom);
+  // réglages d'avant le prénom : un instrument déjà choisi (autre que « autre instrument en do ») compte comme choisi
+  settings.choisi = !!settings.choisi || settings.inst !== 'none';
   const records = load(REC_KEY, {});
   const inst = () => {
     const i = INSTS[settings.inst], f = FAMS[i.fam];
@@ -125,13 +130,14 @@
     Sound.setTranspose(inst().play);
     Sound.useSamples(inst().voice);
     app.querySelectorAll('select.inst-sel').forEach((sel) => { sel.value = k; });
-    const note = app.querySelector('#home-inst-note');
-    if (note) note.textContent = instNote();
+    const ipn = app.querySelector('#ip-name');
+    if (ipn) ipn.textContent = instShort();
     if (G && view === 'song') {
       if (prepping()) cancelAttempt();
       expectNext();
       if (el.instr) el.instr.textContent = instrLine(G.song);
       voiceUI();
+      choixDit();
     }
     applyVoice();
   }
@@ -139,6 +145,99 @@
     settings.level = v === 2 ? 2 : 1;
     save(SET_KEY, settings);
     if (G && view === 'song') { stopAll(); renderSong(G.song); }
+  }
+
+  /* ---------------- l'élève : son prénom et son instrument ----------------
+     Une carte en haut de l'accueil, ouverte tant que l'instrument n'a pas été choisi (première visite), puis repliée
+     en une ligne (« Bonjour, Léa ! · Flûte · Changer »). Dans une comptine ouverte directement (lien partagé par le
+     professeur), la même carte s'ouvre par-dessus tant que l'instrument n'a jamais été choisi. Le prénom est
+     facultatif ; quand le suivi est branché, il part avec les résultats (voir les mentions légales). */
+  const INST_LIST = ['flute', 'clarinette', 'saxalto', 'trompette', 'trombone', 'cor', 'violon', 'alto', 'violoncelle', 'piano', 'xylophone', 'voix', 'none'];
+  const INST_TILE = {
+    flute: ['Flûte', ''], clarinette: ['Clarinette', 'en si♭'], saxalto: ['Saxophone', 'alto, en mi♭'], trompette: ['Trompette', 'en si♭'],
+    trombone: ['Trombone', ''], cor: ['Cor', 'en fa'], violon: ['Violon', ''], alto: ['Alto', ''], violoncelle: ['Violoncelle', ''],
+    piano: ['Piano', ''], xylophone: ['Xylophone', ''], voix: ['Voix', 'je chante'], none: ['Autre', 'instrument en do'],
+  };
+  const instShort = (k = settings.inst) => (INST_TILE[k] || INST_TILE.none)[0];
+  const helloHtml = () => (settings.prenom ? `Bonjour, <b>${esc(settings.prenom)}</b> !` : 'Bonjour !');
+  function eleveHtml(kind) {
+    // kind : 'home' (accueil) ou 'modal' (par-dessus une comptine)
+    const open = kind === 'modal' || !settings.choisi;
+    const why = Suivi.configured ? 'Facultatif. Ton professeur le verra avec tes résultats.' : 'Facultatif. Il reste sur cet appareil.';
+    const tiles = INST_LIST.map((k) => {
+      const [t, s] = INST_TILE[k];
+      const on = settings.choisi && settings.inst === k;
+      return `<label class="ec-tile"><input type="radio" name="ec-inst-${kind}" value="${k}"${on ? ' checked' : ''}><span><b>${t}</b>${s ? `<small>${s}</small>` : ''}</span></label>`;
+    }).join('');
+    return `<section class="eleve-card${open ? ' is-open' : ''}" data-kind="${kind}" aria-label="Toi et ton instrument">
+      <div class="ec-sum">
+        <p class="ec-hello">${helloHtml()}</p>
+        <p class="ec-inst">${ICON.note}<span>${esc(instShort())}</span></p>
+        <button class="ec-edit" type="button">Changer</button>
+      </div>
+      <form class="ec-form" novalidate>
+        <h2 class="ec-title">${settings.choisi ? 'Toi et ton instrument' : 'Bienvenue !'}</h2>
+        <div class="ec-name">
+          <label for="ec-prenom-${kind}">Ton prénom</label>
+          <input type="text" id="ec-prenom-${kind}" name="prenom" maxlength="30" autocomplete="given-name" autocapitalize="words" spellcheck="false" placeholder="Écris ton prénom" value="${esc(settings.prenom)}">
+          <p class="ec-why">${why}</p>
+        </div>
+        <fieldset class="ec-insts"><legend>Ton instrument</legend><div class="ec-grid">${tiles}</div></fieldset>
+        <p class="ec-note" aria-live="polite">${settings.choisi ? esc(instNote()) : 'Touche ton instrument : la page jouera dans son ton, avec son vrai son.'}</p>
+        <button class="ec-go btn-big" type="submit"${settings.choisi ? '' : ' disabled'}><span>C’est parti !</span></button>
+      </form>
+    </section>`;
+  }
+  // onDone : l'élève a validé (la carte se replie, ou la fenêtre se ferme)
+  function bindEleve(card, onDone) {
+    if (!card) return;
+    const form = card.querySelector('.ec-form'), go = card.querySelector('.ec-go'), note = card.querySelector('.ec-note');
+    const name = card.querySelector('input[name="prenom"]');
+    const saveName = () => {
+      const v = cleanName(name.value);
+      if (v !== settings.prenom) { settings.prenom = v; save(SET_KEY, settings); }
+    };
+    name.addEventListener('change', saveName);
+    name.addEventListener('blur', saveName);
+    name.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveName(); name.blur(); } });
+    card.querySelectorAll('.ec-tile input').forEach((r) => r.addEventListener('change', () => {
+      settings.choisi = true;
+      setInst(r.value); // enregistre aussi « choisi »
+      note.textContent = instNote();
+      go.disabled = false;
+    }));
+    card.querySelector('.ec-edit').addEventListener('click', () => {
+      card.classList.add('is-open');
+      card.querySelector('.ec-title').textContent = 'Toi et ton instrument';
+    });
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      saveName();
+      if (!settings.choisi) { note.textContent = 'Choisis d’abord ton instrument.'; return; }
+      card.querySelector('.ec-hello').innerHTML = helloHtml();
+      card.querySelector('.ec-inst span').textContent = instShort();
+      card.classList.remove('is-open');
+      if (onDone) onDone();
+    });
+  }
+  // dans une comptine ouverte directement, tant que l'instrument n'a jamais été choisi
+  function eleveModal() {
+    if (app.querySelector('.ec-modal')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'ec-modal';
+    wrap.innerHTML = `<div class="ec-sheet" role="dialog" aria-modal="true" aria-label="Toi et ton instrument">${eleveHtml('modal')}</div>`;
+    // la comptine derrière ne réagit plus (ni toucher, ni clavier) tant que la carte est ouverte
+    const behind = [...app.children];
+    behind.forEach((c) => { c.inert = true; });
+    app.appendChild(wrap);
+    const sheet = wrap.querySelector('.ec-sheet');
+    sheet.tabIndex = -1;
+    sheet.focus({ preventScroll: true });
+    bindEleve(wrap.querySelector('.eleve-card'), () => {
+      behind.forEach((c) => { c.inert = false; });
+      wrap.remove();
+      if (G && view === 'song') { idleHint(); if (el.bGo) el.bGo.focus({ preventScroll: true }); }
+    });
   }
 
   /* ---------------- la justesse ----------------
@@ -187,7 +286,7 @@
     if (!el.main || !document.contains(el.main)) return;
     const v = !!inst().sing;
     if (el.earText) el.earText.textContent = earText();
-    el.bCal.parentElement.hidden = !v || (Ear.active() && !Ear.voiceOk());
+    el.bCal.closest('.dock-bar').hidden = !v || (Ear.active() && !Ear.voiceOk());
     el.bCal.classList.toggle('is-ready', v && !hasMyVoice() && !(G && G.cal));
   }
 
@@ -255,7 +354,8 @@
   }
 
   /* ---------------- suivi des parties, pour le professeur (src/suivi.js) ---------------- */
-  const track = (type, data) => Suivi.send(type, Object.assign({ inst: settings.inst, mode: settings.mode }, data));
+  // le prénom (s'il a été donné) part avec chaque envoi : la page de suivi montre le dernier connu de chaque appareil
+  const track = (type, data) => Suivi.send(type, Object.assign({ inst: settings.inst, mode: settings.mode }, settings.prenom ? { prenom: settings.prenom } : {}, data));
   const secsSince = (t0) => Math.round((Suivi.clock() - t0) / 1000);
   // comptine quittée avant la fin : on dit où l'élève en était (s'il a commencé à jouer)
   function trackLeave(why) {
@@ -289,6 +389,32 @@
     root.dataset.view = theme ? 'song' : 'home';
   }
 
+  /* L'écran reste allumé dans une comptine (verrou d'écran, « Screen Wake Lock ») : sinon le téléphone posé sur le
+     pupitre s'assombrit puis se met en veille pendant que l'élève joue, et le micro s'arrête. Rendu sur l'accueil.
+     Le navigateur le lâche quand la page passe en arrière-plan : on le reprend au retour, et au premier toucher
+     (certains navigateurs ne l'accordent qu'après un geste). Navigateur trop ancien : l'écran s'éteint comme avant. */
+  const Veille = (() => {
+    let lock = null, want = false, asking = false;
+    async function take() {
+      if (!want || lock || asking || document.hidden || !navigator.wakeLock) return;
+      asking = true;
+      try {
+        const l = await navigator.wakeLock.request('screen');
+        if (!want) { l.release().catch(() => {}); return; }
+        lock = l;
+        l.addEventListener('release', () => { if (lock === l) lock = null; });
+      } catch (e) {
+        /* refusé (mode économie d'énergie, page cachée…) : on réessaiera au prochain geste */
+      } finally {
+        asking = false;
+      }
+    }
+    function drop() { const l = lock; lock = null; if (l) l.release().catch(() => {}); }
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) take(); });
+    document.addEventListener('pointerdown', () => { take(); }, true);
+    return { keep(on) { want = !!on; if (want) take(); else drop(); }, held: () => !!lock };
+  })();
+
   /* ================================ ACCUEIL ================================ */
   const OFFSETS = [0, -26, 18, 28, -14, 26, -22, 12, -26, 20, -8, 24, -20, 10, -24, 18, -10, 26, -18, 8];
 
@@ -296,11 +422,12 @@
     trackLeave('accueil');
     view = 'home';
     G = null;
+    Veille.keep(false);
     if (Ear.active()) Ear.stop();
     D.leave();
     D = PAPER;
     setWorld(null);
-    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, decorFor, GO })) return;
+    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, decorFor, GO, eleveHtml, bindEleve, HOWTO })) return;
     const medals = LIB.map((s, i) => {
       const best = +records[s.id] || 0, best2 = +records[s.id + '@2'] || 0;
       const badge = best ? `<span class="medal-badge" aria-label="Record : ${best} étoile${best > 1 ? 's' : ''}">${[1, 2, 3].map((k) => star(k <= best, 15)).join('')}</span>` : '';
@@ -315,8 +442,6 @@
     }).join('');
     const chips = [['C', 'Do'], ['D', 'Ré'], ['E', 'Mi'], ['F', 'Fa'], ['G', 'Sol'], ['A', 'La'], ['B', 'Si']]
       .map(([l, n]) => `<span class="chip" data-l="${l}">${n}</span>`).join('');
-    const levelOpts = [[1, '1 · Les notes', 'Retrouve chaque note à l’oreille, à ton rythme.'], [2, '2 · Notes et rythme', 'Après le décompte, joue toute la phrase en rythme : la page vérifie les notes et le rythme.']]
-      .map(([v, t, d]) => `<label class="inst-opt"><input type="radio" name="home-level" value="${v}"${settings.level === v ? ' checked' : ''}><span class="inst-card"><b>${t}</b><small>${d}</small></span></label>`).join('');
     const micNote = framed && ONLINE_URL
       ? `<p class="inst-online">Ici, dans claude.ai, le micro n’est pas disponible. Pour jouer avec ton instrument, ouvre la <a href="${esc(ONLINE_URL)}" target="_blank" rel="noopener">version en ligne</a>.</p>`
       : '';
@@ -326,34 +451,17 @@
         <header class="home-head">
           <p class="eyebrow">Jeu d’oreille · ${LIB.length} comptines en do majeur</p>
           <h1 class="home-title"><span class="w">Les Notes</span><span class="w">Envol<span class="lift c1">é</span><span class="lift c2">e</span><span class="lift c3">s</span><span class="flyaway" aria-hidden="true"><i style="--c:var(--n-do);--dl:-.3s"></i><i style="--c:var(--n-sol);--dl:-1.1s;translate:0 -.25em"></i><i style="--c:var(--n-la);--dl:-1.9s;translate:0 -.55em"></i></span></span></h1>
-          <p class="home-lede">Dans chaque comptine, les notes se sont envolées. <strong>Seule la première note de chaque phrase est restée.</strong> Joue-la sur ton instrument (ou chante-la), puis retrouve les suivantes à l’oreille : la page t’écoute avec le micro.</p>
+          <p class="home-lede">Dans chaque comptine, les notes se sont envolées. <strong>Seule la première note de chaque phrase est restée.</strong> Joue-la sur ton instrument (ou chante-la), puis retrouve les suivantes à l’oreille : la page t’écoute avec le micro.</p>
+          <div class="home-eleve">${eleveHtml('home')}${micNote}</div>
         </header>
-        <section class="score" aria-label="Les comptines, de la plus facile à la plus difficile">
+        <section class="score" id="score" aria-label="Les comptines, de la plus facile à la plus difficile">
           <svg class="staff" aria-hidden="true"></svg>
           <ol class="medals">${medals}</ol>
         </section>
         <section class="howto">
           <h2>Comment jouer</h2>
-          <ol class="steps">
-            <li><p>Choisis une comptine. Les plus faciles sont au début du chemin.</p></li>
-            <li><p>Écoute-la en entier, ou phrase par phrase avec le bouton rond. « Jusqu’à la note » rejoue le début de la phrase et s’arrête sur la note à trouver.</p></li>
-            <li><p>Touche « À toi de jouer ! » : la page joue la phrase, compte « 1, 2, 3, 4 », puis c’est à toi. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. La page t’écoute au micro et te dit si la note est juste. Avec la voix, chante chaque note en disant son nom : la page vérifie la hauteur et le nom.</p></li>
-            <li><p>Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée se pose à sa hauteur et le décor s’anime.</p></li>
-            <li><p>« Phrase par phrase » pour t’entraîner avec de l’aide, ou « Toute la comptine » d’un coup, sans aide : à la fin, la page te ramène sur les phrases à revoir. Tu peux rejouer autant de fois que tu veux.</p></li>
-            <li><p>Niveau 2 : après le décompte, joue toute la phrase en rythme ; la page vérifie chaque note et sa place dans le temps. Une phrase réussie, la suivante démarre toute seule.</p></li>
-          </ol>
+          <ol class="steps">${HOWTO.map((t) => `<li><p>${t}</p></li>`).join('')}</ol>
           <div class="side-cards">
-            <fieldset class="legend inst-set">
-              <legend>Ton instrument</legend>
-              <p>Les noms de notes sont ceux de ta partition. La page joue dans le ton de ton instrument, avec un son proche du sien.</p>
-              <label class="home-select">${ICON.note}<select class="inst-sel" id="home-inst" aria-label="Ton instrument">${instOptions()}</select>${ICON.chev}</label>
-              <p class="inst-note" id="home-inst-note">${instNote()}</p>
-              ${micNote}
-            </fieldset>
-            <fieldset class="legend level-set">
-              <legend>Niveau</legend>
-              <div class="inst-opts">${levelOpts}</div>
-            </fieldset>
             <div class="legend">
               <h3>Le code couleur des notes</h3>
               <p>Toutes les comptines sont en do majeur : pas de dièse, pas de bémol. Les notes graves portent un point dessous, les aiguës un point dessus.</p>
@@ -362,14 +470,26 @@
           </div>
         </section>
         <p class="home-foot">${Suivi.configured
-          ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré sans nom, avec l’adresse IP de la connexion, et effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
+          ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour que ton professeur suive tes progrès et pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré avec ton prénom si tu l’as écrit et l’adresse IP de la connexion, puis effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
           : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Le micro s’allume tout seul dans une comptine (le navigateur demande d’abord l’autorisation). Sur ordinateur, la barre d’espace lance «${NB}${GO}${NB}». Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0). Reconnaissance des noms chantés : modèles tirés des voix de synthèse Kokoro (licence Apache 2.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
       </div>
     </main>`;
-    app.querySelector('#home-inst').addEventListener('change', (e) => setInst(e.target.value));
-    app.querySelectorAll('input[name="home-level"]').forEach((r) => r.addEventListener('change', () => { settings.level = +r.value === 2 ? 2 : 1; save(SET_KEY, settings); }));
+    bindEleve(app.querySelector('.eleve-card'), () => {
+      const s = app.querySelector('#score');
+      if (s) s.scrollIntoView({ behavior: RM.matches ? 'auto' : 'smooth', block: 'start' });
+    });
     layoutMedals();
   }
+
+  // « Comment jouer », sur l'accueil des deux versions
+  const HOWTO = [
+    'Écris ton prénom et choisis ton instrument, en haut de la page. Les noms de notes sont ceux de ta partition : la page joue dans le ton de ton instrument, avec son vrai son.',
+    'Choisis une comptine. Les plus faciles sont au début du chemin.',
+    'Choisis ton exercice. Niveau 1, les notes : retrouve-les à ton rythme. Niveau 2, notes et rythme : joue en mesure après le décompte. Phrase par phrase, avec de l’aide, ou toute la comptine d’un coup, sans aide : la page te ramène ensuite sur les phrases à revoir.',
+    'Touche « À toi de jouer ! » : la page joue la phrase, compte « 1, 2, 3, 4 », puis c’est à toi. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. La page t’écoute au micro. Avec la voix, chante chaque note en disant son nom.',
+    'Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée se pose à sa hauteur et le décor s’anime.',
+    'Pour écouter : le bouton rond à côté des paroles joue la phrase, « Écouter toute la comptine » joue tout, « ? » rejoue la phrase jusqu’à la note à trouver. La tortue fait tout jouer plus lentement.',
+  ];
 
   let medalRO = null;
   function layoutMedals() {
@@ -412,12 +532,15 @@
       d += ` C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
     }
     const W = box.width, H = box.height;
+    /* marge de dessin : de quoi loger les bouts arrondis à gauche et à droite, presque rien en haut et en bas (la carte
+       de l'élève est juste au-dessus : une zone peinte qui la chevauche la faisait salir par certains moteurs de rendu) */
+    const MX = 200, MY = 40;
     svg.setAttribute('viewBox', `0 0 ${W.toFixed(0)} ${H.toFixed(0)}`);
-    svg.innerHTML = `<defs><mask id="staff-mask" maskUnits="userSpaceOnUse" x="-300" y="-300" width="${W + 600}" height="${H + 600}"><g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    svg.innerHTML = `<defs><mask id="staff-mask" maskUnits="userSpaceOnUse" x="${-MX}" y="${-MY}" width="${W + 2 * MX}" height="${H + 2 * MY}"><g fill="none" stroke-linecap="round" stroke-linejoin="round">
       <path d="${d}" stroke="#fff" stroke-width="64"/><path d="${d}" stroke="#000" stroke-width="60"/>
       <path d="${d}" stroke="#fff" stroke-width="34"/><path d="${d}" stroke="#000" stroke-width="30"/>
       <path d="${d}" stroke="#fff" stroke-width="3"/></g></mask></defs>
-      <rect class="ink" x="-300" y="-300" width="${W + 600}" height="${H + 600}" mask="url(#staff-mask)"/>`;
+      <rect class="ink" x="${-MX}" y="${-MY}" width="${W + 2 * MX}" height="${H + 2 * MY}" mask="url(#staff-mask)"/>`;
   }
 
   /* ================================ COMPTINE ================================ */
@@ -428,6 +551,7 @@
   function renderSong(song) {
     trackLeave(G && G.song === song ? 'recommence' : 'autre');
     view = 'song';
+    Veille.keep(true);
     D.leave();
     D = decorFor(song.theme);
     setWorld(song.theme);
@@ -463,43 +587,52 @@
     const pills = song.phrases.map((ph, p) => `<li><button class="pill" type="button" data-p="${p}" aria-label="Phrase ${p + 1}">${p + 1}</button></li>`).join('');
     // chaque bouton garde la largeur de son plus long libellé : « Arrêter » ne fait rien bouger
     const lbl2 = (idle) => `<span class="lbl lbl2"><span class="l-idle">${idle}</span><span class="l-busy">Arrêter</span></span>`;
-    const listen = `<button class="btn-big" id="b-go" type="button" aria-pressed="false"><span class="ic">${ICON.metro}</span>${lbl2(GO)}</button>
-          <button class="btn" id="b-all" type="button"><span class="ic">${ICON.play}</span>${lbl2(LISTEN_ALL)}</button>`;
+    // « À toi de jouer ! » dit aussi ce qu'il va lancer (la phrase affichée, ou toute la comptine)
+    const goBtn = `<button class="btn-big go" id="b-go" type="button" aria-pressed="false"><span class="ic">${ICON.metro}</span><span class="go-txt">${lbl2(GO)}<small class="go-sub" id="go-sub"></small></span></button>`;
     app.innerHTML = `
     <main class="song" data-mode="${settings.mode}" data-level="${G.level}" data-stage="${G.stage}">
       <section class="stage grain" aria-label="Décor : ${esc(nb(song.title))}">
         ${D.markup(song, info())}
         <div class="stage-bar">
           <a class="back" href="#" aria-label="Les comptines">${ICON.back}<span>Les comptines</span></a>
-          <label class="inst-pill" title="Ton instrument">${ICON.note}<select class="inst-sel" id="inst-sel" aria-label="Ton instrument">${instOptions()}</select>${ICON.chev}</label>
-          <div class="stage-title" aria-hidden="true"><span>Comptine ${song.level} · ${LEVEL(song.level)}${lv2 ? ' · niveau 2' : ''}</span><b>${titleHtml(song.title)}</b></div>
+          <label class="inst-pill" title="Ton instrument : toucher pour en changer">${ICON.note}<span class="ip-name" id="ip-name">${esc(instShort())}</span>${ICON.chev}<select class="inst-sel" id="inst-sel" aria-label="Ton instrument">${instOptions()}</select></label>
+          <div class="stage-title" aria-hidden="true"><span>Comptine ${song.level} · ${LEVEL(song.level)}</span><b>${titleHtml(song.title)}</b></div>
           <a class="next-song" href="#${next.id}" aria-label="Comptine suivante : ${esc(nb(next.title))}">${ICON.next}</a>
         </div>
       </section>
       <section class="play">
         <header class="play-head">
-          <p class="kicker">Comptine ${song.level} sur ${LIB.length} · ${LEVEL(song.level)}${lv2 ? ' · niveau 2, notes et rythme' : ''}</p>
+          <p class="kicker">Comptine ${song.level} sur ${LIB.length} · ${LEVEL(song.level)}</p>
           <h1>${titleHtml(song.title)}</h1>
           <p class="instr" id="instr">${esc(instrLine(song))}</p>
         </header>
-        <div class="listen">
-          ${listen}
-        </div>
-        <section class="card" aria-label="Phrase en cours">
-          <div class="seg seg-play" role="radiogroup" aria-label="Jouer la comptine">
+        <section class="choix" aria-label="Ton exercice">
+          <div class="seg seg-level" role="radiogroup" aria-label="Niveau">
+            <button type="button" role="radio" data-level="1" aria-checked="${!lv2}"><b class="lv">1</b><span>Les notes</span></button>
+            <button type="button" role="radio" data-level="2" aria-checked="${lv2}"><b class="lv">2</b><span>Notes et rythme</span></button>
+          </div>
+          <div class="seg seg-play" role="radiogroup" aria-label="Jouer">
             <button type="button" role="radio" data-play="phrases" aria-checked="${G.stage !== 'whole'}">Phrase par phrase</button>
             <button type="button" role="radio" data-play="whole" aria-checked="${G.stage === 'whole'}">Toute la comptine</button>
           </div>
+          <p class="choix-dit" id="choix-dit"></p>
+        </section>
+        <section class="card" aria-label="Phrase en cours">
           <div class="card-top">
             <ol class="strip" aria-label="Phrases">${pills}</ol>
             <p class="count" id="count"></p>
           </div>
           <div class="panels">${panels}</div>
+          <div class="ecoute">
+            <button class="btn" id="b-all" type="button"><span class="ic">${ICON.play}</span>${lbl2(LISTEN_ALL)}</button>
+            <button class="btn" id="b-slow" type="button" aria-pressed="${G.slow}" title="Tout jouer plus lentement">${ICON.turtle}<span>Lent</span></button>
+          </div>
         </section>
+        <div class="go-row">${goBtn}</div>
         <div class="done-card" id="done" hidden></div>
         <footer class="play-foot"><button type="button" id="b-reset">${ICON.reset}<span>Recommencer</span></button><a href="#${next.id}">Suivante : ${titleHtml(next.title)} →</a></footer>
       </section>
-      <section class="dock" aria-label="Jouer les notes">
+      <section class="dock" aria-label="Le micro">
         <p class="hint" id="hint" aria-live="polite"></p>
         <div class="ear" id="ear">
           <div class="ear-off is-starting" id="ear-off">
@@ -515,13 +648,8 @@
             </div>
           </div>
         </div>
-        <div class="dock-bar">
-          <div class="seg seg-level" role="radiogroup" aria-label="Niveau">
-            <button type="button" role="radio" data-level="1" aria-checked="${!lv2}"><b class="lv">1</b><span class="long">Les notes</span><span class="short">Notes</span></button>
-            <button type="button" role="radio" data-level="2" aria-checked="${lv2}"><b class="lv">2</b><span class="long">Notes et rythme</span><span class="short">Rythme</span></button>
-          </div>
-          <div class="seg seg-cal"${inst().sing ? '' : ' hidden'}><button type="button" id="b-cal" title="La page apprend comment tu chantes do, ré, mi…">Régler<span class="lbl-l"> ma voix</span></button></div>
-          <div class="seg seg-slow"><button type="button" id="b-slow" aria-pressed="${G.slow}" aria-label="Lentement" title="Lentement">${ICON.turtle}</button></div>
+        <div class="dock-bar"${inst().sing ? '' : ' hidden'}>
+          <div class="seg seg-cal"><button type="button" id="b-cal" title="La page apprend comment tu chantes do, ré, mi…">Régler ma voix</button></div>
         </div>
       </section>
     </main>`;
@@ -552,6 +680,9 @@
       earCap: app.querySelector('#ear-cap'),
       needle: app.querySelector('#needle'),
       instSel: app.querySelector('#inst-sel'),
+      ipName: app.querySelector('#ip-name'),
+      dit: app.querySelector('#choix-dit'),
+      goSub: app.querySelector('#go-sub'),
       bCal: app.querySelector('#b-cal'),
       earText: app.querySelector('#ear-text'),
     };
@@ -563,7 +694,27 @@
     bindSong();
     setCursor(null);
     applyMode();
+    choixDit();
     idleHint();
+    // comptine ouverte directement (lien partagé), instrument jamais choisi : on le demande d'abord
+    if (!settings.choisi) eleveModal();
+  }
+
+  /* L'exercice choisi, en une phrase, sous les deux choix (niveau ; phrase par phrase ou toute la comptine) */
+  function choixDit() {
+    if (!G || !el.dit) return;
+    const v = singing() ? 'Chante' : 'Joue';
+    const whole = G.stage === 'whole';
+    el.dit.textContent = G.level === 2
+      ? (whole ? `${v} toute la comptine d’un coup, en mesure, après le décompte.` : `${v} la phrase en mesure, après le décompte\u00a0: la page vérifie les notes et le rythme.`)
+      : (whole ? 'Toutes les notes d’un coup, sans aide. Ensuite, la page te ramène sur les phrases à revoir.' : 'Retrouve les notes de la phrase, à ton rythme. La page t’aide si tu te trompes.');
+  }
+  // sous « À toi de jouer ! » : ce qu'il va lancer
+  function goSub() {
+    if (!G || !el.goSub) return;
+    if (G.stage === 'whole') { el.goSub.textContent = 'Toute la comptine'; return; }
+    const q = G.moveTo != null ? G.moveTo : G.view;
+    el.goSub.textContent = `Phrase ${q + 1}${G.stage === 'review' && G.queue.includes(q) && !isDone(q) ? ' · à revoir' : ''}`;
   }
 
   function info() {
@@ -652,6 +803,7 @@
     G.song.phrases.forEach((_, i) => paintPill(i));
     from.hidden = true;
     to.hidden = false;
+    goSub();
     if (G.results && G.results[p]) showResult(p);
     if (!animate || RM.matches || !to.animate) return;
     to.animate([{ transform: `translateX(${dir * 28}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' });
@@ -721,6 +873,7 @@
     else if (isDone(q)) { html = `Phrase ${q + 1} ${G.level === 2 ? 'réussie' : 'retrouvée'}${NB}!`; cls = 'ok'; }
     setHint(html, cls);
     if (el.bGo) el.bGo.classList.toggle('is-ready', ready);
+    goSub();
   }
   // une note jouée hors essai : on rappelle comment commencer
   function nudge() {
@@ -904,6 +1057,8 @@
     el.main.dataset.stage = stage;
     app.querySelectorAll('.seg-play [role="radio"]').forEach((b) => b.setAttribute('aria-checked', String((b.dataset.play === 'whole') === (stage === 'whole'))));
     toUI();
+    choixDit();
+    goSub();
   }
 
   // nouvelle partie de la même comptine (go : l'essai démarre tout de suite)
@@ -1174,7 +1329,7 @@
     }
   }
 
-  const LISTEN_ALL = 'Tout écouter';
+  const LISTEN_ALL = 'Écouter toute la comptine';
   function playAll() { playEvents(G.song.events, 'all'); }
   function playPhrase(p, onEnd) { playEvents(G.song.phrases[p].events, 'p' + p, onEnd); }
   function playToMystery() {
@@ -1742,6 +1897,7 @@
 
   document.addEventListener('keydown', (e) => {
     if (view !== 'song' || !G || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (app.querySelector('.ec-modal')) return; // la carte de l'élève est ouverte par-dessus
     if (e.target.closest && e.target.closest('select, input')) return;
     if (e.code === 'Space' && !(e.target.closest && e.target.closest('button, a'))) {
       e.preventDefault();

@@ -12,17 +12,19 @@
 .stage-bar .next-song { margin-left: auto; }
 .inst-pill {
   position: relative; display: inline-flex; align-items: center; gap: 6px;
-  height: 42px; min-width: 0; padding-left: 12px; border-radius: 999px;
+  height: 42px; min-width: 0; padding: 0 32px 0 12px; border-radius: 999px;
   background: var(--paper); color: var(--ink); box-shadow: 0 4px 0 rgba(0, 0, 0, .16);
 }
 .inst-pill > svg:first-child { width: 20px; height: 20px; flex: none; }
+.inst-pill .ip-name { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 10em; }
+.inst-pill:focus-within { outline: 3px solid var(--accent); outline-offset: 3px; }
 .inst-pill select, .home-select select {
   appearance: none; -webkit-appearance: none;
   border: 0; background: transparent; color: inherit;
   font: inherit; font-weight: 700; cursor: pointer;
   min-width: 0; text-overflow: ellipsis;
 }
-.inst-pill select { height: 100%; font-size: 15px; padding: 0 34px 0 2px; border-radius: 999px; }
+.inst-pill select { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border-radius: 999px; opacity: 0; font-size: 16px; }
 .inst-pill select:focus-visible, .home-select select:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .inst-pill .chev, .home-select .chev { position: absolute; right: 10px; top: 50%; width: 18px; height: 18px; margin-top: -9px; pointer-events: none; }
 .inst-pill select option, .home-select select option { color: #1D2350; background: #FFFFFF; }
@@ -47,7 +49,7 @@
 .hint.go { color: var(--accent); font-size: 26px; }
 .card.beat { animation: card-beat .24s ease-out; }
 @keyframes card-beat { from { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 55%, transparent); } to { box-shadow: 0 0 0 0 transparent; } }
-.is-taking .listen .btn, .is-taking .strip, .is-taking .ph-play, .is-taking .ph-to, .is-taking .dock-bar { opacity: .45; pointer-events: none; }
+.is-taking .ecoute .btn, .is-taking .strip, .is-taking .ph-play, .is-taking .ph-to, .is-taking .choix, .is-taking .dock-bar { opacity: .45; pointer-events: none; }
 
 /* verdict de chaque note : un anneau autour de la perle */
 .bead.r-ok, .bead.r-near, .bead.r-far, .bead.r-wrong, .bead.r-miss { outline-offset: 2px; }
@@ -92,7 +94,6 @@
   .stage-bar { gap: 8px; }
   .stage-bar .back { width: 42px; padding: 0; }
   .stage-bar .back span { display: none; }
-  .inst-pill select { font-size: 14px; padding-right: 30px; }
 }
 /* Le titre de la comptine : dans le pupitre sur grand écran ; sur téléphone et
    tablette, dans la barre du haut, entre l'instrument et « suivante », pour ne
@@ -110,12 +111,12 @@
   .stage-bar .stage-title b span { display: inline; font: inherit; letter-spacing: normal; text-transform: none; color: inherit; }
   .stage-bar .next-song { margin-left: 0; }
 }
-/* téléphone : l'instrument devient un bouton rond (le menu s'ouvre toujours au toucher) */
+/* téléphone : l'instrument garde son nom (court), le titre prend le reste */
 @media (max-width: 560px) {
-  .inst-pill { flex: none; width: 42px; padding: 0; justify-content: center; }
-  .inst-pill > svg:first-child { width: 21px; height: 21px; }
-  .inst-pill select { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; opacity: 0; font-size: 16px; }
-  .inst-pill .chev { display: none; }
+  .inst-pill { flex: none; padding: 0 26px 0 10px; gap: 4px; }
+  .inst-pill > svg:first-child { width: 18px; height: 18px; }
+  .inst-pill .ip-name { font-size: 14px; max-width: 6.6em; }
+  .inst-pill .chev { right: 7px; width: 15px; height: 15px; margin-top: -7.5px; }
   .stage-bar .stage-title { padding: 0 14px; }
   /* téléphone : le titre en entier (sur deux lignes s'il le faut), sans la ligne « Comptine n · niveau » */
   .stage-bar .stage-title > span { display: none; }
@@ -141,7 +142,7 @@
   .card { gap: 8px; padding-top: 10px; padding-bottom: 12px; }
 }
 
-.listen .btn .ic { display: inline-grid; place-items: center; }
+.ecoute .btn .ic { display: inline-grid; place-items: center; }
 
 /* carte de fin : jouer toute la comptine d'un coup, et son bilan */
 .full-ask { margin: 0; font-weight: 700; color: var(--text); }
@@ -188,7 +189,7 @@
   .done-actions #d-again { width: 40px; padding: 0; justify-content: center; }
 }
 /* niveau 2, carte de fin : son grand bouton remplace « À toi » (qui revient en « Arrêter » pendant la prise) */
-.song:has(#done:not([hidden])) #b-go { display: none; }
+.song:has(#done:not([hidden])) .go-row { display: none; }
 
 /* ============ rangement : la phrase et ses écoutes, les réglages en bas ============
    carte : ▶ (la phrase) | paroles | ? (jusqu'à la note, niveau 1) ;
@@ -213,23 +214,61 @@
 @media (max-width: 899px) {
   .song[data-level="1"] .panel { grid-template-columns: 40px minmax(0, 1fr) auto; }
   .ph-to { width: 40px; height: 40px; }
-  /* une seule rangée d'actions : « À toi de jouer ! » prend la place qui reste */
-  .listen { flex-wrap: nowrap; }
-  .listen .btn-big { flex: 1 1 auto; min-width: 0; justify-content: center; padding-left: 7px; }
-  .listen .btn-big .ic { margin-right: auto; }
-  .listen .btn-big .lbl2 { margin-right: auto; }
-  .listen .btn { flex: none; }
-  .dock-bar { gap: 6px 8px; }
-  .seg-level button, .seg-slow button { padding: 0 10px; }
-}
-@media (max-width: 380px) {
-  .listen .btn { padding: 0 10px; }
-  .listen .btn .ic svg { width: 16px; height: 16px; }
-  .seg button, .seg-level button, .seg-slow button { padding: 0 8px; }
-  .dock-bar { gap: 6px; }
 }
 /* diagnostic du micro (?diag) */
 .ear-diag { position: fixed; right: 8px; top: calc(76px + env(safe-area-inset-top, 0px)); z-index: 2147483646; max-width: 70vw; padding: 6px 9px; border-radius: 10px; background: rgba(0, 0, 0, .78); color: #fff; font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace; pointer-events: none; }
 
 /* boutons dans la consigne (« Régler ma voix » : Arrêter, Réécouter) */
 .hint .hint-btn { height: 30px; padding: 0 10px; margin-left: 6px; font-size: 13px; vertical-align: middle; }
+
+/* ============ la comptine : l'exercice, l'écoute, « À toi de jouer ! » ============
+   pupitre, de haut en bas : l'exercice (niveau ; phrase par phrase ou toute la comptine, et ce que ça veut dire),
+   la phrase et ses écoutes (▶ la phrase, ? jusqu'à la note, toute la comptine, lentement), puis le grand bouton,
+   qui dit ce qu'il va lancer ; en bas, le micro. */
+.choix { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.choix .seg { align-self: stretch; display: flex; width: 100%; }
+.choix .seg button { flex: 1 1 0; justify-content: center; min-width: 0; white-space: nowrap; }
+.choix .seg-level button span { overflow: hidden; text-overflow: ellipsis; }
+.choix-dit { margin: 0; font-size: 14.5px; line-height: 1.35; color: var(--text-soft); }
+@media (min-width: 1180px) {
+  .choix { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .choix-dit { grid-column: 1 / -1; }
+}
+.ecoute { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ecoute .btn { height: 40px; padding: 0 14px; font-size: 14px; }
+.ecoute .btn .ic svg { width: 16px; height: 16px; }
+#b-slow svg { width: 22px; height: 22px; }
+.go-row { display: flex; }
+.btn-big.go { height: auto; min-height: 56px; padding: 6px 24px 6px 8px; }
+.go-txt { display: grid; justify-items: start; gap: 1px; line-height: 1.1; text-align: left; }
+.go-sub { font-size: 13px; font-weight: 700; opacity: .85; letter-spacing: .01em; }
+.go-sub:empty { display: none; }
+.btn-big.go.is-on .go-sub { visibility: hidden; }
+@media (max-width: 899px) {
+  .choix { gap: 6px; }
+  .choix .seg button { height: 34px; padding: 0 8px; font-size: 13.5px; }
+  .choix-dit { font-size: 13.5px; }
+  .ecoute .btn { height: 38px; padding: 0 12px; font-size: 13.5px; }
+  #b-all { flex: 1 1 auto; min-width: 0; justify-content: center; }
+  .go-row .btn-big { flex: 1 1 auto; justify-content: center; min-height: 52px; }
+  .go-row .btn-big .ic { margin-right: auto; }
+  .go-row .btn-big .go-txt { margin-right: auto; justify-items: center; text-align: center; }
+}
+@media (max-width: 380px) {
+  .choix .seg button { font-size: 12.5px; padding: 0 6px; }
+  .seg .lv { width: 16px; height: 16px; font-size: 10px; }
+  .ecoute .btn { padding: 0 10px; }
+}
+/* écrans peu hauts : l'explication de l'exercice se fait plus petite, puis disparaît */
+@media (min-width: 900px) and (max-height: 760px) { .choix-dit { font-size: 13.5px; } }
+@media (max-width: 899px) and (max-height: 700px) { .choix-dit { display: none; } }
+
+/* ============ par-dessus une comptine : l'élève choisit d'abord son instrument ============ */
+.ec-modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(12, 10, 30, .55); }
+.ec-sheet { width: min(640px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; border-radius: 24px; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); }
+.ec-sheet:focus { outline: none; }
+.ec-modal .eleve-card { --ec-bg: var(--panel); --ec-ink: var(--text); --ec-soft: var(--text-soft); --ec-line: var(--line-strong); --ec-on: var(--panel-2); --ec-accent: var(--text); border-radius: 24px; box-shadow: none; }
+@media (max-width: 599px) {
+  .ec-modal { place-items: end stretch; padding: 0; }
+  .ec-sheet { width: 100%; max-height: 92dvh; border-radius: 24px 24px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px); background: var(--panel); }
+}

@@ -117,6 +117,8 @@ h3.sub { font-size: 15px; font-weight: 650; padding: 18px 16px 6px; border-top: 
 .e-inst { font-size: 16px; }
 .e-inst b { font-weight: 650; }
 .e-how { color: var(--ink-2); font-size: 14px; margin-left: 8px; }
+.e-inst .e-name { font-weight: 750; }
+.e-dot { margin: 0 7px; color: var(--muted); }
 .e-when { font-size: 13px; color: var(--ink-2); white-space: nowrap; }
 .e-when.idle { color: var(--muted); }
 .path { display: grid; grid-template-columns: 40px minmax(0, 420px) auto; gap: 10px; align-items: center; justify-content: start; margin-top: 8px; }

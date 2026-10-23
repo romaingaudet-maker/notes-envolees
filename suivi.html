@@ -130,6 +130,8 @@ h3.sub { font-size: 15px; font-weight: 650; padding: 18px 16px 6px; border-top: 
 .e-inst { font-size: 16px; }
 .e-inst b { font-weight: 650; }
 .e-how { color: var(--ink-2); font-size: 14px; margin-left: 8px; }
+.e-inst .e-name { font-weight: 750; }
+.e-dot { margin: 0 7px; color: var(--muted); }
 .e-when { font-size: 13px; color: var(--ink-2); white-space: nowrap; }
 .e-when.idle { color: var(--muted); }
 .path { display: grid; grid-template-columns: 40px minmax(0, 420px) auto; gap: 10px; align-items: center; justify-content: start; margin-top: 8px; }
@@ -728,7 +730,7 @@ const Suivi = (() => {
   const LIB = SONGS.map(buildSong).sort((a, b) => a.level - b.level);
   const BY_ID = Object.fromEntries(LIB.map((s) => [s.id, s]));
   const INST = {
-    none: 'Sans instrument', voix: 'Voix', piano: 'Piano', flute: 'Flûte', clarinette: 'Clarinette', saxalto: 'Saxophone alto',
+    none: 'Autre instrument en do', voix: 'Voix', piano: 'Piano', flute: 'Flûte', clarinette: 'Clarinette', saxalto: 'Saxophone alto',
     trompette: 'Trompette', trombone: 'Trombone', cor: 'Cor', violon: 'Violon', alto: 'Alto', violoncelle: 'Violoncelle', xylophone: 'Xylophone',
   };
   const INST_SHORT = { none: 'Sans', clarinette: 'Clar.', saxalto: 'Sax.', trompette: 'Tromp.', trombone: 'Tromb.', violoncelle: 'Vlc.', xylophone: 'Xylo.' };
@@ -874,7 +876,7 @@ const Suivi = (() => {
     for (const e of evs) {
       let s = map.get(e.eleve);
       if (!s) {
-        s = { id: e.eleve, ip: '', first: e.t, last: e.t, insts: new Map(), lastInst: '', mic: 0, xylo: 0, snap: null, ep: new Map(), temps: 0, micErr: '', micErrT: 0, micOkT: 0 };
+        s = { id: e.eleve, ip: '', first: e.t, last: e.t, insts: new Map(), lastInst: '', prenom: '', prenomT: -Infinity, prenoms: new Map(), mic: 0, xylo: 0, snap: null, ep: new Map(), temps: 0, micErr: '', micErrT: 0, micOkT: 0 };
         map.set(e.eleve, s);
       }
       s.first = Math.min(s.first, e.t);
@@ -882,6 +884,12 @@ const Suivi = (() => {
       if (!s.ip && e.ip) s.ip = e.ip;
       const d = e.d;
       if (d.inst) s.lastInst = d.inst;
+      // prénom donné par l'élève sur l'accueil (facultatif) : le plus récent compte, les autres restent dans le détail
+      const pn = typeof d.prenom === 'string' ? d.prenom.replace(/\s+/g, ' ').trim().slice(0, 30) : '';
+      if (pn) {
+        s.prenoms.set(pn, Math.max(s.prenoms.get(pn) || 0, e.t));
+        if (e.t >= s.prenomT) { s.prenom = pn; s.prenomT = e.t; }
+      }
       if (e.type === 'visite') { if (d.etoiles && typeof d.etoiles === 'object') s.snap = d.etoiles; continue; }
       if (e.type === 'micro') { s.micErr = MIC_CODE[d.code] || 'erreur'; s.micErrT = e.t; continue; }
       if (e.type === 'debut') {
@@ -1054,7 +1062,7 @@ const Suivi = (() => {
     const idle = s.last < NOW - 14 * DAY;
     return `<article class="eleve${isOpen ? ' is-open' : ''}" data-id="${esc(s.id)}">
       <div class="e-top">
-        <p class="e-inst"><b>${esc(instName(main))}</b>${how ? `<span class="e-how">${esc(how)}</span>` : ''}</p>
+        <p class="e-inst">${s.prenom ? `<b class="e-name">${esc(s.prenom)}</b><span class="e-dot" aria-hidden="true">·</span>` : ''}<b>${esc(instName(main))}</b>${how ? `<span class="e-how">${esc(how)}</span>` : ''}</p>
         <p class="e-when${idle ? ' idle' : ''}">${esc(ago(s.last))}</p>
       </div>
       ${path(1)}${lv2 ? path(2) : ''}
@@ -1095,9 +1103,10 @@ const Suivi = (() => {
     const rows = LIB.filter((song) => s.ep.has(epKey(song.id, 1)) || s.ep.has(epKey(song.id, 2)) || best(s, song.id, 1) || best(s, song.id, 2))
       .map((song) => `<tr><th scope="row"><b>${song.level}</b> ${esc(nb(song.title))}</th>${td('Niveau 1', levelCell(s, song.id, 1))}${lv2 ? td('Niveau 2', levelCell(s, song.id, 2)) : ''}</tr>`).join('');
     const others = [...s.insts.keys()].filter((k) => k !== mainInst(s)).map(instName);
+    const names = [...s.prenoms.entries()].filter(([n]) => n !== s.prenom).sort((a, b) => b[1] - a[1]).map(([n]) => n);
     const me = myId() === s.id;
     return `<div class="detail">
-      <p class="d-meta">${esc(dur(s.temps))} de jeu${s.first < s.last - DAY ? ` depuis le ${esc(day(s.first))}` : ''}${others.length ? ` · a aussi joué : ${esc(others.join(', '))}` : ''}</p>
+      <p class="d-meta">${esc(dur(s.temps))} de jeu${s.first < s.last - DAY ? ` depuis le ${esc(day(s.first))}` : ''}${others.length ? ` · a aussi joué : ${esc(others.join(', '))}` : ''}${names.length ? ` · ${names.length > 1 ? 'autres prénoms donnés' : 'autre prénom donné'} : ${esc(names.join(', '))}` : ''}</p>
       ${rows ? `<table class="tbl ep"><thead><tr><th scope="col">Comptine</th><th scope="col">Niveau 1 · les notes</th>${lv2 ? '<th scope="col">Niveau 2 · notes et rythme</th>' : ''}</tr></thead><tbody>${rows}</tbody></table>` : '<p class="mute">Aucune comptine commencée.</p>'}
       <p class="d-act">
         ${me ? '' : `<button type="button" class="btn ghost" data-act="mine" data-id="${esc(s.id)}">C’est moi : ne plus afficher</button>`}
@@ -1244,7 +1253,9 @@ const Suivi = (() => {
       b.disabled = true;
       try { await mark(id, act === 'mine'); open.delete(id); render(); } catch (e) { b.disabled = false; alert('Ça n’a pas marché. Vérifie ta connexion et réessaie.'); }
     } else if (act === 'delete') {
-      if (!confirm('Effacer définitivement toutes les données de cet élève ?')) return;
+      const who = (students(EVENTS.filter((e) => e.eleve === id))[0] || {}).prenom || '';
+      const de = !who ? 'de cet élève' : /^[aeiouyhàâäéèêëîïôöùûü]/i.test(who) ? `d’${who}` : `de ${who}`;
+      if (!confirm(`Effacer définitivement toutes les données ${de} ?`)) return;
       b.disabled = true;
       try {
         const r = await fetch(`${API}/eleve?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers: { Authorization: 'Bearer ' + KEY } });

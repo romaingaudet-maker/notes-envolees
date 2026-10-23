@@ -78,6 +78,13 @@ await check('effacer un élève n’efface que lui', async () => {
   const j = await (await read()).json();
   return r.effaces === 1 && j.evenements.length === 1 && j.evenements[0][2] === 'abcdef234567';
 });
+await check('prénom de l’élève (accents, apostrophe, trait d’union) rangé tel quel', async () => {
+  const ok = (await post({ e: 'prenom234567', y: 'debut', inst: 'flute', mode: 'mic', c: 'frere-jacques', niveau: 1, prenom: 'Léa-Marie D’Arc' })).status === 204;
+  const j = await (await read()).json();
+  const r = j.evenements.find((x) => x[2] === 'prenom234567');
+  await call('/eleve?id=prenom234567', { method: 'DELETE', headers: { Authorization: 'Bearer ' + KEY } });
+  return ok && r && r[5].prenom === 'Léa-Marie D’Arc' && r[5].inst === 'flute';
+});
 await check('clé trop courte dans le Worker : 503', async () => (await call('/donnees', { headers: { Authorization: 'Bearer court' } }, { DB: env.DB, CLE_PROF: 'court' })).status === 503);
 await check('base absente : 503', async () => (await call('/e', { method: 'POST', body: '{}', headers: { Origin: SITE } }, { CLE_PROF: KEY })).status === 503);
 
@@ -110,6 +117,12 @@ await check('avec l’adresse, un envoi part vers /e avec identifiant', () => {
   c.Suivi.send('fin', { c: 'frere-jacques', etoiles: 3 });
   const [u, b] = c.beacons[0] || [];
   return u === 'https://suivi.example.workers.dev/e' && /^[a-z0-9]{12}$/.test(b.e) && b.y === 'fin' && b.etoiles === 3 && c.Suivi.id() === b.e;
+});
+await check('le prénom part avec l’envoi quand le jeu le donne', () => {
+  const c = loadClient('https://suivi.example.workers.dev');
+  c.Suivi.send('debut', { c: 'frere-jacques', inst: 'flute', prenom: 'Léa' });
+  const b = (c.beacons[0] || [])[1] || {};
+  return b.prenom === 'Léa' && b.inst === 'flute' && b.y === 'debut';
 });
 await check('le même identifiant d’un envoi à l’autre', () => { const c = loadClient('https://s.example'); c.Suivi.send('debut', {}); c.Suivi.send('fin', {}); return c.beacons[0][1].e === c.beacons[1][1].e; });
 await check('appareil du professeur exclu : rien ne part', () => { const c = loadClient('https://s.example', { 'notes-envolees-suivi-off': '1' }); c.Suivi.send('visite', {}); return !c.beacons.length; });

@@ -279,7 +279,7 @@ const HomeSkin = (() => {
   const MIDI = { C: 60, D: 62, E: 64, F: 65, G: 67, A: 69, B: 71 };
 
   function render(ctx) {
-    const { app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, GO } = ctx;
+    const { app, LIB, records, inst, star, ICON, esc, titleHtml, LEVEL, framed, ONLINE_URL, GO, eleveHtml, bindEleve, HOWTO } = ctx;
     const LEGAL_URL = ctx.LEGAL_URL || 'mentions-legales.html';
     const gl = Engine.supported();
     lastLIB = LIB;
@@ -306,8 +306,6 @@ const HomeSkin = (() => {
       </li>`;
     }).join('');
     const chips = [['C', 'Do'], ['D', 'Ré'], ['E', 'Mi'], ['F', 'Fa'], ['G', 'Sol'], ['A', 'La'], ['B', 'Si']].map(([l, n]) => `<span class="chip" data-l="${l}">${n}</span>`).join('');
-    const levelOpts = [[1, '1 · Les notes', 'Retrouve chaque note à l’oreille, à ton rythme.'], [2, '2 · Notes et rythme', 'Après le décompte, joue toute la phrase en rythme : la page vérifie les notes et le rythme.']]
-      .map(([v, t, d]) => `<label class="lh-opt"><input type="radio" name="home-level" id="home-level-${v}" value="${v}"${settings.level === v ? ' checked' : ''}><span class="lh-optcard"><b>${t}</b><small>${d}</small></span></label>`).join('');
     const micNote = framed && ONLINE_URL ? `<p class="lh-online">Ici, dans claude.ai, le micro n’est pas disponible. Pour jouer avec ton instrument, ouvre la <a href="${esc(ONLINE_URL)}" target="_blank" rel="noopener">version en ligne</a>.</p>` : '';
     app.innerHTML = `
     <main class="lhome${gl ? ' has-gl' : ''}">
@@ -325,6 +323,7 @@ const HomeSkin = (() => {
           </div>
         </div>
       </section>
+      <section class="lh-eleve" id="lh-eleve" aria-label="Toi et ton instrument">${eleveHtml('home')}${micNote}</section>
       <section class="lh-path" id="lh-path" aria-label="Les comptines, de la plus facile à la plus difficile">
         <header class="lh-path-head">
           <h2>Le fil des comptines</h2>
@@ -336,27 +335,9 @@ const HomeSkin = (() => {
         </div>
       </section>
       <section class="lh-bench" aria-label="Réglages et mode d’emploi">
-        <div class="lh-patch lh-inst">
-          <h2>Ton instrument</h2>
-          <p>Les noms de notes sont ceux de ta partition. La page joue dans le ton de ton instrument, avec son vrai son.</p>
-          <label class="lh-select">${ICON.note}<select class="inst-sel" id="home-inst" aria-label="Ton instrument">${instOptions()}</select>${ICON.chev}</label>
-          <p class="lh-note" id="home-inst-note">${esc(instNote())}</p>
-          ${micNote}
-        </div>
-        <fieldset class="lh-patch lh-level">
-          <legend>Niveau</legend>
-          <div class="lh-opts">${levelOpts}</div>
-        </fieldset>
         <div class="lh-patch lh-how">
           <h2>Comment jouer</h2>
-          <ol class="lh-steps">
-            <li>Choisis une comptine : les plus faciles sont au début du fil.</li>
-            <li>Écoute-la en entier, ou phrase par phrase avec le bouton rond. « Jusqu’à la note » rejoue le début de la phrase et s’arrête sur la note à trouver.</li>
-            <li>Touche « À toi de jouer ! » : la page joue la phrase, compte « 1, 2, 3, 4 », puis c’est à toi. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. La page t’écoute au micro. Avec la voix, chante chaque note en disant son nom : la page vérifie la hauteur et le nom.</li>
-            <li>Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée rejoint la comptine et le décor s’anime.</li>
-            <li>« Phrase par phrase » pour t’entraîner avec de l’aide, ou « Toute la comptine » d’un coup, sans aide : à la fin, la page te ramène sur les phrases à revoir. Tu peux rejouer autant de fois que tu veux.</li>
-            <li>Niveau 2 : après le décompte, joue toute la phrase en rythme. Une phrase réussie, la suivante démarre toute seule.</li>
-          </ol>
+          <ol class="lh-steps">${HOWTO.map((t) => `<li>${t}</li>`).join('')}</ol>
         </div>
         <div class="lh-patch lh-colors">
           <h2>Les couleurs des notes</h2>
@@ -365,15 +346,20 @@ const HomeSkin = (() => {
         </div>
       </section>
       <p class="lh-foot">${typeof Suivi !== 'undefined' && Suivi.configured
-        ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré sans nom, avec l’adresse IP de la connexion, et effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
+        ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour que ton professeur suive tes progrès et pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré avec ton prénom si tu l’as écrit et l’adresse IP de la connexion, puis effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
         : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Le micro s’allume tout seul dans une comptine (le navigateur demande d’abord l’autorisation). Sur ordinateur, la barre d’espace lance « ${GO} ». Comptines traditionnelles du domaine public. Décors en 3D faits avec three.js (licence MIT) ; titre en police Gluten (SIL OFL). Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0). Reconnaissance des noms chantés : modèles tirés des voix de synthèse Kokoro (licence Apache 2.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
     </main>`;
     root = app.querySelector('.lhome');
-    app.querySelector('#home-inst').addEventListener('change', (e) => setInst(e.target.value));
-    app.querySelectorAll('input[name="home-level"]').forEach((r) => r.addEventListener('change', () => { settings.level = +r.value === 2 ? 2 : 1; save(SET_KEY, settings); }));
-    app.querySelector('#lh-go').addEventListener('click', () => {
+    const toPath = () => {
       const p = app.querySelector('#lh-path');
       p.scrollIntoView({ behavior: RM.matches ? 'auto' : 'smooth', block: 'start' });
+    };
+    bindEleve(app.querySelector('.eleve-card'), toPath);
+    // instrument pas encore choisi : « Choisir une comptine » mène d'abord à la carte de l'élève
+    app.querySelector('#lh-go').addEventListener('click', () => {
+      const open = app.querySelector('.eleve-card.is-open');
+      if (open) open.scrollIntoView({ behavior: RM.matches ? 'auto' : 'smooth', block: 'start' });
+      else toPath();
     });
     layoutHoops();
     // les portraits : le fichier, ou (s'il manque) fabriqué ici
