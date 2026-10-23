@@ -640,7 +640,6 @@ html.onb-open, html.onb-open body { overflow: hidden; }
   .stage-bar .stage-title b { font-size: 15px; line-height: 1.04; white-space: normal; text-wrap: balance; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 }
 @media (max-width: 359px) { .stage-bar .stage-title b { font-size: 14px; } .stage-bar .stage-title { padding: 0 11px; } }
-.cin b.bar { margin-left: 8px; }
 
 /* petits téléphones (iPhone SE…) : on gagne quelques pixels pour garder le décor */
 @media (max-width: 899px) and (max-height: 700px) {
@@ -727,10 +726,11 @@ html.onb-open, html.onb-open body { overflow: hidden; }
 }
 
 /* ============ le pupitre, en bas : deux étages de taille fixe ============
-   En haut, une ligne : le niveau tant que rien n'a commencé, puis ce que dit la page (consigne, décompte,
+   En haut, une ligne : le niveau tant qu'aucun essai n'est allé au bout, puis ce que dit la page (consigne, décompte,
    « note n sur N », bilan). En dessous, trois ronds : au centre, le grand rond (« À toi de jouer ! »,
    « Corriger la phrase n », « Rejouer ») devient la note entendue pendant le jeu, avec sa jauge en arc ; de chaque
-   côté, un petit rond change de rôle selon le moment (écouter, arrêter, recommencer, jusqu'à la note, suivante…).
+   côté, un petit rond change de rôle selon le moment : au repos, ce que joue le grand rond (« Phrase n » ou « Toute
+   la comptine ») ; pendant le jeu, arrêter, recommencer, jusqu'à la note ; à la fin, l'autre niveau, suivante.
    D'un moment à l'autre, rien ne change de taille ni de place. */
 .pupitre {
   --gc: 116px;                      /* le grand rond */
@@ -786,6 +786,12 @@ html.onb-open, html.onb-open body { overflow: hidden; }
 .pu-side:focus-visible .pu-ic { outline: 3px solid var(--accent); outline-offset: 3px; }
 .pu-side .q { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px dashed currentColor; font-size: 15px; line-height: 1; }
 @media (hover: hover) { .pu-side:hover .pu-ic { background: var(--panel-2); } .pu-side.is-on:hover .pu-ic { background: var(--text); } }
+/* au repos, « Phrase n » et « Toute la comptine » : celui qui est choisi prend la couleur du grand rond, qui le jouera */
+.pu-pick .pu-ic svg { width: calc(var(--sc) * .52); height: calc(var(--sc) * .52); }
+.pu-pick[aria-pressed="false"] .pu-ic { color: var(--text-soft); }
+.pu-pick[aria-pressed="false"] .pu-lbl { font-weight: 600; }
+.pu-pick[aria-pressed="true"] .pu-ic { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 62%, #000); }
+.pu-pick[aria-pressed="true"]:active .pu-ic { box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 62%, #000); }
 
 /* le grand rond : « À toi de jouer ! », « Corriger la phrase n », « Rejouer la comptine » */
 .pu-go {
@@ -4651,6 +4657,9 @@ const INST_ICON = (() => {
     note: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17.2V5.4l10.5-2.4v12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><ellipse cx="6.4" cy="17.4" rx="3" ry="2.4" fill="currentColor"/><ellipse cx="16.9" cy="15.1" rx="3" ry="2.4" fill="currentColor"/></svg>',
     chev: '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5l5.5 5.5 5.5-5.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>',
+    // les petits ronds du repos : une phrase (une rangée de perles), toute la comptine (deux rangées)
+    phrase: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><circle cx="3.6" cy="15" r="2.9"/><circle cx="9.2" cy="10" r="2.9"/><circle cx="14.8" cy="12.6" r="2.9"/><circle cx="20.4" cy="7.8" r="2.9"/></g></svg>',
+    song: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><circle cx="3.6" cy="8" r="2.4"/><circle cx="9.2" cy="4.2" r="2.4"/><circle cx="14.8" cy="6.2" r="2.4"/><circle cx="20.4" cy="2.9" r="2.4"/><circle cx="3.6" cy="20.6" r="2.4"/><circle cx="9.2" cy="16.8" r="2.4"/><circle cx="14.8" cy="18.8" r="2.4"/><circle cx="20.4" cy="15.5" r="2.4"/></g></svg>',
   };
   const star = (on, size = 24) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.45 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z" fill="${on ? '#F5C32C' : 'none'}" stroke="${on ? '#C8901A' : 'currentColor'}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
   const chip = (letter, name) => `<span class="nchip" data-l="${letter}">${name}</span>`;
@@ -5150,10 +5159,10 @@ const INST_ICON = (() => {
   const HOWTO = [
     'La première fois, la page te demande ton prénom et ton instrument : touche son dessin. Pour en changer, touche « Changer » en haut de l’accueil, ou le nom de ton instrument en haut d’une comptine. Les noms de notes sont ceux de ta partition : la page joue dans le ton de ton instrument, avec son vrai son.',
     'Choisis une comptine. Les plus faciles sont au début du chemin.',
-    'Choisis ton niveau. Niveau 1, les notes : retrouve-les à ton rythme. Niveau 2, notes et rythme : joue en mesure après le décompte. Tu joues d’abord toute la comptine d’un coup ; ensuite, la page te ramène sur les phrases à corriger, une par une.',
-    'Touche le grand rond « À toi de jouer ! » : la page joue la comptine, compte « 1, 2, 3, 4 », puis c’est à toi. Pendant que tu joues, le rond montre la note qu’il entend. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec la voix, chante chaque note en disant son nom.',
+    'Choisis ton niveau. Niveau 1, les notes : retrouve-les à ton rythme. Niveau 2, notes et rythme : joue en mesure après le décompte. Au début, tu joues toute la comptine d’un coup ; ensuite, la page te ramène sur les phrases à corriger, une par une.',
+    'De chaque côté du grand rond, choisis ce que tu joues : « Toute la comptine » ou « Phrase 1 » (la phrase affichée). Touche ensuite le grand rond « À toi de jouer ! » : la page la joue, compte « 1, 2, 3, 4 », puis c’est à toi. Pendant que tu joues, le rond montre la note qu’il entend. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec la voix, chante chaque note en disant son nom.',
     'Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée se pose à sa hauteur et le décor s’anime.',
-    'Pour écouter avant de jouer : les petits ronds « Phrase 1 » et « Toute la comptine ». Pendant la correction d’une phrase, « Jusqu’à la note » la rejoue jusqu’à la note à trouver. Pour que la page joue plus lentement, touche le nom de ton instrument, en haut : « Vitesse : lente ».',
+    'Au niveau 1, pendant que tu joues une phrase, « Jusqu’à la note » la rejoue jusqu’à la note à trouver. Pour que la page joue plus lentement, touche le nom de ton instrument, en haut : « Vitesse : lente ».',
   ];
 
   let medalRO = null;
@@ -5227,9 +5236,10 @@ const INST_ICON = (() => {
       slow: !!keepSlow, playing: null, done: false, lastStars: 0,
       // niveau 2
       passed: new Set(), fails: 0, tries: song.phrases.map(() => 0), take: null, results: [], moveTo: null, keepMic: false, fullRes: null,
-      // stage : 'whole' (d'abord, toute la comptine d'un coup), puis 'review' (les phrases à corriger, une par une)
+      // whole : ce que joue le grand rond, toute la comptine (au début) ou la phrase affichée (au choix, les petits ronds)
+      // begun : un essai est allé jusqu'au bout (en haut du pupitre, ce que dit la page remplace alors le niveau)
       // miss : notes manquées pendant la comptine entière (niveau 1) ; queue : phrases à corriger ; acts : gestes de l'élève
-      stage: 'whole', miss: new Set(), queue: [], acts: 0,
+      whole: true, begun: false, miss: new Set(), queue: [], acts: 0,
       // live : essai en cours au niveau 1 (après l'écoute et le décompte) ; cnt : décompte du niveau 1 ; helped : notes montrées
       live: null, cnt: null, helped: 0, nudged: false,
       // suivi : début de la partie (temps page visible), « lentement » utilisé, résultat déjà envoyé
@@ -5246,10 +5256,12 @@ const INST_ICON = (() => {
         <div class="rstrip" aria-hidden="true" hidden></div>
       </div>`).join('');
     const pills = song.phrases.map((ph, p) => `<li><button class="pill" type="button" data-p="${p}" aria-label="Phrase ${p + 1}">${p + 1}</button></li>`).join('');
-    // le pupitre : de chaque côté du grand rond, un petit rond à la fois (les autres attendent leur moment, cachés)
-    const side = (id, ic, lbl, aria = '', hide = true) => `<button class="pu-side" id="${id}" type="button"${aria ? ` aria-label="${aria}"` : ''}${hide ? ' hidden' : ''}><span class="pu-ic">${ic}</span><span class="pu-lbl">${lbl}</span></button>`;
+    // le pupitre : de chaque côté du grand rond, un petit rond à la fois (les autres attendent leur moment, cachés) ;
+    // au repos, les deux petits ronds choisissent ce que joue le grand rond (celui qui est choisi reste enfoncé)
+    const side = (id, ic, lbl, aria = '') => `<button class="pu-side" id="${id}" type="button"${aria ? ` aria-label="${aria}"` : ''} hidden><span class="pu-ic">${ic}</span><span class="pu-lbl">${lbl}</span></button>`;
+    const pick = (id, ic, lbl, on) => `<button class="pu-side pu-pick" id="${id}" type="button" aria-pressed="${on}" aria-describedby="pick-d"><span class="pu-ic">${ic}</span><span class="pu-lbl">${lbl}</span></button>`;
     app.innerHTML = `
-    <main class="song" data-mode="${settings.mode}" data-level="${G.level}" data-stage="${G.stage}">
+    <main class="song" data-mode="${settings.mode}" data-level="${G.level}">
       <section class="stage grain" aria-label="Décor : ${esc(nb(song.title))}">
         ${D.markup(song, info())}
         <div class="stage-bar">
@@ -5285,7 +5297,7 @@ const INST_ICON = (() => {
         </div>
         <div class="pu-row">
           <div class="pu-slot">
-            ${side('b-phrase', ICON.play, `Phrase${NB}1`, 'Écouter la phrase 1', false)}
+            ${pick('b-phrase', ICON.phrase, `Phrase${NB}1`, false)}
             ${side('b-stop', ICON.stop, 'Arrêter')}
             ${side('b-level', lv2 ? ICON.note : ICON.metro, lv2 ? `Niveau${NB}1` : `Niveau${NB}2`, lv2 ? 'Niveau 1 : les notes' : 'Niveau 2 : notes et rythme')}
           </div>
@@ -5294,14 +5306,14 @@ const INST_ICON = (() => {
             <div class="pu-ear" id="ear" hidden>${GAUGE}<span class="g-lo" aria-hidden="true">bas</span><span class="g-hi" aria-hidden="true">haut</span><div class="heard" id="heard"><span class="heard-n" id="heard-n">…</span><span class="heard-s" id="heard-s"></span></div></div>
           </div>
           <div class="pu-slot">
-            ${side('b-all', ICON.play, LISTEN_ALL, 'Écouter toute la comptine', false)}
+            ${pick('b-all', ICON.song, ALL_LBL, true)}
             ${side('b-restart', ICON.reset, 'Recommencer')}
             ${lv2 ? '' : side('b-to', Q_ICON, 'Jusqu’à la note', 'Écouter la phrase jusqu’à la note à trouver')}
             ${side('b-hear', ICON.play, 'Réécouter', 'Réécouter la note')}
-            ${side('b-again', ICON.reset, 'Tout rejouer', 'Rejouer toute la comptine')}
             <a class="pu-side" id="a-next" href="#${next.id}" aria-label="Comptine suivante : ${esc(nb(next.title))}" hidden><span class="pu-ic">${ICON.next}</span><span class="pu-lbl">Suivante</span></a>
           </div>
         </div>
+        <span id="pick-d" hidden>Ce que joue le grand rond, avant que tu joues</span>
         <div class="pu-msg" id="ear-msg" hidden></div>
       </section>
     </main>`;
@@ -5319,7 +5331,6 @@ const INST_ICON = (() => {
       bLevel: app.querySelector('#b-level'),
       bRestart: app.querySelector('#b-restart'),
       bHear: app.querySelector('#b-hear'),
-      bAgain: app.querySelector('#b-again'),
       aNext: app.querySelector('#a-next'),
       bRg: app.querySelector('#b-rg'),
       instr: app.querySelector('#instr'),
@@ -5357,10 +5368,12 @@ const INST_ICON = (() => {
 
   /* ================= LE PUPITRE (en bas) =================
      Deux étages de taille fixe ; seul leur contenu change avec le moment de la partie :
-       repos : en haut le niveau ; ▶ la phrase affichée · le grand rond « À toi de jouer ! » · ▶ toute la comptine
+       repos : en haut le niveau ; « Phrase n » · le grand rond (« À toi de jouer ! ») · « Toute la comptine » : les
+               deux petits ronds choisissent ce que joue le grand rond, la phrase affichée ou toute la comptine
        jeu   : la consigne (écoute, décompte, « note n sur N », la réponse) ; Arrêter · le grand rond devient la note
-               entendue, avec sa jauge · Recommencer (niveau 1, pendant la correction d'une phrase : « Jusqu'à la note »)
-       apres : le bilan, la phrase à corriger ; ▶ cette phrase · « Corriger la phrase n » · Tout rejouer
+               entendue, avec sa jauge · Recommencer (niveau 1, pendant une phrase : « Jusqu'à la note »)
+       apres : en haut, ce que dit la page (le bilan, la phrase à corriger) ; en dessous, comme au repos
+               (le grand rond : « Corriger la phrase n », « Jouer la phrase n », « Rejouer la comptine »…)
        cal   : le réglage de la voix ; Arrêter · la note entendue · Réécouter
        fin   : « Comptine terminée ! » ; l'autre niveau · « Rejouer » · Suivante */
   function bandState() {
@@ -5368,25 +5381,26 @@ const INST_ICON = (() => {
     if (G.done) return 'fin';
     if (G.cal) return 'cal';
     if (busy() || (el.main && el.main.classList.contains('is-taking'))) return 'jeu';
-    return G.stage === 'review' ? 'apres' : 'repos';
+    return G.begun ? 'apres' : 'repos';
   }
-  const SIDES = { repos: ['bPhrase', 'bAll'], jeu: ['bStop', 'bRestart'], apres: ['bPhrase', 'bAgain'], cal: ['bStop', 'bHear'], fin: ['bLevel', 'aNext'] };
-  const SIDE_KEYS = ['bPhrase', 'bStop', 'bLevel', 'bAll', 'bRestart', 'bTo', 'bHear', 'bAgain', 'aNext'];
+  const SIDES = { repos: ['bPhrase', 'bAll'], jeu: ['bStop', 'bRestart'], apres: ['bPhrase', 'bAll'], cal: ['bStop', 'bHear'], fin: ['bLevel', 'aNext'] };
+  const SIDE_KEYS = ['bPhrase', 'bStop', 'bLevel', 'bAll', 'bRestart', 'bTo', 'bHear', 'aNext'];
   function bandUI() {
     if (!G || !el.pu || !document.contains(el.pu)) return;
     const st = bandState();
     const shown = SIDES[st].slice();
-    if (st === 'jeu' && el.bTo && G.stage === 'review' && G.live && !G.live.full) shown[1] = 'bTo';
+    if (st === 'jeu' && el.bTo && G.live && !G.live.full) shown[1] = 'bTo';
     const had = el.pu.contains(document.activeElement) ? document.activeElement : null;
     el.pu.dataset.band = st;
     SIDE_KEYS.forEach((k) => { if (el[k]) el[k].hidden = !shown.includes(k); });
     const ear = st === 'jeu' || st === 'cal';
     el.bGo.hidden = ear;
     el.ear.hidden = !ear;
-    // en haut : le niveau tant que rien n'a commencé (sauf un message à lire, le temps de le lire), sinon ce que dit la page
+    // en haut : le niveau tant qu'aucun essai n'est allé au bout (sauf un message à lire, le temps de le lire), sinon ce que dit la page
     const seg = st === 'repos' && !(G.flashUntil > performance.now());
     el.seg.hidden = !seg;
     el.hint.hidden = seg;
+    pickUI();
     goLabel(st);
     // le bouton qui avait le clavier vient de laisser sa place : le clavier passe au bouton principal du moment
     if (had && had.closest('[hidden]')) {
@@ -5394,13 +5408,16 @@ const INST_ICON = (() => {
       if (to && !to.hidden) to.focus({ preventScroll: true });
     }
   }
-  // ce que lance le grand rond : toute la comptine ; la phrase à corriger (ou affichée) ; à la fin, toute la comptine encore
+  // la phrase que jouerait le grand rond : celle qui est affichée, ou la suivante quand on vient d'en réussir une
+  const goPhrase = () => (G.moveTo != null ? G.moveTo : G.view);
+  /* ce que lance le grand rond : toute la comptine (« À toi de jouer ! », puis « Rejouer la comptine ») ; la phrase
+     choisie (« Jouer », « Corriger » si elle est à corriger, « Rejouer » si elle est faite ou déjà essayée) */
   function goLabel(st = bandState()) {
     if (!G || !el.goT) return;
     let t = 'À toi', s = `de jouer${NB}!`;
-    if (st === 'fin') { t = 'Rejouer'; s = 'la comptine'; } else if (G.stage === 'review') {
-      const q = G.moveTo != null ? G.moveTo : G.view;
-      t = G.queue.includes(q) && !isDone(q) ? 'Corriger' : 'Rejouer';
+    if (st === 'fin' || (G.whole && G.fullRes)) { t = 'Rejouer'; s = 'la comptine'; } else if (!G.whole) {
+      const q = goPhrase();
+      t = G.queue.includes(q) && !isDone(q) ? 'Corriger' : isDone(q) || G.tries[q] ? 'Rejouer' : 'Jouer';
       s = `la phrase${NB}${q + 1}`;
     }
     el.goT.textContent = t;
@@ -5502,7 +5519,7 @@ const INST_ICON = (() => {
     G.song.phrases.forEach((_, i) => paintPill(i));
     from.hidden = true;
     to.hidden = false;
-    phraseUI();
+    pickUI();
     goLabel();
     if (G.results && G.results[p]) showResult(p);
     if (!animate || RM.matches || !to.animate) return;
@@ -5531,13 +5548,15 @@ const INST_ICON = (() => {
     if (hint) cursorHint();
   }
 
-  // le pupitre suit l'essai (au niveau 1, « Jusqu'à la note » paraît pendant la correction d'une phrase)
+  // le pupitre suit l'essai (au niveau 1, « Jusqu'à la note » paraît pendant une phrase)
   function toUI() { bandUI(); }
-  // « Phrase n » : écoute la phrase affichée (pendant qu'elle passe, son rond dit « Arrêter »)
-  function phraseUI() {
-    if (!el.bPhrase || el.bPhrase.classList.contains('is-on')) return;
-    el.bPhrase.querySelector('.pu-lbl').textContent = `Phrase${NB}${G.view + 1}`;
-    el.bPhrase.setAttribute('aria-label', `Écouter la phrase ${G.view + 1}`);
+  // les deux petits ronds du repos : « Phrase n » (la phrase que jouerait le grand rond) et « Toute la comptine » ;
+  // celui qui est choisi est enfoncé
+  function pickUI() {
+    if (!G || !el.bPhrase) return;
+    el.bPhrase.setAttribute('aria-pressed', String(!G.whole));
+    el.bAll.setAttribute('aria-pressed', String(G.whole));
+    el.bPhrase.querySelector('.pu-lbl').textContent = `Phrase${NB}${goPhrase() + 1}`;
   }
 
   function expectNext() {
@@ -5546,14 +5565,16 @@ const INST_ICON = (() => {
   }
 
   /* ================= LES ESSAIS =================
-     « À toi de jouer ! » : la page joue la phrase (ou toute la comptine), puis le
-     décompte, puis l'élève joue. Le même bouton, phrase par phrase ou comptine entière.
+     Le grand rond (« À toi de jouer ! ») : la page joue toute la comptine ou la phrase affichée,
+     au choix (les petits ronds « Toute la comptine » et « Phrase n » ; au début, toute la
+     comptine), puis le décompte, puis l'élève joue.
      - niveau 1 : les notes seules, à son rythme. Phrase par phrase, avec l'aide (flèches,
        note montrée) ; comptine entière, sans aide : une fausse note est comptée et on passe.
      - niveau 2 : notes et rythme (prise chronométrée, voir startTake).
-     Un essai repart toujours de zéro sur ce qu'il couvre ; on peut rejouer autant qu'on veut.
-     Après la comptine entière : bilan, puis retour sur les phrases à revoir. Une phrase
-     réussie, la suivante (ou la prochaine à revoir) démarre toute seule. */
+     Un essai repart toujours de zéro sur ce qu'il couvre ; on peut rejouer autant qu'on veut
+     (toute la comptine, une fois un essai allé au bout : c'est une nouvelle partie).
+     Après la comptine entière : bilan, puis le grand rond passe aux phrases à revoir. Une
+     phrase réussie, la suivante (ou la prochaine à revoir) démarre toute seule. */
   const NB = '\u00a0'; // espace insécable (« À toi de jouer ! » reste sur une ligne)
   const GO = `À toi de jouer${NB}!`;
   const whichPh = (qs) => (qs.length === 1 ? 'la phrase ' + (qs[0] + 1) : 'les phrases ' + qs.slice(0, -1).map((q) => q + 1).join(', ') + ' et ' + (qs[qs.length - 1] + 1));
@@ -5563,16 +5584,16 @@ const INST_ICON = (() => {
   const isDone = (q) => (G.level === 2 ? G.passed.has(q) : G.song.phrases[q].notes.every((m) => G.found.has(m)));
   const stopSrc = (x) => { try { if (x) x.stop(); } catch (err) { /* déjà joué */ } };
 
-  // le message quand rien ne se passe ; après la comptine entière, la phrase à corriger
+  // le message quand rien ne se passe : ce que jouera le grand rond (après la comptine entière, la phrase à corriger)
   function idleHint() {
     if (!G || !el.hint || G.done || busy()) return;
     const q = G.view;
-    // au repos, la ligne du haut montre le niveau : ce message ne se lit qu'après la comptine entière (phrases à corriger)
+    // au repos, la ligne du haut montre le niveau : ce message ne se lit qu'une fois un essai allé au bout
     let html = G.level === 2 ? 'Toute la comptine, en rythme' : 'Toute la comptine, sans aide', cls = '', ready = false;
-    if (G.stage === 'review') {
+    if (!G.whole) {
       if (G.queue.includes(q) && !isDone(q)) { html = `À corriger${NB}: phrase ${q + 1}`; cls = 'up'; ready = true; }
       else if (isDone(q)) { html = `Phrase ${q + 1} ${G.level === 2 ? 'réussie' : 'retrouvée'}${NB}!`; cls = 'ok'; }
-      else html = `Phrase ${q + 1}`;
+      else html = `Phrase ${q + 1}, ${G.level === 2 ? 'en rythme' : 'avec de l’aide'}`;
     }
     setHint(html, cls);
     if (el.bGo) el.bGo.classList.toggle('is-ready', ready);
@@ -5595,9 +5616,9 @@ const INST_ICON = (() => {
     if (h) h.dataset.whole = '1';
   }
 
-  // ce que lance « À toi de jouer ! » : toute la comptine, ou la phrase affichée (ou la suivante, si on vient d'en réussir une)
+  // ce que lance le grand rond : toute la comptine, ou la phrase affichée (ou la suivante, si on vient d'en réussir une)
   function scope() {
-    if (G.stage === 'whole') return { full: true, p: 0 };
+    if (G.whole) { G.moveTo = null; return { full: true, p: 0 }; }
     if (G.moveTo != null) { const nx = G.moveTo; G.moveTo = null; showPhrase(nx); return { full: false, p: nx }; }
     return { full: false, p: G.view };
   }
@@ -5612,6 +5633,8 @@ const INST_ICON = (() => {
 
   function goAttempt(sc) {
     if (!G || G.done) return;
+    // toute la comptine, une fois un essai allé au bout : une nouvelle partie (comme « Rejouer la comptine », à la fin)
+    if ((sc ? sc.full : G.whole) && G.begun) { newRound(true); return; }
     if (G.cal) { G.cal = null; applyVoice(); }
     // la voix jamais réglée sur cet appareil : le premier essai commence par « Régler ma voix » (on peut l'arrêter)
     if (singing() && !hasMyVoice() && !G.calAsked) { G.calAsked = true; calStart(true); return; }
@@ -5645,7 +5668,7 @@ const INST_ICON = (() => {
     const p = sc.full ? 0 : sc.p;
     showPhrase(p, false);
     const ci = countIn(p);
-    const c = Object.assign({}, ci, { sc, k: -1, raf: 0, srcs: ci.clicks.map((t, i) => Sound.clickAt(t, ci.labels[i] === 1)) });
+    const c = Object.assign({}, ci, { sc, k: -1, raf: 0, srcs: ci.clicks.map((t, i) => Sound.clickAt(t, ci.downs[i])) });
     G.cnt = c;
     el.main.classList.add('is-taking');
     setGoUI(true);
@@ -5690,22 +5713,19 @@ const INST_ICON = (() => {
     if (had && !silent) idleHint();
   }
 
-  // après une phrase réussie : la prochaine à travailler (à revoir après la comptine entière, sinon la suivante pas encore faite)
+  // après une phrase réussie : la prochaine à travailler (d'abord celles à revoir après la comptine entière, puis la suivante pas encore faite)
   function nextTarget(p) {
     const N = G.song.phrases.length;
-    for (let k = 1; k <= N; k++) {
-      const q = (p + k) % N;
-      if (isDone(q)) continue;
-      if (G.stage === 'review' && !G.queue.includes(q)) continue;
-      return q;
-    }
-    return null;
+    const order = Array.from({ length: N }, (_, k) => (p + 1 + k) % N).filter((q) => !isDone(q));
+    const queued = order.filter((q) => G.queue.includes(q));
+    return queued.length ? queued[0] : order.length ? order[0] : null;
   }
   // elle démarre toute seule (écoute, décompte), sauf si l'élève a fait autre chose entre-temps
   function chain(p) {
     const nx = nextTarget(p);
     if (nx == null) return;
     G.moveTo = nx;
+    bandUI(); // le grand rond l'annonce déjà (« Jouer la phrase n »)
     const tok = G.acts;
     later(() => { if (G && G.moveTo === nx && G.acts === tok && !busy() && !G.done && !G.playing) goAttempt(); }, 1300);
   }
@@ -5747,27 +5767,25 @@ const INST_ICON = (() => {
     toReview(bad, text);
   }
 
-  // après la comptine entière : directement sur la première phrase à revoir ; « À toi de jouer ! » la propose
+  // après la comptine entière : directement sur la première phrase à revoir ; le grand rond passe à la phrase et la propose
   function toReview(bad, text) {
     G.queue = bad;
-    setStage('review');
+    G.whole = false;
+    G.begun = true;
     G.song.phrases.forEach((_, q) => paintPill(q));
     showPhrase(bad[0]);
     setHint(text, 'up');
     if (el.bGo) el.bGo.classList.add('is-ready');
-  }
-
-  function setStage(stage) {
-    G.stage = stage;
-    el.main.dataset.stage = stage;
     bandUI();
   }
 
   // nouvelle partie de la même comptine, toute la comptine d'abord (go : l'essai démarre tout de suite)
   function newRound(go) {
+    const had = !!(el.pu && el.pu.contains(document.activeElement)); // le clavier était sur le pupitre : il y reste
     stopAll();
     renderSong(G.song);
     if (go) goAttempt();
+    if (had) { const to = el.bStop.hidden ? el.bGo : el.bStop; if (!to.hidden) to.focus({ preventScroll: true }); }
   }
 
   /* ---------------- réponses (au micro) ---------------- */
@@ -5791,7 +5809,7 @@ const INST_ICON = (() => {
     const target = G.song.notes[G.cursor];
     const pitchOk = rightPitch(hit, target.midi);
     const said = singing() ? nameSaid(hit.syl, target.midi) : null;
-    if (G.stage === 'whole') {
+    if (G.live.full) {
       if (pitchOk) tuneTo(hit, target.midi);
       wholeNote(pitchOk && said !== 'non', el.heard);
       return;
@@ -5846,6 +5864,7 @@ const INST_ICON = (() => {
     const next = ph.notes.find((m) => m > n && !G.found.has(m));
     if (next != null) { setCursor(next, true, false); laterHint(() => { if (G && G.cursor === next) cursorHint(); }, 650); return; }
     // phrase retrouvée : fin de l'essai ; la suivante démarre toute seule
+    G.begun = true;
     endLive();
     setHint(`Phrase ${p + 1} retrouvée !`, 'ok');
     chain(p);
@@ -5988,7 +6007,7 @@ const INST_ICON = (() => {
     D.note(el.stage, n, on);
   }
 
-  // pendant une écoute, son petit rond devient « Arrêter »
+  // pendant son écoute, « Jusqu'à la note » devient « Arrêter »
   function sideBusy(b, on, ic, lbl, aria) {
     if (!b) return;
     b.classList.toggle('is-on', on);
@@ -5999,15 +6018,12 @@ const INST_ICON = (() => {
   const Q_ICON = '<span class="q" aria-hidden="true">?</span>';
   function setPlayingUI(kind, on) {
     el.main.classList.toggle('is-playing', on);
-    if (kind === 'all') sideBusy(el.bAll, on, ICON.play, LISTEN_ALL, 'Écouter toute la comptine');
-    else if (kind === 'to') sideBusy(el.bTo, on, Q_ICON, 'Jusqu’à la note', 'Écouter la phrase jusqu’à la note à trouver');
-    else if (kind.startsWith('p')) sideBusy(el.bPhrase, on, ICON.play, `Phrase${NB}${G.view + 1}`, `Écouter la phrase ${G.view + 1}`);
+    if (kind === 'to') sideBusy(el.bTo, on, Q_ICON, 'Jusqu’à la note', 'Écouter la phrase jusqu’à la note à trouver');
     bandUI();
   }
 
-  const LISTEN_ALL = 'Toute la comptine';
-  function playAll() { playEvents(G.song.events, 'all'); }
-  function playPhrase(p, onEnd) { playEvents(G.song.phrases[p].events, 'p' + p, onEnd); }
+  const ALL_LBL = 'Toute la comptine';
+  function playAll() { playEvents(G.song.events, 'all'); } // à la fin de la comptine, pour fêter
   function playToMystery() {
     if (G.cursor == null) { playAll(); return; }
     const target = G.song.notes[G.cursor];
@@ -6028,8 +6044,9 @@ const INST_ICON = (() => {
 
   /* Décompte avant la phrase p, calé sur la mesure : les temps de la mesure où
      la phrase commence, précédés d'une mesure entière s'il en faut pour
-     compter au moins trois temps (« 1 2 1 » → levée sur le 2e temps en 2/4,
-     « 1 2 3 » → levée sur le 3e temps et demi en 4/4, « 1 2 3 4 » sinon). */
+     compter au moins trois temps. On les compte d'un bout à l'autre (« 1 2 3 4 »,
+     même en 2/4 ; « 1 2 3 » pour une levée sur le 2e temps en 2/4, ou sur le 3e temps
+     et demi en 4/4) ; le premier temps de chaque mesure sonne plus fort (downs). */
   function countIn(p, lead = 0.3) {
     const song = G.song, spb = spbOf();
     const compound = song.meter[1] === 8 && song.meter[0] % 3 === 0;
@@ -6045,8 +6062,9 @@ const INST_ICON = (() => {
     const beatSec = unit * spb;
     const c0 = Sound.now() + lead;
     const clicks = Array.from({ length: N }, (_, k) => c0 + k * beatSec);
-    const labels = clicks.map((_, k) => (((k - full) % perBar) + perBar) % perBar + 1);
-    return { N, clicks, labels, beatSec, spb, T0: c0 + (full + pos) * beatSec };
+    const labels = clicks.map((_, k) => k + 1);
+    const downs = clicks.map((_, k) => (((k - full) % perBar) + perBar) % perBar === 0);
+    return { N, clicks, labels, downs, beatSec, spb, T0: c0 + (full + pos) * beatSec };
   }
 
   function showCount(ci, k) {
@@ -6058,7 +6076,7 @@ const INST_ICON = (() => {
       hintSeq++;
       return;
     }
-    setHint(`<span class="cin" aria-label="Décompte : ${ci.labels[k]}">${ci.labels.map((l, i) => `<b class="${i < k ? 'past' : i === k ? 'on' : ''}${l === 1 && i ? ' bar' : ''}">${l}</b>`).join('')}</span>`, 'count');
+    setHint(`<span class="cin" aria-label="Décompte : ${ci.labels[k]}">${ci.labels.map((l, i) => `<b class="${i < k ? 'past' : i === k ? 'on' : ''}">${l}</b>`).join('')}</span>`, 'count');
   }
 
 
@@ -6084,7 +6102,7 @@ const INST_ICON = (() => {
     const tk = Object.assign({}, ci, {
       p, full, exp, starts, got: [], phase: 'count', k: -1, raf: 0, mic: settings.mode === 'mic', sing: singing() && Ear.voiceOk(),
       Tend: ci.T0 + exp[exp.length - 1].t + Math.max(0.9, 1.6 * ci.beatSec),
-      srcs: ci.clicks.map((t, i) => Sound.clickAt(t, ci.labels[i] === 1)),
+      srcs: ci.clicks.map((t, i) => Sound.clickAt(t, ci.downs[i])),
     });
     G.take = tk;
     el.main.classList.add('is-taking');
@@ -6188,6 +6206,7 @@ const INST_ICON = (() => {
     const same = tk.mic ? (e, g) => rightPitch(g.hit, e.midi) && !(tk.sing && nameSaid(g.syl, e.midi) === 'non') : (e, g) => g.midi === e.midi;
     const r = Rhythm.evaluate({ exp: tk.exp, got: tk.got, beat: tk.beatSec, same, mic: tk.mic });
     if (tk.full) { endFullTake(tk, r); return; }
+    G.begun = true;
     setGoUI(false);
     const ph = G.song.phrases[tk.p];
     let fresh = 0;
@@ -6213,6 +6232,7 @@ const INST_ICON = (() => {
     if (r.pass) G.passed.add(tk.p); else G.fails++;
     paintPill(tk.p);
     paintCount();
+    goLabel(); // manquée : « Rejouer la phrase n »
     const st = info();
     D.update(el.stage, st);
     if (r.pass) D.react(el.stage, 'phrase', st);
@@ -6513,21 +6533,26 @@ const INST_ICON = (() => {
     if (busy()) cancelAttempt(); else goAttempt();
   }
 
+  // les deux petits ronds du repos : ce que joue le grand rond, la phrase affichée ou toute la comptine
+  function pickWhole(whole) {
+    if (!G || busy() || G.done) return;
+    G.acts++; // la phrase suivante ne démarre plus toute seule
+    if (G.whole === whole) return;
+    G.whole = whole;
+    if (G.moveTo != null) moveOn(); else idleHint();
+    bandUI();
+  }
+
   function bindSong() {
-    el.bAll.addEventListener('click', () => { G.acts++; if (prepping()) { cancelAttempt(); return; } toggle('all', playAll)(); });
+    el.bPhrase.addEventListener('click', () => pickWhole(false));
+    el.bAll.addEventListener('click', () => pickWhole(true));
     if (el.bTo) el.bTo.addEventListener('click', toggle('to', playToMystery));
-    // « Phrase n » : la phrase affichée ; pendant qu'une phrase passe, le même bouton l'arrête
-    el.bPhrase.addEventListener('click', () => {
-      G.acts++;
-      if (G.playing && G.playing.kind.startsWith('p')) stopPlayback(true); else playPhrase(G.view);
-    });
     el.bGo.addEventListener('click', goButton);
     // « Arrêter » : l'essai en cours, ou le réglage de la voix
     el.bStop.addEventListener('click', () => { G.acts++; if (G.cal) calStop(); else cancelAttempt(); });
     // « Recommencer » : le même essai depuis le début (l'écoute, puis le décompte)
     el.bRestart.addEventListener('click', () => { G.acts++; goAttempt(G.attemptSc); });
     el.bHear.addEventListener('click', () => { if (G.cal) calStep(); });
-    el.bAgain.addEventListener('click', () => { G.acts++; newRound(true); });
     el.bLevel.addEventListener('click', () => setLevel(G.level === 2 ? 1 : 2));
     el.bRg.addEventListener('click', reglages);
     app.querySelector('#b-reset').addEventListener('click', reset);

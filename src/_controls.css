@@ -126,7 +126,6 @@
   .stage-bar .stage-title b { font-size: 15px; line-height: 1.04; white-space: normal; text-wrap: balance; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 }
 @media (max-width: 359px) { .stage-bar .stage-title b { font-size: 14px; } .stage-bar .stage-title { padding: 0 11px; } }
-.cin b.bar { margin-left: 8px; }
 
 /* petits téléphones (iPhone SE…) : on gagne quelques pixels pour garder le décor */
 @media (max-width: 899px) and (max-height: 700px) {
@@ -213,10 +212,11 @@
 }
 
 /* ============ le pupitre, en bas : deux étages de taille fixe ============
-   En haut, une ligne : le niveau tant que rien n'a commencé, puis ce que dit la page (consigne, décompte,
+   En haut, une ligne : le niveau tant qu'aucun essai n'est allé au bout, puis ce que dit la page (consigne, décompte,
    « note n sur N », bilan). En dessous, trois ronds : au centre, le grand rond (« À toi de jouer ! »,
    « Corriger la phrase n », « Rejouer ») devient la note entendue pendant le jeu, avec sa jauge en arc ; de chaque
-   côté, un petit rond change de rôle selon le moment (écouter, arrêter, recommencer, jusqu'à la note, suivante…).
+   côté, un petit rond change de rôle selon le moment : au repos, ce que joue le grand rond (« Phrase n » ou « Toute
+   la comptine ») ; pendant le jeu, arrêter, recommencer, jusqu'à la note ; à la fin, l'autre niveau, suivante.
    D'un moment à l'autre, rien ne change de taille ni de place. */
 .pupitre {
   --gc: 116px;                      /* le grand rond */
@@ -272,6 +272,12 @@
 .pu-side:focus-visible .pu-ic { outline: 3px solid var(--accent); outline-offset: 3px; }
 .pu-side .q { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px dashed currentColor; font-size: 15px; line-height: 1; }
 @media (hover: hover) { .pu-side:hover .pu-ic { background: var(--panel-2); } .pu-side.is-on:hover .pu-ic { background: var(--text); } }
+/* au repos, « Phrase n » et « Toute la comptine » : celui qui est choisi prend la couleur du grand rond, qui le jouera */
+.pu-pick .pu-ic svg { width: calc(var(--sc) * .52); height: calc(var(--sc) * .52); }
+.pu-pick[aria-pressed="false"] .pu-ic { color: var(--text-soft); }
+.pu-pick[aria-pressed="false"] .pu-lbl { font-weight: 600; }
+.pu-pick[aria-pressed="true"] .pu-ic { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 62%, #000); }
+.pu-pick[aria-pressed="true"]:active .pu-ic { box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 62%, #000); }
 
 /* le grand rond : « À toi de jouer ! », « Corriger la phrase n », « Rejouer la comptine » */
 .pu-go {
