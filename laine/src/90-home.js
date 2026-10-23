@@ -314,8 +314,8 @@ const HomeSkin = (() => {
         <div class="lh-hero-in">
           <h1 class="lh-h1"><span class="lh-fallback">Les Notes <span>Envolées</span></span><span class="lh-sr">Les Notes Envolées</span></h1>
           <div class="lh-intro">
-            <p class="lh-eyebrow">Jeu d’oreille · ${LIB.length} comptines en do majeur · décors en laine</p>
-            <p class="lh-lede">Dans chaque comptine, les notes se sont envolées. <strong>Seule la première note de chaque phrase est restée.</strong> Joue-la sur ton instrument (ou chante-la), puis retrouve les suivantes à l’oreille : la page t’écoute avec le micro.</p>
+            <p class="lh-eyebrow">Jeu d’oreille · décors en laine</p>
+            <p class="lh-lede"><strong>Les notes se sont envolées.</strong> Retrouve-les à l’oreille : la page t’écoute au micro.</p>
             <div class="lh-actions">
               <button class="lh-cta" type="button" id="lh-go">Choisir une comptine</button>
               <p class="lh-hint" id="lh-hint">${gl ? 'Touche les notes qui volent : elles chantent.' : ''}</p>

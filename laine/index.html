@@ -1351,9 +1351,10 @@ html.onb-open, html.onb-open body { overflow: hidden; }
 @media (max-width: 859px) { .lh-hoops { grid-template-columns: repeat(3, minmax(0, 1fr)); } .lhome { --hs: 158px; } }
 @media (max-width: 699px) {
   .lh-hero { height: auto; }
-  .lh-stage { position: relative; height: clamp(320px, 58svh, 520px); }
+  .lh-stage { position: relative; height: clamp(300px, 52svh, 520px); }
   .lh-hero::after { display: none; }
   .lh-hero-in { position: relative; inset: auto; padding-block: 14px 8px; }
+  .lh-eleve { padding-block: 10px 0; }
   .lh-hoops { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 54px 12px; }
   .lhome { --hs: 146px; }
   .hoop-title { font-size: 16px; }
@@ -21478,8 +21479,8 @@ const HomeSkin = (() => {
         <div class="lh-hero-in">
           <h1 class="lh-h1"><span class="lh-fallback">Les Notes <span>Envolées</span></span><span class="lh-sr">Les Notes Envolées</span></h1>
           <div class="lh-intro">
-            <p class="lh-eyebrow">Jeu d’oreille · ${LIB.length} comptines en do majeur · décors en laine</p>
-            <p class="lh-lede">Dans chaque comptine, les notes se sont envolées. <strong>Seule la première note de chaque phrase est restée.</strong> Joue-la sur ton instrument (ou chante-la), puis retrouve les suivantes à l’oreille : la page t’écoute avec le micro.</p>
+            <p class="lh-eyebrow">Jeu d’oreille · décors en laine</p>
+            <p class="lh-lede"><strong>Les notes se sont envolées.</strong> Retrouve-les à l’oreille : la page t’écoute au micro.</p>
             <div class="lh-actions">
               <button class="lh-cta" type="button" id="lh-go">Choisir une comptine</button>
               <p class="lh-hint" id="lh-hint">${gl ? 'Touche les notes qui volent : elles chantent.' : ''}</p>
@@ -22301,9 +22302,9 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     <main class="home grain">
       <div class="home-in">
         <header class="home-head">
-          <p class="eyebrow">Jeu d’oreille · ${LIB.length} comptines en do majeur</p>
+          <p class="eyebrow">Jeu d’oreille · ${LIB.length} comptines</p>
           <h1 class="home-title"><span class="w">Les Notes</span><span class="w">Envol<span class="lift c1">é</span><span class="lift c2">e</span><span class="lift c3">s</span><span class="flyaway" aria-hidden="true"><i style="--c:var(--n-do);--dl:-.3s"></i><i style="--c:var(--n-sol);--dl:-1.1s;translate:0 -.25em"></i><i style="--c:var(--n-la);--dl:-1.9s;translate:0 -.55em"></i></span></span></h1>
-          <p class="home-lede">Dans chaque comptine, les notes se sont envolées. <strong>Seule la première note de chaque phrase est restée.</strong> Joue-la sur ton instrument (ou chante-la), puis retrouve les suivantes à l’oreille : la page t’écoute avec le micro.</p>
+          <p class="home-lede"><strong>Les notes se sont envolées.</strong> Retrouve-les à l’oreille : la page t’écoute au micro.</p>
           <div class="home-eleve">${eleveHtml()}${micNote}</div>
         </header>
         <section class="score" id="score" aria-label="Les comptines, de la plus facile à la plus difficile">

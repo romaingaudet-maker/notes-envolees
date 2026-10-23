@@ -535,9 +535,9 @@
     <main class="home grain">
       <div class="home-in">
         <header class="home-head">
-          <p class="eyebrow">Jeu d’oreille · ${LIB.length} comptines en do majeur</p>
+          <p class="eyebrow">Jeu d’oreille · ${LIB.length} comptines</p>
           <h1 class="home-title"><span class="w">Les Notes</span><span class="w">Envol<span class="lift c1">é</span><span class="lift c2">e</span><span class="lift c3">s</span><span class="flyaway" aria-hidden="true"><i style="--c:var(--n-do);--dl:-.3s"></i><i style="--c:var(--n-sol);--dl:-1.1s;translate:0 -.25em"></i><i style="--c:var(--n-la);--dl:-1.9s;translate:0 -.55em"></i></span></span></h1>
-          <p class="home-lede">Dans chaque comptine, les notes se sont envolées. <strong>Seule la première note de chaque phrase est restée.</strong> Joue-la sur ton instrument (ou chante-la), puis retrouve les suivantes à l’oreille : la page t’écoute avec le micro.</p>
+          <p class="home-lede"><strong>Les notes se sont envolées.</strong> Retrouve-les à l’oreille : la page t’écoute au micro.</p>
           <div class="home-eleve">${eleveHtml()}${micNote}</div>
         </header>
         <section class="score" id="score" aria-label="Les comptines, de la plus facile à la plus difficile">

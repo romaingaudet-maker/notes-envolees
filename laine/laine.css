@@ -168,9 +168,10 @@
 @media (max-width: 859px) { .lh-hoops { grid-template-columns: repeat(3, minmax(0, 1fr)); } .lhome { --hs: 158px; } }
 @media (max-width: 699px) {
   .lh-hero { height: auto; }
-  .lh-stage { position: relative; height: clamp(320px, 58svh, 520px); }
+  .lh-stage { position: relative; height: clamp(300px, 52svh, 520px); }
   .lh-hero::after { display: none; }
   .lh-hero-in { position: relative; inset: auto; padding-block: 14px 8px; }
+  .lh-eleve { padding-block: 10px 0; }
   .lh-hoops { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 54px 12px; }
   .lhome { --hs: 146px; }
   .hoop-title { font-size: 16px; }
