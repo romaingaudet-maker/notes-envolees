@@ -171,8 +171,10 @@
     return `<section class="eleve-card" aria-label="Toi et ton instrument">
       <div class="ec-sum">
         <span class="ec-pic">${instPic()}</span>
-        <p class="ec-txt"><span class="ec-hello">${helloHtml()}</span><span class="ec-inst">${esc(instShort())}</span></p>
-        <button class="ec-edit" type="button">Changer</button>
+        <div class="ec-txt">
+          <p class="ec-hello">${helloHtml()}</p>
+          <p class="ec-row"><span class="ec-inst">${esc(instShort())}</span><button class="ec-edit" type="button">Changer</button></p>
+        </div>
       </div>
     </section>`;
   }

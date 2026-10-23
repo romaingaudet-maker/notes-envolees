@@ -502,10 +502,12 @@ a { color: inherit; }
 .ec-sum { display: flex; align-items: center; gap: 12px; }
 .ec-pic { flex: none; width: 54px; height: 54px; border-radius: 16px; background: var(--ec-on); display: grid; place-items: center; }
 .ec-pic svg { width: 46px; height: 46px; }
-.ec-txt { margin: 0; display: grid; min-width: 0; line-height: 1.15; }
-.ec-hello { font-family: var(--font-display); font-weight: 800; font-size: 21px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ec-txt { display: grid; gap: 4px; min-width: 0; }
+/* le prénom en entier : la ligne passe à la suivante s'il le faut, rien n'est coupé */
+.ec-hello { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 21px; line-height: 1.12; overflow-wrap: anywhere; text-wrap: balance; }
+.ec-row { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; }
 .ec-inst { font-weight: 700; font-size: 15px; color: var(--ec-soft); }
-.ec-edit { margin-left: auto; flex: none; height: 38px; padding: 0 16px; border-radius: 999px; border: 2px solid var(--ec-accent); background: transparent; color: inherit; font-weight: 700; font-size: 15px; cursor: pointer; }
+.ec-edit { flex: none; height: 32px; padding: 0 13px; border-radius: 999px; border: 2px solid var(--ec-accent); background: transparent; color: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
 
 /* les cartes à dessin des instruments (première visite, réglages d'une comptine) */
 .ic-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
@@ -566,6 +568,8 @@ html.onb-open, html.onb-open body { overflow: hidden; }
   .ic-pic { width: 56px; height: 56px; }
   .ic-card b { font-size: 14.5px; }
   .eleve-card { padding: 8px 12px 8px 8px; }
+  .ec-pic { width: 50px; height: 50px; }
+  .ec-pic svg { width: 42px; height: 42px; }
   .ec-hello { font-size: 19px; }
 }
 /* ordinateur : au milieu de la page, devant l'accueil ou la comptine assombris */
@@ -21933,8 +21937,10 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     return `<section class="eleve-card" aria-label="Toi et ton instrument">
       <div class="ec-sum">
         <span class="ec-pic">${instPic()}</span>
-        <p class="ec-txt"><span class="ec-hello">${helloHtml()}</span><span class="ec-inst">${esc(instShort())}</span></p>
-        <button class="ec-edit" type="button">Changer</button>
+        <div class="ec-txt">
+          <p class="ec-hello">${helloHtml()}</p>
+          <p class="ec-row"><span class="ec-inst">${esc(instShort())}</span><button class="ec-edit" type="button">Changer</button></p>
+        </div>
       </div>
     </section>`;
   }
