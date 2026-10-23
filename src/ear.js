@@ -164,7 +164,9 @@ const PitchKit = (() => {
         if (masked && (!T.held || T.held.pc !== pc)) T.held = { pc, peak: rms, min: rms, armed: false, ring: true };
         const h = T.held;
         if (!h || h.pc !== pc) {
-          T.held = { pc, r, peak: rms, min: rms, armed: false, t0: T.cand.t };
+          // la voix : le volume des trames de la note déjà entendues sert de référence au creux de la consonne
+          // suivante (une note chantée brève n'a parfois qu'une ou deux trames après celle-ci)
+          T.held = { pc, r, peak: rms, min: rms, armed: false, t0: T.cand.t, lv: T.voice ? T.hist.slice(-Math.min(T.cand.n, 6)) : undefined };
           T.on = null; // l'attaque de cette note-ci
           return { r, cents: T.cand.c, f: res.f, t: T.cand.t };
         }
@@ -203,7 +205,7 @@ const PitchKit = (() => {
             if (++h.re.n >= 2) {
               const t0 = h.re.t;
               if (T.voice && h.t0 != null && t0 - h.t0 < 0.18) { h.re = null; k.push(rms); if (k.length > 9) k.shift(); return null; }
-              T.held = { pc, r, peak: rms, min: rms, armed: false, t0 };
+              T.held = { pc, r, peak: rms, min: rms, armed: false, t0, lv: T.voice ? T.hist.slice(-3) : undefined };
               T.on = null;
               return { r, cents: T.cand.c, f: res.f, t: t0 };
             }
