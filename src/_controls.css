@@ -34,9 +34,7 @@
 .inst-pill .chev, .home-select .chev { position: absolute; right: 10px; top: 50%; width: 18px; height: 18px; margin-top: -9px; pointer-events: none; }
 .inst-pill select option, .home-select select option { color: #1D2350; background: #FFFFFF; }
 
-/* ============ niveau, lentement (et « Régler ma voix »), sous l'écoute du micro ============ */
-.dock-bar { align-self: stretch; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 10px; }
-.dock-bar .seg { align-self: auto; }
+/* ============ le niveau (en haut du pupitre, et dans les réglages) ============ */
 .seg .lv { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; line-height: 1; background: var(--line); color: inherit; }
 .seg button[aria-checked="true"] .lv { background: var(--accent); color: var(--accent-ink); }
 .seg .short { display: none; }
@@ -54,7 +52,7 @@
 .hint.go { color: var(--accent); font-size: 26px; }
 .card.beat { animation: card-beat .24s ease-out; }
 @keyframes card-beat { from { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 55%, transparent); } to { box-shadow: 0 0 0 0 transparent; } }
-.is-taking .ecoute .btn, .is-taking .strip, .is-taking .choix, .is-taking .dock-bar, .is-taking .inst-pill { opacity: .45; pointer-events: none; }
+.is-taking .strip, .is-taking .inst-pill { opacity: .45; pointer-events: none; }
 
 /* verdict de chaque note : un anneau autour de la perle */
 .bead.r-ok, .bead.r-near, .bead.r-far, .bead.r-wrong, .bead.r-miss { outline-offset: 2px; }
@@ -136,7 +134,6 @@
   .rstrip .rline { top: 6px; }
   .rstrip .tk, .rstrip .dot { top: 1px; }
   .rstrip .dot.extra { top: 3px; }
-  .ear-msg { font-size: 13px; padding: 6px 10px; }
 }
 /* bureau très bas : la bande du rythme se fait discrète */
 @media (min-width: 900px) and (max-height: 660px) {
@@ -147,7 +144,6 @@
   .card { gap: 8px; padding-top: 10px; padding-bottom: 12px; }
 }
 
-.ecoute .btn .ic { display: inline-grid; place-items: center; }
 
 /* carte de fin : jouer toute la comptine d'un coup, et son bilan */
 .full-ask { margin: 0; font-weight: 700; color: var(--text); }
@@ -162,19 +158,13 @@
 @media (max-width: 899px) {
   .done-card { gap: 8px; padding: 12px 14px 14px; }
   .done-card .done-stars svg { width: 30px; height: 30px; }
-  .done-actions { gap: 8px; }
-  .done-actions .btn { height: 40px; }
 }
 
-/* carte de fin, plus compacte : étoiles et titre sur une ligne, boutons resserrés */
+/* carte de fin, compacte : étoiles et titre sur une ligne ; la suite est dans le pupitre (l'autre niveau, rejouer, suivante) */
 .done-card { gap: 10px; padding: 14px 18px 16px; }
 .done-head { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; }
 .done-card h2 { font-size: clamp(22px, 2.1vw, 28px); }
 .done-card .done-stars svg { width: 28px; height: 28px; }
-.done-actions { gap: 8px; }
-.done-actions .btn { height: 40px; padding: 0 14px; font-size: 14px; }
-.done-actions .btn-big { height: 46px; font-size: 16px; padding-right: 16px; }
-.done-actions .btn-big .ic { width: 34px; height: 34px; }
 @media (max-width: 899px) {
   .done-card h2 { font-size: 20px; }
   .done-card .done-stars svg { width: 24px; height: 24px; }
@@ -182,79 +172,13 @@
   .full-res, .full-ask { font-size: 15px; }
 }
 
-/* carte de fin affichée : l'indication du bas (redite du titre) et le pied de page s'effacent ;
-   s'il manque encore de la place, l'écoute du micro se replie jusqu'à ce qu'on rejoue */
-.song:has(#done:not([hidden])) .dock > .hint,
+/* carte de fin affichée : le pied de page s'efface ; s'il manque encore de la place, son message aussi */
 .song:has(#done:not([hidden])) .play-foot { display: none; }
-.song.tight:has(#done:not([hidden])) .dock > .ear { display: none; }
-.done-actions .short { display: none; }
-@media (max-width: 899px) {
-  .done-actions .long { display: none; }
-  .done-actions .short { display: inline; }
-  .done-actions #d-again { width: 40px; padding: 0; justify-content: center; }
-}
-/* niveau 2, carte de fin : son grand bouton remplace « À toi » (qui revient en « Arrêter » pendant la prise) */
-.song:has(#done:not([hidden])) .go-row { display: none; }
-
-/* ============ rangement : la carte de la phrase ============
-   les paroles, les notes, puis les écoutes sur une seule ligne : « Phrase n », « Toute la comptine »
-   et « ? » (jusqu'à la note à trouver, niveau 1) ; la vitesse est dans les réglages (le bouton de l'instrument) */
-.ph-to .q { display: grid; place-items: center; }
-.ph-to .q svg { width: 12px; height: 12px; }
-.ecoute .ph-to { flex: none; padding: 0 14px 0 8px; }
-.seg-cal[hidden] { display: none; }
+.song.tight .done-card > p { display: none; }
 .seg button[aria-pressed="true"] { background: var(--text); color: var(--panel); }
-@media (max-width: 1359px) {
-  .ph-to .lbl { display: none; }
-  .ecoute .ph-to { width: 40px; padding: 0; justify-content: center; border-radius: 50%; }
-}
-@media (max-width: 899px) {
-  .ecoute .ph-to { width: 38px; }
-}
 /* diagnostic du micro (?diag) */
 .ear-diag { position: fixed; right: 8px; top: calc(76px + env(safe-area-inset-top, 0px)); z-index: 2147483646; max-width: 70vw; padding: 6px 9px; border-radius: 10px; background: rgba(0, 0, 0, .78); color: #fff; font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace; pointer-events: none; }
 
-/* boutons dans la consigne (« Régler ma voix » : Arrêter, Réécouter) */
-.hint .hint-btn { height: 30px; padding: 0 10px; margin-left: 6px; font-size: 13px; vertical-align: middle; }
-
-/* ============ la comptine : l'exercice, l'écoute, « À toi de jouer ! » ============
-   pupitre, de haut en bas : l'exercice (niveau ; phrase par phrase ou toute la comptine, et ce que ça veut dire),
-   la phrase et ses écoutes (▶ la phrase, ? jusqu'à la note, toute la comptine, lentement), puis le grand bouton,
-   qui dit ce qu'il va lancer ; en bas, le micro. */
-.choix { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
-.choix .seg { align-self: stretch; display: flex; width: 100%; }
-.choix .seg button { flex: 1 1 0; justify-content: center; min-width: 0; white-space: nowrap; }
-.choix .seg-level button span { overflow: hidden; text-overflow: ellipsis; }
-.choix-dit { margin: 0; font-size: 14.5px; line-height: 1.35; color: var(--text-soft); }
-.ecoute { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.ecoute .btn { height: 40px; padding: 0 14px; font-size: 14px; }
-.ecoute .btn .ic svg { width: 16px; height: 16px; }
-.go-row { display: flex; }
-.btn-big.go { height: auto; min-height: 56px; padding: 6px 24px 6px 8px; }
-.go-txt { display: grid; justify-items: start; gap: 1px; line-height: 1.1; text-align: left; }
-.go-sub { font-size: 13px; font-weight: 700; opacity: .85; letter-spacing: .01em; }
-.go-sub:empty { display: none; }
-.btn-big.go.is-on .go-sub { visibility: hidden; }
-@media (max-width: 899px) {
-  .choix { gap: 6px; }
-  .choix .seg button { height: 34px; padding: 0 8px; font-size: 13.5px; }
-  .choix-dit { font-size: 13.5px; }
-  .ecoute .btn { height: 38px; padding: 0 12px; font-size: 13.5px; }
-  #b-phrase, #b-all { flex: 1 1 auto; min-width: 0; justify-content: center; }
-  .go-row .btn-big { flex: 1 1 auto; justify-content: center; min-height: 52px; }
-  .go-row .btn-big .ic { margin-right: auto; }
-  .go-row .btn-big .go-txt { margin-right: auto; justify-items: center; text-align: center; }
-}
-@media (max-width: 380px) {
-  .choix .seg button { font-size: 12.5px; padding: 0 6px; }
-  .seg .lv { width: 16px; height: 16px; font-size: 10px; }
-  .ecoute .btn { padding: 0 10px; }
-}
-/* écrans peu hauts : l'explication de l'exercice se fait plus petite, puis disparaît */
-@media (min-width: 900px) and (max-height: 760px) { .choix-dit { font-size: 13.5px; } }
-@media (max-width: 899px) and (max-height: 700px) { .choix-dit { display: none; } }
-/* comptine finie : la carte de fin dit la suite, l'explication de l'exercice se retire */
-.song.fin .choix-dit { display: none; }
 
 /* ============ les réglages d'une comptine : l'instrument et la vitesse ============ */
 .ec-modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(12, 10, 30, .55); }
@@ -286,4 +210,164 @@
   .rg-grid .ic-pic { width: 42px; height: 42px; }
   .rg-grid .ic-card b { font-size: 12.5px; }
   .rg-grid .ic-card small { font-size: 10.5px; }
+}
+
+/* ============ le pupitre, en bas : deux étages de taille fixe ============
+   En haut, une ligne : le niveau tant que rien n'a commencé, puis ce que dit la page (consigne, décompte,
+   « note n sur N », bilan). En dessous, trois ronds : au centre, le grand rond (« À toi de jouer ! »,
+   « Corriger la phrase n », « Rejouer ») devient la note entendue pendant le jeu, avec sa jauge en arc ; de chaque
+   côté, un petit rond change de rôle selon le moment (écouter, arrêter, recommencer, jusqu'à la note, suivante…).
+   D'un moment à l'autre, rien ne change de taille ni de place. */
+.pupitre {
+  --gc: 116px;                      /* le grand rond */
+  --gb: calc(var(--gc) + 40px);     /* sa place, avec la jauge */
+  --sc: 58px;                       /* les petits ronds */
+  --pt: 44px;                       /* la ligne du haut */
+  grid-area: dock;
+  position: relative; z-index: 3;
+  display: grid; grid-template-rows: var(--pt) var(--gb); gap: 6px;
+  padding: 10px max(14px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px));
+  background: var(--band, color-mix(in srgb, var(--panel) 35%, #FFFFFF));
+  border-radius: 26px 26px 0 0;
+  box-shadow: 0 -2px 0 var(--line), 0 -10px 26px color-mix(in srgb, var(--text) 7%, transparent);
+}
+/* univers de nuit : le pupitre reste un peu plus clair que la page */
+:root[data-world="lune"], :root[data-world="coucou"] { --band: color-mix(in srgb, var(--panel-2) 90%, #FFFFFF); }
+
+/* la ligne du haut : le niveau, ou ce que dit la page */
+.pu-top { display: grid; place-items: center; min-width: 0; }
+.pu-top > * { grid-area: 1 / 1; }
+.pu-top .seg { width: min(100%, 420px); display: flex; }
+.pu-top .seg button { flex: 1 1 0; justify-content: center; min-width: 0; height: calc(var(--pt) - 10px); white-space: nowrap; }
+.pu-top .seg button span { overflow: hidden; text-overflow: ellipsis; }
+.pu-top .hint { width: 100%; height: var(--pt); min-height: 0; overflow: hidden; font-size: 20px; }
+.pu-top .hint.long { font-size: 15px; line-height: 1.15; }
+.pu-top .hint.go { font-size: 24px; }
+.pu-top .hint .nchip { min-width: 42px; height: 30px; font-size: 16px; }
+.pu-top .hint svg { width: 26px; height: 26px; }
+.pu-top .hint small { font-size: 13px; }
+.pu-top .cin b { width: 1.5em; height: 1.5em; }
+
+/* les trois ronds */
+.pu-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--gb) minmax(0, 1fr); width: 100%; max-width: 520px; margin: 0 auto; }
+.pu-slot, .pu-mid { display: grid; min-width: 0; }
+.pu-slot > *, .pu-mid > * { grid-area: 1 / 1; }
+.pu-mid { place-items: center; width: var(--gb); height: var(--gb); }
+.pu-side {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  height: var(--gb); min-width: 0; padding: calc((var(--gb) - var(--sc)) / 2) 2px 0;
+  border: 0; background: none; color: var(--text); text-decoration: none; cursor: pointer;
+  font-weight: 700; font-size: 13px; line-height: 1.15;
+}
+.pu-ic {
+  flex: none; display: grid; place-items: center; width: var(--sc); height: var(--sc); border-radius: 50%;
+  border: 2px solid var(--line-strong); background: var(--panel); color: var(--text);
+  box-shadow: 0 3px 0 var(--line); transition: transform .08s, background-color .15s;
+}
+.pu-ic svg { width: 22px; height: 22px; }
+.pu-lbl { max-width: 7.6em; text-align: center; }
+.pu-side:active .pu-ic { transform: translateY(2px); box-shadow: 0 1px 0 var(--line); }
+.pu-side.is-on .pu-ic { background: var(--text); color: var(--panel); border-color: var(--text); }
+.pu-side:focus-visible { outline: none; }
+.pu-side:focus-visible .pu-ic { outline: 3px solid var(--accent); outline-offset: 3px; }
+.pu-side .q { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px dashed currentColor; font-size: 15px; line-height: 1; }
+@media (hover: hover) { .pu-side:hover .pu-ic { background: var(--panel-2); } .pu-side.is-on:hover .pu-ic { background: var(--text); } }
+
+/* le grand rond : « À toi de jouer ! », « Corriger la phrase n », « Rejouer la comptine » */
+.pu-go {
+  width: var(--gc); height: var(--gc); padding: 0; border: 0; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: var(--accent); color: var(--accent-ink); cursor: pointer; text-align: center;
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--accent) 62%, #000), 0 0 0 8px color-mix(in srgb, var(--accent) 14%, transparent);
+  transition: transform .08s;
+}
+.pu-go .ic { display: grid; margin-bottom: 2px; }
+.pu-go .ic svg { width: calc(var(--gc) * .21); height: calc(var(--gc) * .21); }
+.pu-go-t { font-family: var(--font-display); font-weight: 800; font-size: calc(var(--gc) * .17); line-height: 1; }
+.pu-go-s { max-width: 86%; font-weight: 700; font-size: calc(var(--gc) * .11); line-height: 1.1; }
+.pu-go:active { transform: translateY(3px); box-shadow: 0 2px 0 color-mix(in srgb, var(--accent) 62%, #000), 0 0 0 8px color-mix(in srgb, var(--accent) 14%, transparent); }
+.pu-go:focus-visible { outline: 3px solid var(--text); outline-offset: 10px; }
+/* « Corriger la phrase n » proposé : le grand rond respire doucement */
+.pu-go.is-ready { animation: pu-ready 1.6s ease-in-out infinite; }
+@keyframes pu-ready {
+  0%, 100% { box-shadow: 0 5px 0 color-mix(in srgb, var(--accent) 62%, #000), 0 0 0 8px color-mix(in srgb, var(--accent) 14%, transparent); }
+  50% { box-shadow: 0 5px 0 color-mix(in srgb, var(--accent) 62%, #000), 0 0 0 17px color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .pu-go.is-ready { animation: none; } }
+
+/* pendant le jeu : la note entendue, et la jauge en arc au-dessus (bas, juste, haut) */
+.pu-ear { position: relative; width: var(--gb); height: var(--gb); display: grid; place-items: center; }
+.pu-gauge { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.pu-gauge .g-trk { fill: none; stroke: var(--line-strong); stroke-width: 5; stroke-linecap: round; }
+.pu-gauge .g-ok { fill: none; stroke: #4CAF5A; stroke-width: 9; stroke-linecap: round; opacity: .8; }
+.pu-gauge .needle { transform-box: view-box; transform-origin: 50% 50%; transform: rotate(calc(var(--c, 0) * 1.2deg)); transition: transform .12s, opacity .2s; }
+.pu-gauge .needle circle { fill: var(--text); stroke: var(--panel); stroke-width: 2.5; }
+.pu-gauge .needle.off { opacity: .25; }
+.g-lo, .g-hi { position: absolute; top: 31%; font-size: 11px; font-weight: 700; line-height: 1; color: var(--text-soft); }
+.g-lo { right: 88%; }
+.g-hi { left: 88%; }
+.pu-ear .heard {
+  width: var(--gc); height: var(--gc); align-content: center; gap: 3px;
+  box-shadow: 0 0 0 calc(var(--lvl) * 8px) color-mix(in srgb, var(--nc, var(--accent)) 24%, transparent);
+}
+.pu-ear .heard-n { font-size: calc(var(--gc) * .3); }
+.heard-s { font-size: 13px; font-weight: 700; line-height: 1; }
+.heard-s:empty { display: none; }
+
+/* le micro ne marche pas : une bulle au-dessus du pupitre, avec de quoi le rallumer */
+.pu-msg {
+  position: absolute; left: 12px; right: 12px; bottom: calc(100% + 10px); z-index: 6;
+  max-width: 520px; margin: 0 auto;
+  display: grid; gap: 10px; justify-items: center; text-align: center;
+  padding: 12px 16px 14px; border-radius: 18px;
+  background: var(--panel); color: var(--text); border: 2px solid var(--line-strong);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .2); font-size: 15px; line-height: 1.35;
+}
+.pu-msg p { margin: 0; }
+.pu-msg a { font-weight: 700; }
+.pu-msg .btn-big { height: 46px; font-size: 16px; padding-right: 18px; }
+.pu-msg .btn-big .ic { width: 34px; height: 34px; }
+
+/* « Régler ma voix », dans les réglages (la voix seulement) */
+.rg-voice { justify-self: start; }
+
+/* téléphone : la phrase et ses perles un peu plus grandes quand l'écran est assez haut */
+@media (max-width: 899px) and (min-height: 760px) {
+  .card { padding: 14px 16px 16px; gap: 10px; border-radius: 22px; }
+  .pill { width: 34px; height: 34px; font-size: 14px; }
+  .ph-lyric { font-size: 19px; }
+  .beads { --stp: 8px; --bs: 32px; gap: 4px; }
+  .bead { font-size: 13px; }
+}
+/* téléphone peu haut : le pupitre se resserre, le décor garde sa place */
+@media (max-width: 899px) and (max-height: 700px) {
+  .pupitre { --gc: 96px; --sc: 50px; --pt: 40px; gap: 4px; padding-top: 8px; }
+  .pu-top .hint { font-size: 18px; }
+  .pu-top .hint.go { font-size: 21px; }
+  .pu-side { font-size: 12px; gap: 4px; }
+}
+@media (max-width: 899px) and (max-height: 580px) {
+  .pupitre { --gc: 80px; --sc: 46px; }
+}
+/* bureau : le pupitre occupe le bas de la colonne de jeu */
+@media (min-width: 900px) {
+  .pupitre { --gc: 128px; --sc: 62px; --pt: 50px; padding-top: 12px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+  .pu-top .hint { font-size: 21px; }
+  .pu-side { font-size: 13.5px; }
+}
+@media (min-width: 900px) and (max-height: 760px) { .pupitre { --gc: 108px; --sc: 54px; --pt: 46px; } }
+@media (min-width: 900px) and (max-height: 640px) { .pupitre { --gc: 92px; --sc: 50px; --pt: 42px; padding-top: 8px; } }
+/* téléphone à l'horizontale : le décor à gauche, la phrase et le pupitre à droite (comme sur ordinateur) */
+@media (max-width: 899px) and (max-height: 500px) and (orientation: landscape) {
+  .song { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "stage play" "stage dock"; }
+  .stage { min-height: 0; }
+  .play { padding-block: 8px; }
+  .stage-bar .back { width: 42px; padding: 0; }
+  .stage-bar .back span { display: none; }
+  .inst-pill { flex: none; padding: 0 26px 0 10px; gap: 4px; }
+  .inst-pill .chev { right: 7px; width: 15px; height: 15px; margin-top: -7.5px; }
+  .stage-bar .stage-title { padding: 0 14px; }
+  .stage-bar .stage-title > span { display: none; }
+  .stage-bar .stage-title b { font-size: 15px; line-height: 1.04; white-space: normal; text-wrap: balance; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+  .pupitre { border-radius: 22px 22px 0 0; }
 }

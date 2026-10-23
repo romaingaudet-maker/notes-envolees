@@ -237,7 +237,6 @@ a { color: inherit; }
 .btn[aria-pressed="true"] { background: var(--text); color: var(--panel); border-color: var(--text); }
 .btn-big:active, .btn:active { transform: translateY(2px); }
 .btn:disabled { opacity: .45; cursor: default; }
-.is-playing .go-row .btn-big { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent), 0 4px 0 color-mix(in srgb, var(--accent) 62%, #000); }
 
 /* la phrase en cours */
 .card { background: var(--panel-2); border-radius: 24px; padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 12px; }
@@ -294,16 +293,7 @@ a { color: inherit; }
 .play-foot svg { width: 16px; height: 16px; }
 .play-foot a:hover, .play-foot button:hover { color: var(--text); }
 
-/* là où l'on joue */
-.dock {
-  grid-area: dock;
-  background: var(--panel-2);
-  border-top: 2px solid var(--line);
-  display: flex; flex-direction: column; align-items: stretch; gap: 6px;
-  padding-left: max(18px, env(safe-area-inset-left, 0px));
-  padding-right: max(18px, env(safe-area-inset-right, 0px));
-  padding-block: 8px calc(12px + env(safe-area-inset-bottom, 0px));
-}
+/* la consigne (dans le pupitre, en bas : voir _controls.css) */
 .hint { min-height: 40px; margin: 0; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 10px; text-align: center; font-family: var(--font-display); font-weight: 700; font-size: 21px; line-height: 1.1; color: var(--text); }
 .hint small { font-family: var(--font-text); font-weight: 400; font-size: 14px; color: var(--text-soft); }
 .hint svg { width: 30px; height: 30px; }
@@ -317,21 +307,7 @@ a { color: inherit; }
 @keyframes wobble { 0%, 100% { translate: 0 0; } 25% { translate: -6px 0; } 75% { translate: 6px 0; } }
 @keyframes glow { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
 
-/* le micro */
-.ear-off { display: grid; gap: 10px; justify-items: center; text-align: center; padding: 2px 0 4px; }
-.ear-text { margin: 0; color: var(--text-soft); font-size: 15px; max-width: 34em; }
-.ear-row { justify-self: stretch; display: flex; gap: 10px 14px; justify-content: center; align-items: flex-end; }
-.inst-pick { flex: 0 1 330px; display: grid; gap: 3px; font-size: 13px; color: var(--text-soft); font-weight: 700; text-align: left; min-width: 0; }
-.inst-pick select { font-size: 15px; font-weight: 400; color: var(--text); background: var(--panel); border: 2px solid var(--line-strong); border-radius: 12px; height: 46px; padding: 0 10px; width: 100%; min-width: 0; text-overflow: ellipsis; }
-#mic-on { flex: none; }
-.ear-off.is-blocked .ear-row, .ear-off.is-blocked .ear-text { display: none; }
-.dock:has(.ear-msg:not([hidden])) .hint { display: none; }
-.ear-msg { max-width: 38em; display: grid; gap: 8px; justify-items: center; padding: 10px 14px; border-radius: 14px; background: var(--panel); border: 2px solid var(--line); font-size: 15px; }
-.ear-msg p { margin: 0; }
-.ear-msg a { font-weight: 700; }
-.ear-on { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; padding: 4px 2px 6px; }
-/* le micro s'allume tout seul : pas de bouton pendant ce temps */
-.ear-off.is-starting .ear-row { display: none; }
+/* la note entendue (au centre du pupitre, pendant le jeu) */
 .heard {
   --lvl: 0;
   width: 92px; height: 92px; border-radius: 50%;
@@ -344,17 +320,6 @@ a { color: inherit; }
 .heard[data-l] { border: 3px solid color-mix(in srgb, var(--nc) 60%, #000); }
 .heard.is-wait { opacity: .45; }
 .heard-n { font-family: var(--font-display); font-weight: 800; font-size: 27px; line-height: 1; }
-.ear-mid { min-width: 0; }
-.ear-cap { margin: 0; font-weight: 700; font-size: 16px; }
-.tuner { position: relative; height: 40px; margin-top: 6px; }
-.tuner::before { content: ""; position: absolute; left: 0; right: 0; top: 9px; height: 8px; border-radius: 4px; background: var(--line); }
-.tuner .tz { position: absolute; left: 35%; width: 30%; top: 7px; height: 12px; border-radius: 6px; background: color-mix(in srgb, #4CAF5A 55%, transparent); }
-.tuner .needle { position: absolute; top: 0; left: calc(50% + var(--c, 0) * 1%); width: 6px; margin-left: -3px; height: 26px; border-radius: 3px; background: var(--text); transition: left .12s; }
-.tuner .needle.off { opacity: .2; }
-.tuner span { position: absolute; top: 24px; font-size: 12px; color: var(--text-soft); }
-.tuner .t-lo { left: 0; }
-.tuner .t-mid { left: 50%; transform: translateX(-50%); }
-.tuner .t-hi { right: 0; }
 .mini { height: 36px; padding: 0 12px; border-radius: 999px; border: 2px solid var(--line-strong); background: var(--panel); color: var(--text); font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; }
 
 .seg { align-self: center; display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--panel); border: 2px solid var(--line); }
@@ -366,15 +331,16 @@ a { color: inherit; }
 .confetti { position: fixed; z-index: 44; top: -20px; width: 10px; height: 16px; border-radius: 3px; pointer-events: none; animation: confetti-fall var(--t, 2.6s) cubic-bezier(.3, .1, .7, 1) forwards; }
 @keyframes confetti-fall { to { transform: translate(var(--dx, 0px), 110vh) rotate(var(--rot, 540deg)); } }
 
-/* bureau : la carte grandit avec la hauteur de l'écran */
+/* bureau : la carte grandit avec la hauteur de l'écran, et se place au milieu de la colonne (le pupitre est en bas) */
 @media (min-width: 900px) {
-  .card { padding: clamp(14px, 2vh, 22px) clamp(16px, 1.6vw, 24px) clamp(18px, 2.4vh, 26px); gap: clamp(12px, 1.7vh, 18px); }
-  .pill { width: clamp(34px, 4.2vh, 40px); height: clamp(34px, 4.2vh, 40px); font-size: 15px; }
-  .count { font-size: 15px; }
-  .panel { gap: clamp(8px, 1.3vh, 14px); }
-  .ph-lyric { font-size: clamp(19px, 2.65vh, 26px); }
-  .beads { --stp: clamp(8px, 1.3vh, 13px); --bs: clamp(32px, 4.5vh, 46px); gap: clamp(4px, .6vh, 7px); }
-  .bead { font-size: clamp(13px, 1.65vh, 16px); }
+  .card { padding: clamp(16px, 2.6vh, 28px) clamp(18px, 1.8vw, 28px) clamp(18px, 3vh, 30px); gap: clamp(12px, 2vh, 20px); }
+  .play > .card, .play > .done-card { margin-block: auto; }
+  .pill { width: clamp(34px, 5.4vh, 50px); height: clamp(34px, 5.4vh, 50px); font-size: clamp(15px, 2vh, 18px); }
+  .count { font-size: clamp(15px, 2vh, 18px); }
+  .panel { gap: clamp(8px, 1.6vh, 16px); }
+  .ph-lyric { font-size: clamp(20px, 3.6vh, 34px); }
+  .beads { --stp: clamp(8px, 2vh, 18px); --bs: clamp(34px, 6.4vh, 62px); gap: clamp(4px, .8vh, 8px); }
+  .bead { font-size: clamp(13px, 2.2vh, 19px); }
 }
 
 /* bureau étroit (tablette à l'horizontale, petit portable) : plus de place pour le jeu */
@@ -387,35 +353,25 @@ a { color: inherit; }
   .btn.icon .lbl { display: none; }
 }
 
-/* l'explication du micro disparaît quand la place manque */
-@media (max-width: 899px), (max-height: 820px) {
-  .ear-text { display: none; }
-}
-
 /* écrans peu hauts : on resserre */
 @media (min-width: 900px) and (max-height: 820px) {
   .play { gap: 10px; padding-block: 16px 8px; }
   .play-head h1 { font-size: clamp(28px, 3vw, 40px); }
   .play-head .instr { display: none; }
-  .hint { min-height: 34px; font-size: 19px; }
 }
 
 @media (min-width: 900px) and (max-height: 660px) {
   .play { gap: 8px; padding-block: 12px 6px; }
   .play-head .kicker { display: none; }
   .play-head h1 { font-size: clamp(24px, 2.2vw, 30px); }
-  .hint { min-height: 30px; font-size: 18px; }
-  .dock { gap: 4px; padding-block: 6px 8px; }
   .seg button { height: 30px; }
-  .heard { width: 76px; height: 76px; }
 }
 
 /* ---------- téléphone / tablette : un seul écran, empilé ---------- */
 @media (max-width: 899px) {
   .song { display: flex; flex-direction: column; }
   .stage { flex: 1 1 0; min-height: 120px; }
-  .play { flex: 0 1 auto; gap: 10px; padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); padding-block: 10px 6px; }
-  .dock { flex: none; padding-block: 6px calc(8px + env(safe-area-inset-bottom, 0px)); gap: 4px; }
+  .play { flex: 0 1 auto; gap: 10px; padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); padding-block: 10px; }
   .play-head, .play-foot { display: none; }
   .stage-title { display: block; }
   .btn-big { height: 46px; font-size: 16px; padding-right: 16px; }
@@ -429,21 +385,8 @@ a { color: inherit; }
   .beads { --stp: 6px; --bs: 28px; gap: 3px; }
   .bead { font-size: 12px; }
   .pill { width: 30px; height: 30px; font-size: 13px; }
-  .hint { font-size: 18px; min-height: 34px; }
   .nchip { min-width: 44px; height: 32px; font-size: 16px; }
   .seg button { height: 32px; padding: 0 12px; font-size: 13px; }
-  .heard { width: 76px; height: 76px; }
-  .heard-n { font-size: 23px; }
-  .ear-on { grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; padding: 2px 0 4px; }
-  .lbl-l { display: none; }
-  .ear-cap { font-size: 15px; line-height: 1.2; }
-  .tuner { margin-top: 4px; }
-  .ear-row { gap: 8px; }
-  .inst-pick > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .inst-pick select { font-size: 14px; }
-  #mic-on { height: 46px; font-size: 15px; padding-right: 14px; }
-  #mic-on .ic { width: 34px; height: 34px; }
-  .ear-msg { font-size: 14px; padding: 8px 12px; gap: 6px; }
   .medals { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 52px 12px; }
   /* sur deux colonnes, la vague des médaillons est adoucie : sinon un titre sur trois lignes passe sous le médaillon suivant */
   .medal-link { transform: translateY(calc(var(--off, 0px) * .45)); }
@@ -457,20 +400,12 @@ a { color: inherit; }
   .beads { --bs: 26px; }
 }
 
-/* jouer la comptine : phrase par phrase, ou toute la comptine d'un coup (puis les phrases à revoir) */
+/* après la comptine entière : les phrases à corriger, entourées de rouge */
 .pill.is-redo { outline: 3px dashed #E5484D; outline-offset: 2px; }
-/* « À toi de jouer ! » proposé (phrases à revoir) : le bouton respire doucement */
-.btn-big.is-ready { animation: go-ready 1.6s ease-in-out infinite; }
-@keyframes go-ready { 0%, 100% { box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 62%, #000), 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 62%, #000), 0 0 0 9px color-mix(in srgb, var(--accent) 0%, transparent); } }
-/* « Régler ma voix » pas encore fait : le petit bouton respire aussi */
-.mini.is-ready, .seg-cal button.is-ready { color: var(--accent); animation: mini-ready 1.6s ease-in-out infinite; }
+/* « Régler ma voix » pas encore fait (dans les réglages) : le bouton respire doucement */
+.rg-voice.is-ready { color: var(--accent); border-color: var(--accent); animation: mini-ready 1.6s ease-in-out infinite; }
 @keyframes mini-ready { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 0%, transparent); } }
-@media (prefers-reduced-motion: reduce) { .btn-big.is-ready, .mini.is-ready, .seg-cal button.is-ready { animation: none; } }
-/* libellé double (« Tout écouter » / « Arrêter ») : le bouton a la largeur du plus long, rien ne se décale */
-.lbl2 { display: inline-grid; }
-.lbl2 > span { grid-area: 1 / 1; text-align: center; }
-.lbl2 .l-busy, .is-on > .lbl2 .l-idle { visibility: hidden; }
-.is-on > .lbl2 .l-busy { visibility: visible; }
+@media (prefers-reduced-motion: reduce) { .rg-voice.is-ready { animation: none; } }
 
 /* ============ l'élève : la première visite (deux écrans), puis le rappel en haut de l'accueil ============ */
 .home-eleve { grid-column: 1 / -1; display: grid; gap: 10px; margin-top: 18px; position: relative; z-index: 2; }

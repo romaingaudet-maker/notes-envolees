@@ -257,7 +257,6 @@ a { color: inherit; }
 .btn[aria-pressed="true"] { background: var(--text); color: var(--panel); border-color: var(--text); }
 .btn-big:active, .btn:active { transform: translateY(2px); }
 .btn:disabled { opacity: .45; cursor: default; }
-.is-playing .go-row .btn-big { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent), 0 4px 0 color-mix(in srgb, var(--accent) 62%, #000); }
 
 /* la phrase en cours */
 .card { background: var(--panel-2); border-radius: 24px; padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 12px; }
@@ -314,16 +313,7 @@ a { color: inherit; }
 .play-foot svg { width: 16px; height: 16px; }
 .play-foot a:hover, .play-foot button:hover { color: var(--text); }
 
-/* là où l'on joue */
-.dock {
-  grid-area: dock;
-  background: var(--panel-2);
-  border-top: 2px solid var(--line);
-  display: flex; flex-direction: column; align-items: stretch; gap: 6px;
-  padding-left: max(18px, env(safe-area-inset-left, 0px));
-  padding-right: max(18px, env(safe-area-inset-right, 0px));
-  padding-block: 8px calc(12px + env(safe-area-inset-bottom, 0px));
-}
+/* la consigne (dans le pupitre, en bas : voir _controls.css) */
 .hint { min-height: 40px; margin: 0; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 10px; text-align: center; font-family: var(--font-display); font-weight: 700; font-size: 21px; line-height: 1.1; color: var(--text); }
 .hint small { font-family: var(--font-text); font-weight: 400; font-size: 14px; color: var(--text-soft); }
 .hint svg { width: 30px; height: 30px; }
@@ -337,21 +327,7 @@ a { color: inherit; }
 @keyframes wobble { 0%, 100% { translate: 0 0; } 25% { translate: -6px 0; } 75% { translate: 6px 0; } }
 @keyframes glow { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
 
-/* le micro */
-.ear-off { display: grid; gap: 10px; justify-items: center; text-align: center; padding: 2px 0 4px; }
-.ear-text { margin: 0; color: var(--text-soft); font-size: 15px; max-width: 34em; }
-.ear-row { justify-self: stretch; display: flex; gap: 10px 14px; justify-content: center; align-items: flex-end; }
-.inst-pick { flex: 0 1 330px; display: grid; gap: 3px; font-size: 13px; color: var(--text-soft); font-weight: 700; text-align: left; min-width: 0; }
-.inst-pick select { font-size: 15px; font-weight: 400; color: var(--text); background: var(--panel); border: 2px solid var(--line-strong); border-radius: 12px; height: 46px; padding: 0 10px; width: 100%; min-width: 0; text-overflow: ellipsis; }
-#mic-on { flex: none; }
-.ear-off.is-blocked .ear-row, .ear-off.is-blocked .ear-text { display: none; }
-.dock:has(.ear-msg:not([hidden])) .hint { display: none; }
-.ear-msg { max-width: 38em; display: grid; gap: 8px; justify-items: center; padding: 10px 14px; border-radius: 14px; background: var(--panel); border: 2px solid var(--line); font-size: 15px; }
-.ear-msg p { margin: 0; }
-.ear-msg a { font-weight: 700; }
-.ear-on { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; padding: 4px 2px 6px; }
-/* le micro s'allume tout seul : pas de bouton pendant ce temps */
-.ear-off.is-starting .ear-row { display: none; }
+/* la note entendue (au centre du pupitre, pendant le jeu) */
 .heard {
   --lvl: 0;
   width: 92px; height: 92px; border-radius: 50%;
@@ -364,17 +340,6 @@ a { color: inherit; }
 .heard[data-l] { border: 3px solid color-mix(in srgb, var(--nc) 60%, #000); }
 .heard.is-wait { opacity: .45; }
 .heard-n { font-family: var(--font-display); font-weight: 800; font-size: 27px; line-height: 1; }
-.ear-mid { min-width: 0; }
-.ear-cap { margin: 0; font-weight: 700; font-size: 16px; }
-.tuner { position: relative; height: 40px; margin-top: 6px; }
-.tuner::before { content: ""; position: absolute; left: 0; right: 0; top: 9px; height: 8px; border-radius: 4px; background: var(--line); }
-.tuner .tz { position: absolute; left: 35%; width: 30%; top: 7px; height: 12px; border-radius: 6px; background: color-mix(in srgb, #4CAF5A 55%, transparent); }
-.tuner .needle { position: absolute; top: 0; left: calc(50% + var(--c, 0) * 1%); width: 6px; margin-left: -3px; height: 26px; border-radius: 3px; background: var(--text); transition: left .12s; }
-.tuner .needle.off { opacity: .2; }
-.tuner span { position: absolute; top: 24px; font-size: 12px; color: var(--text-soft); }
-.tuner .t-lo { left: 0; }
-.tuner .t-mid { left: 50%; transform: translateX(-50%); }
-.tuner .t-hi { right: 0; }
 .mini { height: 36px; padding: 0 12px; border-radius: 999px; border: 2px solid var(--line-strong); background: var(--panel); color: var(--text); font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; }
 
 .seg { align-self: center; display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--panel); border: 2px solid var(--line); }
@@ -386,15 +351,16 @@ a { color: inherit; }
 .confetti { position: fixed; z-index: 44; top: -20px; width: 10px; height: 16px; border-radius: 3px; pointer-events: none; animation: confetti-fall var(--t, 2.6s) cubic-bezier(.3, .1, .7, 1) forwards; }
 @keyframes confetti-fall { to { transform: translate(var(--dx, 0px), 110vh) rotate(var(--rot, 540deg)); } }
 
-/* bureau : la carte grandit avec la hauteur de l'écran */
+/* bureau : la carte grandit avec la hauteur de l'écran, et se place au milieu de la colonne (le pupitre est en bas) */
 @media (min-width: 900px) {
-  .card { padding: clamp(14px, 2vh, 22px) clamp(16px, 1.6vw, 24px) clamp(18px, 2.4vh, 26px); gap: clamp(12px, 1.7vh, 18px); }
-  .pill { width: clamp(34px, 4.2vh, 40px); height: clamp(34px, 4.2vh, 40px); font-size: 15px; }
-  .count { font-size: 15px; }
-  .panel { gap: clamp(8px, 1.3vh, 14px); }
-  .ph-lyric { font-size: clamp(19px, 2.65vh, 26px); }
-  .beads { --stp: clamp(8px, 1.3vh, 13px); --bs: clamp(32px, 4.5vh, 46px); gap: clamp(4px, .6vh, 7px); }
-  .bead { font-size: clamp(13px, 1.65vh, 16px); }
+  .card { padding: clamp(16px, 2.6vh, 28px) clamp(18px, 1.8vw, 28px) clamp(18px, 3vh, 30px); gap: clamp(12px, 2vh, 20px); }
+  .play > .card, .play > .done-card { margin-block: auto; }
+  .pill { width: clamp(34px, 5.4vh, 50px); height: clamp(34px, 5.4vh, 50px); font-size: clamp(15px, 2vh, 18px); }
+  .count { font-size: clamp(15px, 2vh, 18px); }
+  .panel { gap: clamp(8px, 1.6vh, 16px); }
+  .ph-lyric { font-size: clamp(20px, 3.6vh, 34px); }
+  .beads { --stp: clamp(8px, 2vh, 18px); --bs: clamp(34px, 6.4vh, 62px); gap: clamp(4px, .8vh, 8px); }
+  .bead { font-size: clamp(13px, 2.2vh, 19px); }
 }
 
 /* bureau étroit (tablette à l'horizontale, petit portable) : plus de place pour le jeu */
@@ -407,35 +373,25 @@ a { color: inherit; }
   .btn.icon .lbl { display: none; }
 }
 
-/* l'explication du micro disparaît quand la place manque */
-@media (max-width: 899px), (max-height: 820px) {
-  .ear-text { display: none; }
-}
-
 /* écrans peu hauts : on resserre */
 @media (min-width: 900px) and (max-height: 820px) {
   .play { gap: 10px; padding-block: 16px 8px; }
   .play-head h1 { font-size: clamp(28px, 3vw, 40px); }
   .play-head .instr { display: none; }
-  .hint { min-height: 34px; font-size: 19px; }
 }
 
 @media (min-width: 900px) and (max-height: 660px) {
   .play { gap: 8px; padding-block: 12px 6px; }
   .play-head .kicker { display: none; }
   .play-head h1 { font-size: clamp(24px, 2.2vw, 30px); }
-  .hint { min-height: 30px; font-size: 18px; }
-  .dock { gap: 4px; padding-block: 6px 8px; }
   .seg button { height: 30px; }
-  .heard { width: 76px; height: 76px; }
 }
 
 /* ---------- téléphone / tablette : un seul écran, empilé ---------- */
 @media (max-width: 899px) {
   .song { display: flex; flex-direction: column; }
   .stage { flex: 1 1 0; min-height: 120px; }
-  .play { flex: 0 1 auto; gap: 10px; padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); padding-block: 10px 6px; }
-  .dock { flex: none; padding-block: 6px calc(8px + env(safe-area-inset-bottom, 0px)); gap: 4px; }
+  .play { flex: 0 1 auto; gap: 10px; padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); padding-block: 10px; }
   .play-head, .play-foot { display: none; }
   .stage-title { display: block; }
   .btn-big { height: 46px; font-size: 16px; padding-right: 16px; }
@@ -449,21 +405,8 @@ a { color: inherit; }
   .beads { --stp: 6px; --bs: 28px; gap: 3px; }
   .bead { font-size: 12px; }
   .pill { width: 30px; height: 30px; font-size: 13px; }
-  .hint { font-size: 18px; min-height: 34px; }
   .nchip { min-width: 44px; height: 32px; font-size: 16px; }
   .seg button { height: 32px; padding: 0 12px; font-size: 13px; }
-  .heard { width: 76px; height: 76px; }
-  .heard-n { font-size: 23px; }
-  .ear-on { grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; padding: 2px 0 4px; }
-  .lbl-l { display: none; }
-  .ear-cap { font-size: 15px; line-height: 1.2; }
-  .tuner { margin-top: 4px; }
-  .ear-row { gap: 8px; }
-  .inst-pick > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .inst-pick select { font-size: 14px; }
-  #mic-on { height: 46px; font-size: 15px; padding-right: 14px; }
-  #mic-on .ic { width: 34px; height: 34px; }
-  .ear-msg { font-size: 14px; padding: 8px 12px; gap: 6px; }
   .medals { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 52px 12px; }
   /* sur deux colonnes, la vague des médaillons est adoucie : sinon un titre sur trois lignes passe sous le médaillon suivant */
   .medal-link { transform: translateY(calc(var(--off, 0px) * .45)); }
@@ -477,20 +420,12 @@ a { color: inherit; }
   .beads { --bs: 26px; }
 }
 
-/* jouer la comptine : phrase par phrase, ou toute la comptine d'un coup (puis les phrases à revoir) */
+/* après la comptine entière : les phrases à corriger, entourées de rouge */
 .pill.is-redo { outline: 3px dashed #E5484D; outline-offset: 2px; }
-/* « À toi de jouer ! » proposé (phrases à revoir) : le bouton respire doucement */
-.btn-big.is-ready { animation: go-ready 1.6s ease-in-out infinite; }
-@keyframes go-ready { 0%, 100% { box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 62%, #000), 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 62%, #000), 0 0 0 9px color-mix(in srgb, var(--accent) 0%, transparent); } }
-/* « Régler ma voix » pas encore fait : le petit bouton respire aussi */
-.mini.is-ready, .seg-cal button.is-ready { color: var(--accent); animation: mini-ready 1.6s ease-in-out infinite; }
+/* « Régler ma voix » pas encore fait (dans les réglages) : le bouton respire doucement */
+.rg-voice.is-ready { color: var(--accent); border-color: var(--accent); animation: mini-ready 1.6s ease-in-out infinite; }
 @keyframes mini-ready { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 0%, transparent); } }
-@media (prefers-reduced-motion: reduce) { .btn-big.is-ready, .mini.is-ready, .seg-cal button.is-ready { animation: none; } }
-/* libellé double (« Tout écouter » / « Arrêter ») : le bouton a la largeur du plus long, rien ne se décale */
-.lbl2 { display: inline-grid; }
-.lbl2 > span { grid-area: 1 / 1; text-align: center; }
-.lbl2 .l-busy, .is-on > .lbl2 .l-idle { visibility: hidden; }
-.is-on > .lbl2 .l-busy { visibility: visible; }
+@media (prefers-reduced-motion: reduce) { .rg-voice.is-ready { animation: none; } }
 
 /* ============ l'élève : la première visite (deux écrans), puis le rappel en haut de l'accueil ============ */
 .home-eleve { grid-column: 1 / -1; display: grid; gap: 10px; margin-top: 18px; position: relative; z-index: 2; }
@@ -613,9 +548,7 @@ html.onb-open, html.onb-open body { overflow: hidden; }
 .inst-pill .chev, .home-select .chev { position: absolute; right: 10px; top: 50%; width: 18px; height: 18px; margin-top: -9px; pointer-events: none; }
 .inst-pill select option, .home-select select option { color: #1D2350; background: #FFFFFF; }
 
-/* ============ niveau, lentement (et « Régler ma voix »), sous l'écoute du micro ============ */
-.dock-bar { align-self: stretch; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 10px; }
-.dock-bar .seg { align-self: auto; }
+/* ============ le niveau (en haut du pupitre, et dans les réglages) ============ */
 .seg .lv { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; line-height: 1; background: var(--line); color: inherit; }
 .seg button[aria-checked="true"] .lv { background: var(--accent); color: var(--accent-ink); }
 .seg .short { display: none; }
@@ -633,7 +566,7 @@ html.onb-open, html.onb-open body { overflow: hidden; }
 .hint.go { color: var(--accent); font-size: 26px; }
 .card.beat { animation: card-beat .24s ease-out; }
 @keyframes card-beat { from { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 55%, transparent); } to { box-shadow: 0 0 0 0 transparent; } }
-.is-taking .ecoute .btn, .is-taking .strip, .is-taking .choix, .is-taking .dock-bar, .is-taking .inst-pill { opacity: .45; pointer-events: none; }
+.is-taking .strip, .is-taking .inst-pill { opacity: .45; pointer-events: none; }
 
 /* verdict de chaque note : un anneau autour de la perle */
 .bead.r-ok, .bead.r-near, .bead.r-far, .bead.r-wrong, .bead.r-miss { outline-offset: 2px; }
@@ -715,7 +648,6 @@ html.onb-open, html.onb-open body { overflow: hidden; }
   .rstrip .rline { top: 6px; }
   .rstrip .tk, .rstrip .dot { top: 1px; }
   .rstrip .dot.extra { top: 3px; }
-  .ear-msg { font-size: 13px; padding: 6px 10px; }
 }
 /* bureau très bas : la bande du rythme se fait discrète */
 @media (min-width: 900px) and (max-height: 660px) {
@@ -726,7 +658,6 @@ html.onb-open, html.onb-open body { overflow: hidden; }
   .card { gap: 8px; padding-top: 10px; padding-bottom: 12px; }
 }
 
-.ecoute .btn .ic { display: inline-grid; place-items: center; }
 
 /* carte de fin : jouer toute la comptine d'un coup, et son bilan */
 .full-ask { margin: 0; font-weight: 700; color: var(--text); }
@@ -741,19 +672,13 @@ html.onb-open, html.onb-open body { overflow: hidden; }
 @media (max-width: 899px) {
   .done-card { gap: 8px; padding: 12px 14px 14px; }
   .done-card .done-stars svg { width: 30px; height: 30px; }
-  .done-actions { gap: 8px; }
-  .done-actions .btn { height: 40px; }
 }
 
-/* carte de fin, plus compacte : étoiles et titre sur une ligne, boutons resserrés */
+/* carte de fin, compacte : étoiles et titre sur une ligne ; la suite est dans le pupitre (l'autre niveau, rejouer, suivante) */
 .done-card { gap: 10px; padding: 14px 18px 16px; }
 .done-head { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; }
 .done-card h2 { font-size: clamp(22px, 2.1vw, 28px); }
 .done-card .done-stars svg { width: 28px; height: 28px; }
-.done-actions { gap: 8px; }
-.done-actions .btn { height: 40px; padding: 0 14px; font-size: 14px; }
-.done-actions .btn-big { height: 46px; font-size: 16px; padding-right: 16px; }
-.done-actions .btn-big .ic { width: 34px; height: 34px; }
 @media (max-width: 899px) {
   .done-card h2 { font-size: 20px; }
   .done-card .done-stars svg { width: 24px; height: 24px; }
@@ -761,79 +686,13 @@ html.onb-open, html.onb-open body { overflow: hidden; }
   .full-res, .full-ask { font-size: 15px; }
 }
 
-/* carte de fin affichée : l'indication du bas (redite du titre) et le pied de page s'effacent ;
-   s'il manque encore de la place, l'écoute du micro se replie jusqu'à ce qu'on rejoue */
-.song:has(#done:not([hidden])) .dock > .hint,
+/* carte de fin affichée : le pied de page s'efface ; s'il manque encore de la place, son message aussi */
 .song:has(#done:not([hidden])) .play-foot { display: none; }
-.song.tight:has(#done:not([hidden])) .dock > .ear { display: none; }
-.done-actions .short { display: none; }
-@media (max-width: 899px) {
-  .done-actions .long { display: none; }
-  .done-actions .short { display: inline; }
-  .done-actions #d-again { width: 40px; padding: 0; justify-content: center; }
-}
-/* niveau 2, carte de fin : son grand bouton remplace « À toi » (qui revient en « Arrêter » pendant la prise) */
-.song:has(#done:not([hidden])) .go-row { display: none; }
-
-/* ============ rangement : la carte de la phrase ============
-   les paroles, les notes, puis les écoutes sur une seule ligne : « Phrase n », « Toute la comptine »
-   et « ? » (jusqu'à la note à trouver, niveau 1) ; la vitesse est dans les réglages (le bouton de l'instrument) */
-.ph-to .q { display: grid; place-items: center; }
-.ph-to .q svg { width: 12px; height: 12px; }
-.ecoute .ph-to { flex: none; padding: 0 14px 0 8px; }
-.seg-cal[hidden] { display: none; }
+.song.tight .done-card > p { display: none; }
 .seg button[aria-pressed="true"] { background: var(--text); color: var(--panel); }
-@media (max-width: 1359px) {
-  .ph-to .lbl { display: none; }
-  .ecoute .ph-to { width: 40px; padding: 0; justify-content: center; border-radius: 50%; }
-}
-@media (max-width: 899px) {
-  .ecoute .ph-to { width: 38px; }
-}
 /* diagnostic du micro (?diag) */
 .ear-diag { position: fixed; right: 8px; top: calc(76px + env(safe-area-inset-top, 0px)); z-index: 2147483646; max-width: 70vw; padding: 6px 9px; border-radius: 10px; background: rgba(0, 0, 0, .78); color: #fff; font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace; pointer-events: none; }
 
-/* boutons dans la consigne (« Régler ma voix » : Arrêter, Réécouter) */
-.hint .hint-btn { height: 30px; padding: 0 10px; margin-left: 6px; font-size: 13px; vertical-align: middle; }
-
-/* ============ la comptine : l'exercice, l'écoute, « À toi de jouer ! » ============
-   pupitre, de haut en bas : l'exercice (niveau ; phrase par phrase ou toute la comptine, et ce que ça veut dire),
-   la phrase et ses écoutes (▶ la phrase, ? jusqu'à la note, toute la comptine, lentement), puis le grand bouton,
-   qui dit ce qu'il va lancer ; en bas, le micro. */
-.choix { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
-.choix .seg { align-self: stretch; display: flex; width: 100%; }
-.choix .seg button { flex: 1 1 0; justify-content: center; min-width: 0; white-space: nowrap; }
-.choix .seg-level button span { overflow: hidden; text-overflow: ellipsis; }
-.choix-dit { margin: 0; font-size: 14.5px; line-height: 1.35; color: var(--text-soft); }
-.ecoute { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.ecoute .btn { height: 40px; padding: 0 14px; font-size: 14px; }
-.ecoute .btn .ic svg { width: 16px; height: 16px; }
-.go-row { display: flex; }
-.btn-big.go { height: auto; min-height: 56px; padding: 6px 24px 6px 8px; }
-.go-txt { display: grid; justify-items: start; gap: 1px; line-height: 1.1; text-align: left; }
-.go-sub { font-size: 13px; font-weight: 700; opacity: .85; letter-spacing: .01em; }
-.go-sub:empty { display: none; }
-.btn-big.go.is-on .go-sub { visibility: hidden; }
-@media (max-width: 899px) {
-  .choix { gap: 6px; }
-  .choix .seg button { height: 34px; padding: 0 8px; font-size: 13.5px; }
-  .choix-dit { font-size: 13.5px; }
-  .ecoute .btn { height: 38px; padding: 0 12px; font-size: 13.5px; }
-  #b-phrase, #b-all { flex: 1 1 auto; min-width: 0; justify-content: center; }
-  .go-row .btn-big { flex: 1 1 auto; justify-content: center; min-height: 52px; }
-  .go-row .btn-big .ic { margin-right: auto; }
-  .go-row .btn-big .go-txt { margin-right: auto; justify-items: center; text-align: center; }
-}
-@media (max-width: 380px) {
-  .choix .seg button { font-size: 12.5px; padding: 0 6px; }
-  .seg .lv { width: 16px; height: 16px; font-size: 10px; }
-  .ecoute .btn { padding: 0 10px; }
-}
-/* écrans peu hauts : l'explication de l'exercice se fait plus petite, puis disparaît */
-@media (min-width: 900px) and (max-height: 760px) { .choix-dit { font-size: 13.5px; } }
-@media (max-width: 899px) and (max-height: 700px) { .choix-dit { display: none; } }
-/* comptine finie : la carte de fin dit la suite, l'explication de l'exercice se retire */
-.song.fin .choix-dit { display: none; }
 
 /* ============ les réglages d'une comptine : l'instrument et la vitesse ============ */
 .ec-modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(12, 10, 30, .55); }
@@ -865,6 +724,166 @@ html.onb-open, html.onb-open body { overflow: hidden; }
   .rg-grid .ic-pic { width: 42px; height: 42px; }
   .rg-grid .ic-card b { font-size: 12.5px; }
   .rg-grid .ic-card small { font-size: 10.5px; }
+}
+
+/* ============ le pupitre, en bas : deux étages de taille fixe ============
+   En haut, une ligne : le niveau tant que rien n'a commencé, puis ce que dit la page (consigne, décompte,
+   « note n sur N », bilan). En dessous, trois ronds : au centre, le grand rond (« À toi de jouer ! »,
+   « Corriger la phrase n », « Rejouer ») devient la note entendue pendant le jeu, avec sa jauge en arc ; de chaque
+   côté, un petit rond change de rôle selon le moment (écouter, arrêter, recommencer, jusqu'à la note, suivante…).
+   D'un moment à l'autre, rien ne change de taille ni de place. */
+.pupitre {
+  --gc: 116px;                      /* le grand rond */
+  --gb: calc(var(--gc) + 40px);     /* sa place, avec la jauge */
+  --sc: 58px;                       /* les petits ronds */
+  --pt: 44px;                       /* la ligne du haut */
+  grid-area: dock;
+  position: relative; z-index: 3;
+  display: grid; grid-template-rows: var(--pt) var(--gb); gap: 6px;
+  padding: 10px max(14px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px));
+  background: var(--band, color-mix(in srgb, var(--panel) 35%, #FFFFFF));
+  border-radius: 26px 26px 0 0;
+  box-shadow: 0 -2px 0 var(--line), 0 -10px 26px color-mix(in srgb, var(--text) 7%, transparent);
+}
+/* univers de nuit : le pupitre reste un peu plus clair que la page */
+:root[data-world="lune"], :root[data-world="coucou"] { --band: color-mix(in srgb, var(--panel-2) 90%, #FFFFFF); }
+
+/* la ligne du haut : le niveau, ou ce que dit la page */
+.pu-top { display: grid; place-items: center; min-width: 0; }
+.pu-top > * { grid-area: 1 / 1; }
+.pu-top .seg { width: min(100%, 420px); display: flex; }
+.pu-top .seg button { flex: 1 1 0; justify-content: center; min-width: 0; height: calc(var(--pt) - 10px); white-space: nowrap; }
+.pu-top .seg button span { overflow: hidden; text-overflow: ellipsis; }
+.pu-top .hint { width: 100%; height: var(--pt); min-height: 0; overflow: hidden; font-size: 20px; }
+.pu-top .hint.long { font-size: 15px; line-height: 1.15; }
+.pu-top .hint.go { font-size: 24px; }
+.pu-top .hint .nchip { min-width: 42px; height: 30px; font-size: 16px; }
+.pu-top .hint svg { width: 26px; height: 26px; }
+.pu-top .hint small { font-size: 13px; }
+.pu-top .cin b { width: 1.5em; height: 1.5em; }
+
+/* les trois ronds */
+.pu-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--gb) minmax(0, 1fr); width: 100%; max-width: 520px; margin: 0 auto; }
+.pu-slot, .pu-mid { display: grid; min-width: 0; }
+.pu-slot > *, .pu-mid > * { grid-area: 1 / 1; }
+.pu-mid { place-items: center; width: var(--gb); height: var(--gb); }
+.pu-side {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  height: var(--gb); min-width: 0; padding: calc((var(--gb) - var(--sc)) / 2) 2px 0;
+  border: 0; background: none; color: var(--text); text-decoration: none; cursor: pointer;
+  font-weight: 700; font-size: 13px; line-height: 1.15;
+}
+.pu-ic {
+  flex: none; display: grid; place-items: center; width: var(--sc); height: var(--sc); border-radius: 50%;
+  border: 2px solid var(--line-strong); background: var(--panel); color: var(--text);
+  box-shadow: 0 3px 0 var(--line); transition: transform .08s, background-color .15s;
+}
+.pu-ic svg { width: 22px; height: 22px; }
+.pu-lbl { max-width: 7.6em; text-align: center; }
+.pu-side:active .pu-ic { transform: translateY(2px); box-shadow: 0 1px 0 var(--line); }
+.pu-side.is-on .pu-ic { background: var(--text); color: var(--panel); border-color: var(--text); }
+.pu-side:focus-visible { outline: none; }
+.pu-side:focus-visible .pu-ic { outline: 3px solid var(--accent); outline-offset: 3px; }
+.pu-side .q { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px dashed currentColor; font-size: 15px; line-height: 1; }
+@media (hover: hover) { .pu-side:hover .pu-ic { background: var(--panel-2); } .pu-side.is-on:hover .pu-ic { background: var(--text); } }
+
+/* le grand rond : « À toi de jouer ! », « Corriger la phrase n », « Rejouer la comptine » */
+.pu-go {
+  width: var(--gc); height: var(--gc); padding: 0; border: 0; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: var(--accent); color: var(--accent-ink); cursor: pointer; text-align: center;
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--accent) 62%, #000), 0 0 0 8px color-mix(in srgb, var(--accent) 14%, transparent);
+  transition: transform .08s;
+}
+.pu-go .ic { display: grid; margin-bottom: 2px; }
+.pu-go .ic svg { width: calc(var(--gc) * .21); height: calc(var(--gc) * .21); }
+.pu-go-t { font-family: var(--font-display); font-weight: 800; font-size: calc(var(--gc) * .17); line-height: 1; }
+.pu-go-s { max-width: 86%; font-weight: 700; font-size: calc(var(--gc) * .11); line-height: 1.1; }
+.pu-go:active { transform: translateY(3px); box-shadow: 0 2px 0 color-mix(in srgb, var(--accent) 62%, #000), 0 0 0 8px color-mix(in srgb, var(--accent) 14%, transparent); }
+.pu-go:focus-visible { outline: 3px solid var(--text); outline-offset: 10px; }
+/* « Corriger la phrase n » proposé : le grand rond respire doucement */
+.pu-go.is-ready { animation: pu-ready 1.6s ease-in-out infinite; }
+@keyframes pu-ready {
+  0%, 100% { box-shadow: 0 5px 0 color-mix(in srgb, var(--accent) 62%, #000), 0 0 0 8px color-mix(in srgb, var(--accent) 14%, transparent); }
+  50% { box-shadow: 0 5px 0 color-mix(in srgb, var(--accent) 62%, #000), 0 0 0 17px color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .pu-go.is-ready { animation: none; } }
+
+/* pendant le jeu : la note entendue, et la jauge en arc au-dessus (bas, juste, haut) */
+.pu-ear { position: relative; width: var(--gb); height: var(--gb); display: grid; place-items: center; }
+.pu-gauge { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.pu-gauge .g-trk { fill: none; stroke: var(--line-strong); stroke-width: 5; stroke-linecap: round; }
+.pu-gauge .g-ok { fill: none; stroke: #4CAF5A; stroke-width: 9; stroke-linecap: round; opacity: .8; }
+.pu-gauge .needle { transform-box: view-box; transform-origin: 50% 50%; transform: rotate(calc(var(--c, 0) * 1.2deg)); transition: transform .12s, opacity .2s; }
+.pu-gauge .needle circle { fill: var(--text); stroke: var(--panel); stroke-width: 2.5; }
+.pu-gauge .needle.off { opacity: .25; }
+.g-lo, .g-hi { position: absolute; top: 31%; font-size: 11px; font-weight: 700; line-height: 1; color: var(--text-soft); }
+.g-lo { right: 88%; }
+.g-hi { left: 88%; }
+.pu-ear .heard {
+  width: var(--gc); height: var(--gc); align-content: center; gap: 3px;
+  box-shadow: 0 0 0 calc(var(--lvl) * 8px) color-mix(in srgb, var(--nc, var(--accent)) 24%, transparent);
+}
+.pu-ear .heard-n { font-size: calc(var(--gc) * .3); }
+.heard-s { font-size: 13px; font-weight: 700; line-height: 1; }
+.heard-s:empty { display: none; }
+
+/* le micro ne marche pas : une bulle au-dessus du pupitre, avec de quoi le rallumer */
+.pu-msg {
+  position: absolute; left: 12px; right: 12px; bottom: calc(100% + 10px); z-index: 6;
+  max-width: 520px; margin: 0 auto;
+  display: grid; gap: 10px; justify-items: center; text-align: center;
+  padding: 12px 16px 14px; border-radius: 18px;
+  background: var(--panel); color: var(--text); border: 2px solid var(--line-strong);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .2); font-size: 15px; line-height: 1.35;
+}
+.pu-msg p { margin: 0; }
+.pu-msg a { font-weight: 700; }
+.pu-msg .btn-big { height: 46px; font-size: 16px; padding-right: 18px; }
+.pu-msg .btn-big .ic { width: 34px; height: 34px; }
+
+/* « Régler ma voix », dans les réglages (la voix seulement) */
+.rg-voice { justify-self: start; }
+
+/* téléphone : la phrase et ses perles un peu plus grandes quand l'écran est assez haut */
+@media (max-width: 899px) and (min-height: 760px) {
+  .card { padding: 14px 16px 16px; gap: 10px; border-radius: 22px; }
+  .pill { width: 34px; height: 34px; font-size: 14px; }
+  .ph-lyric { font-size: 19px; }
+  .beads { --stp: 8px; --bs: 32px; gap: 4px; }
+  .bead { font-size: 13px; }
+}
+/* téléphone peu haut : le pupitre se resserre, le décor garde sa place */
+@media (max-width: 899px) and (max-height: 700px) {
+  .pupitre { --gc: 96px; --sc: 50px; --pt: 40px; gap: 4px; padding-top: 8px; }
+  .pu-top .hint { font-size: 18px; }
+  .pu-top .hint.go { font-size: 21px; }
+  .pu-side { font-size: 12px; gap: 4px; }
+}
+@media (max-width: 899px) and (max-height: 580px) {
+  .pupitre { --gc: 80px; --sc: 46px; }
+}
+/* bureau : le pupitre occupe le bas de la colonne de jeu */
+@media (min-width: 900px) {
+  .pupitre { --gc: 128px; --sc: 62px; --pt: 50px; padding-top: 12px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+  .pu-top .hint { font-size: 21px; }
+  .pu-side { font-size: 13.5px; }
+}
+@media (min-width: 900px) and (max-height: 760px) { .pupitre { --gc: 108px; --sc: 54px; --pt: 46px; } }
+@media (min-width: 900px) and (max-height: 640px) { .pupitre { --gc: 92px; --sc: 50px; --pt: 42px; padding-top: 8px; } }
+/* téléphone à l'horizontale : le décor à gauche, la phrase et le pupitre à droite (comme sur ordinateur) */
+@media (max-width: 899px) and (max-height: 500px) and (orientation: landscape) {
+  .song { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "stage play" "stage dock"; }
+  .stage { min-height: 0; }
+  .play { padding-block: 8px; }
+  .stage-bar .back { width: 42px; padding: 0; }
+  .stage-bar .back span { display: none; }
+  .inst-pill { flex: none; padding: 0 26px 0 10px; gap: 4px; }
+  .inst-pill .chev { right: 7px; width: 15px; height: 15px; margin-top: -7.5px; }
+  .stage-bar .stage-title { padding: 0 14px; }
+  .stage-bar .stage-title > span { display: none; }
+  .stage-bar .stage-title b { font-size: 15px; line-height: 1.04; white-space: normal; text-wrap: balance; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+  .pupitre { border-radius: 22px 22px 0 0; }
 }
 
 /* ================================ DÉCORS ================================ */
@@ -21858,6 +21877,9 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   };
   const star = (on, size = 24) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.45 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z" fill="${on ? '#F5C32C' : 'none'}" stroke="${on ? '#C8901A' : 'currentColor'}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
   const chip = (letter, name) => `<span class="nchip" data-l="${letter}">${name}</span>`;
+  /* La jauge du grand rond, pendant le jeu : un arc au-dessus de la note entendue (bas à gauche, juste en haut, en
+     vert, haut à droite) ; le point tourne avec l'écart à la note (±50 cents → ±60°, la zone verte : ±15 cents). */
+  const GAUGE = '<svg class="pu-gauge" viewBox="0 0 156 156" aria-hidden="true"><path class="g-trk" d="M17.38 43A70 70 0 0 1 138.62 43"/><path class="g-ok" d="M56.37 11.43A70 70 0 0 1 99.63 11.43"/><g class="needle off" id="needle"><circle cx="78" cy="8" r="6"/></g></svg>';
 
   /* ---------------- réglages et étoiles (sur cet appareil) ---------------- */
   // préfixe NE_NS : la version de qualification garde ses réglages et ses étoiles à part
@@ -21915,8 +21937,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
       if (prepping()) cancelAttempt();
       expectNext();
       if (el.instr) el.instr.textContent = instrLine(G.song);
-      voiceUI();
-      choixDit();
+      if (G.cal && !singing()) calStop();
     }
     applyVoice();
   }
@@ -22043,9 +22064,9 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     }));
     step(1);
   }
-  /* Les réglages d'une comptine (le bouton à son nom, en haut) : l'instrument et la vitesse (la tortue : la page joue
-     plus lentement ; au niveau 2, le décompte et la mesure aussi). La tortue reste dessinée sur le bouton tant que la
-     vitesse lente est choisie. */
+  /* Les réglages d'une comptine (le bouton à son nom, en haut) : le niveau, la vitesse (la tortue : la page joue plus
+     lentement ; au niveau 2, le décompte et la mesure aussi), l'instrument et, pour la voix, « Régler ma voix ». La tortue
+     reste dessinée sur le bouton tant que la vitesse lente est choisie. */
   function setSlow(on) {
     if (!G) return;
     G.slow = !!on;
@@ -22060,8 +22081,14 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     wrap.innerHTML = `<div class="ec-sheet" role="dialog" aria-modal="true" aria-labelledby="rg-title">
       <div class="rg-in">
         <div class="rg-head"><h2 class="rg-title" id="rg-title">Réglages</h2><button class="rg-x" type="button" aria-label="Fermer">${ICON.close}</button></div>
+        <p class="rg-lbl">Niveau</p>
+        <div class="seg rg-seg rg-level" role="radiogroup" aria-label="Niveau">
+          <button type="button" role="radio" data-level="1" aria-checked="${G.level !== 2}"><b class="lv">1</b><span>Les notes</span></button>
+          <button type="button" role="radio" data-level="2" aria-checked="${G.level === 2}"><b class="lv">2</b><span>Notes et rythme</span></button>
+        </div>
+        <p class="rg-note">Changer de niveau recommence la comptine.</p>
         <p class="rg-lbl">Vitesse</p>
-        <div class="seg rg-seg" role="radiogroup" aria-label="Vitesse">
+        <div class="seg rg-seg rg-speed" role="radiogroup" aria-label="Vitesse">
           <button type="button" role="radio" data-slow="0" aria-checked="${!G.slow}">Normale</button>
           <button type="button" role="radio" data-slow="1" aria-checked="${G.slow}">${ICON.turtle}<span>Lente</span></button>
         </div>
@@ -22069,13 +22096,17 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
         <p class="rg-lbl">Ton instrument</p>
         <div class="ic-grid rg-grid">${instCards()}</div>
         <p class="rg-note rg-inst-note" aria-live="polite">${esc(instNote())}</p>
+        <button class="btn rg-voice" type="button"${inst().sing ? '' : ' hidden'}>${ICON.mic}<span>Régler ma voix</span></button>
         <button class="btn-big rg-ok" type="button"><span>OK</span></button>
       </div>
     </div>`;
     const behind = [...app.children];
     behind.forEach((c) => { c.inert = true; });
     app.appendChild(wrap);
-    const sheet = wrap.querySelector('.ec-sheet'), note = wrap.querySelector('.rg-inst-note');
+    const sheet = wrap.querySelector('.ec-sheet'), note = wrap.querySelector('.rg-inst-note'), voice = wrap.querySelector('.rg-voice');
+    // « Régler ma voix » (la voix seulement) : il respire tant que la voix n'est pas réglée sur cet appareil
+    const voiceBtn = () => { voice.hidden = !inst().sing; voice.classList.toggle('is-ready', !hasMyVoice()); };
+    voiceBtn();
     sheet.tabIndex = -1;
     sheet.focus({ preventScroll: true });
     const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
@@ -22094,11 +22125,19 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
       settings.choisi = true;
       setInst(b.dataset.k);
       note.textContent = instNote();
+      voiceBtn();
     }));
-    wrap.querySelectorAll('.rg-seg [role="radio"]').forEach((b) => b.addEventListener('click', () => {
+    wrap.querySelectorAll('.rg-speed [role="radio"]').forEach((b) => b.addEventListener('click', () => {
       setSlow(b.dataset.slow === '1');
-      wrap.querySelectorAll('.rg-seg [role="radio"]').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
+      wrap.querySelectorAll('.rg-speed [role="radio"]').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
     }));
+    // un autre niveau : la comptine recommence (la feuille se ferme d'abord)
+    wrap.querySelectorAll('.rg-level [role="radio"]').forEach((b) => b.addEventListener('click', () => {
+      const v = +b.dataset.level;
+      close();
+      if (v !== G.level) setLevel(v);
+    }));
+    voice.addEventListener('click', () => { close(); calStart(false); });
   }
 
   /* ---------------- la justesse ----------------
@@ -22139,34 +22178,21 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     const mine = G && G.cal ? null : myVoice();
     Ear.setVoice(defVoice, mine);
   }
-  const earText = () => (inst().sing
-    ? (G && G.level === 2 ? 'La page écoute ta voix avec le micro : chante chaque note en disant son nom, puis elle vérifie les notes et le rythme.' : 'La page écoute ta voix avec le micro : chante chaque note en disant son nom (do, ré, mi…).')
-    : (G && G.level === 2 ? 'La page écoute ton instrument avec le micro, puis vérifie les notes et le rythme.' : 'La page écoute ton instrument avec le micro et te dit si la note est juste.'));
-  // les libellés qui changent avec la voix ; « Régler ma voix » seulement pour la voix
-  function voiceUI() {
-    if (!el.main || !document.contains(el.main)) return;
-    const v = !!inst().sing;
-    if (el.earText) el.earText.textContent = earText();
-    el.bCal.closest('.dock-bar').hidden = !v || (Ear.active() && !Ear.voiceOk());
-    el.bCal.classList.toggle('is-ready', v && !hasMyVoice() && !(G && G.cal));
-  }
-
   /* « Régler ma voix » : la page joue do, ré, mi… jusqu'à si ; l'élève chante chaque note en disant son nom */
   const CAL_PCS = [0, 2, 4, 5, 7, 9, 11];
-  const calStopBtn = '<button class="mini hint-btn" type="button" data-act="cal-stop">Arrêter</button>';
-  // first : proposé avant le premier essai (sinon, l'élève a touché « Régler »)
+  // first : proposé avant le premier essai (sinon, l'élève a touché « Régler ma voix », dans les réglages)
   function calStart(first) {
     if (!G || !singing()) return;
     if (!Ear.active()) { startMic().then(() => { if (G && Ear.active() && !G.cal) calStart(first); }); return; }
-    if (!Ear.voiceOk()) { setHint('Ce navigateur ne me laisse pas reconnaître les noms chantés : je vérifie seulement la hauteur.', ''); return; }
+    if (!Ear.voiceOk()) { setHint('Ce navigateur ne me laisse pas reconnaître les noms chantés : je vérifie seulement la hauteur.', ''); flashTop(4500); return; }
     G.acts++;
     cancelAttempt(true);
     stopPlayback(true);
     G.cal = { i: 0, seqs: {}, first: !!first };
     applyVoice();
-    voiceUI();
+    bandUI();
     if (first) {
-      setHint(`D’abord, la page apprend ta voix${NB}: chante chaque note en disant son nom ${calStopBtn}`, '');
+      setHint(`D’abord, la page apprend ta voix${NB}: chante chaque note en disant son nom`, '');
       later(() => { if (G && G.cal && G.cal.i === 0) calStep(); }, 2200);
       return;
     }
@@ -22179,18 +22205,17 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     c.on = true;
     Ear.expect(pc);
     Sound.tap(voiceNow(), 60 + pc, 0.9);
-    setHint(`Réglage ${c.i + 1}/7${NB}: chante ${chip(L, NOTE_FR[L])} en disant «${NB}${SYL_FR[PitchKit.SYL[c.i]]}${NB}» ${calStopBtn}`, '');
+    setHint(`Réglage ${c.i + 1}/7${NB}: chante ${chip(L, NOTE_FR[L])} en disant «${NB}${SYL_FR[PitchKit.SYL[c.i]]}${NB}»`, '');
   }
   function calHit(hit) {
     const c = G.cal, pc = CAL_PCS[c.i], L = PC_LETTER[pc];
     if (!hit.seq || !hit.seq.length || !c.on) return; // pas avant que la page ait joué la première note
 
     const want = PitchKit.SYL[c.i];
-    const again = '<button class="mini hint-btn" type="button" data-act="cal-again">Réécouter</button>';
     // la bonne note (à l'octave près) : sinon, ce pourrait être un autre nom (mi et fa, si et do sont voisins)
     if (mod12(hit.r) !== pc) {
       retrigger(el.heard, 'is-wrong');
-      setHint(`J’entends ${PC_FR[mod12(hit.r)]}, pas ${chip(L, NOTE_FR[L])} ${again} ${calStopBtn}`, 'down');
+      setHint(`J’entends ${PC_FR[mod12(hit.r)]}, pas ${chip(L, NOTE_FR[L])}`, 'down');
       return;
     }
     // on ne vérifie pas le nom avec les modèles par défaut : c'est justement quand ils reconnaissent mal
@@ -22201,17 +22226,17 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     try { localStorage.setItem(VOICE_KEY, JSON.stringify(Object.assign({ v: VOICE_V }, PitchKit.packModels(Object.fromEntries(PitchKit.SYL.map((s) => [s, [c.seqs[s]]])))))); } catch (e) { /* stockage indisponible : réglage pour cette visite seulement */ }
     G.cal = null;
     applyVoice();
-    voiceUI();
     expectNext();
     setHint(`Ta voix est réglée${NB}! Touche «${NB}${GO}${NB}»`, 'ok');
+    flashTop(3600);
   }
   function calStop() {
     if (!G || !G.cal) return;
     G.cal = null;
     applyVoice();
-    voiceUI();
     expectNext();
     idleHint();
+    bandUI();
   }
 
   /* ---------------- suivi des parties, pour le professeur (src/suivi.js) ---------------- */
@@ -22349,9 +22374,9 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     'La première fois, la page te demande ton prénom et ton instrument : touche son dessin. Pour en changer, touche « Changer » en haut de l’accueil, ou le nom de ton instrument en haut d’une comptine. Les noms de notes sont ceux de ta partition : la page joue dans le ton de ton instrument, avec son vrai son.',
     'Choisis une comptine. Les plus faciles sont au début du chemin.',
     'Choisis ton niveau. Niveau 1, les notes : retrouve-les à ton rythme. Niveau 2, notes et rythme : joue en mesure après le décompte. Tu joues d’abord toute la comptine d’un coup ; ensuite, la page te ramène sur les phrases à corriger, une par une.',
-    'Touche « À toi de jouer ! » : la page joue la phrase, compte « 1, 2, 3, 4 », puis c’est à toi. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. La page t’écoute au micro. Avec la voix, chante chaque note en disant son nom.',
+    'Touche le grand rond « À toi de jouer ! » : la page joue la comptine, compte « 1, 2, 3, 4 », puis c’est à toi. Pendant que tu joues, le rond montre la note qu’il entend. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec la voix, chante chaque note en disant son nom.',
     'Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée se pose à sa hauteur et le décor s’anime.',
-    'Pour écouter : « Phrase 1 » joue la phrase affichée, « Toute la comptine » joue tout, « ? » rejoue la phrase jusqu’à la note à trouver. Pour que la page joue plus lentement, touche le nom de ton instrument, en haut : « Vitesse : lente ».',
+    'Pour écouter avant de jouer : les petits ronds « Phrase 1 » et « Toute la comptine ». Pendant la correction d’une phrase, « Jusqu’à la note » la rejoue jusqu’à la note à trouver. Pour que la page joue plus lentement, touche le nom de ton instrument, en haut : « Vitesse : lente ».',
   ];
 
   let medalRO = null;
@@ -22444,17 +22469,15 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
         <div class="rstrip" aria-hidden="true" hidden></div>
       </div>`).join('');
     const pills = song.phrases.map((ph, p) => `<li><button class="pill" type="button" data-p="${p}" aria-label="Phrase ${p + 1}">${p + 1}</button></li>`).join('');
-    // chaque bouton garde la largeur de son plus long libellé : « Arrêter » ne fait rien bouger
-    const lbl2 = (idle, cls = '') => `<span class="lbl lbl2"><span class="l-idle${cls ? ' ' + cls : ''}">${idle}</span><span class="l-busy">Arrêter</span></span>`;
-    // « À toi de jouer ! » dit aussi ce qu'il va lancer (la phrase affichée, ou toute la comptine)
-    const goBtn = `<button class="btn-big go" id="b-go" type="button" aria-pressed="false"><span class="ic">${ICON.metro}</span><span class="go-txt">${lbl2(GO)}<small class="go-sub" id="go-sub"></small></span></button>`;
+    // le pupitre : de chaque côté du grand rond, un petit rond à la fois (les autres attendent leur moment, cachés)
+    const side = (id, ic, lbl, aria = '', hide = true) => `<button class="pu-side" id="${id}" type="button"${aria ? ` aria-label="${aria}"` : ''}${hide ? ' hidden' : ''}><span class="pu-ic">${ic}</span><span class="pu-lbl">${lbl}</span></button>`;
     app.innerHTML = `
     <main class="song" data-mode="${settings.mode}" data-level="${G.level}" data-stage="${G.stage}">
       <section class="stage grain" aria-label="Décor : ${esc(nb(song.title))}">
         ${D.markup(song, info())}
         <div class="stage-bar">
           <a class="back" href="#" aria-label="Les comptines">${ICON.back}<span>Les comptines</span></a>
-          <button class="inst-pill" id="b-rg" type="button" aria-haspopup="dialog" aria-label="Réglages : ton instrument et la vitesse" title="Réglages : ton instrument et la vitesse">${ICON.note}<span class="ip-name" id="ip-name">${esc(instShort())}</span><span class="ip-slow" id="ip-slow"${G.slow ? '' : ' hidden'}>${ICON.turtle}</span>${ICON.chev}</button>
+          <button class="inst-pill" id="b-rg" type="button" aria-haspopup="dialog" aria-label="Réglages : le niveau, ton instrument et la vitesse" title="Réglages : le niveau, ton instrument et la vitesse">${ICON.note}<span class="ip-name" id="ip-name">${esc(instShort())}</span><span class="ip-slow" id="ip-slow"${G.slow ? '' : ' hidden'}>${ICON.turtle}</span>${ICON.chev}</button>
           <div class="stage-title" aria-hidden="true"><span>Comptine ${song.level} · ${LEVEL(song.level)}</span><b>${titleHtml(song.title)}</b></div>
           <a class="next-song" href="#${next.id}" aria-label="Comptine suivante : ${esc(nb(next.title))}">${ICON.next}</a>
         </div>
@@ -22465,48 +22488,44 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
           <h1>${titleHtml(song.title)}</h1>
           <p class="instr" id="instr">${esc(instrLine(song))}</p>
         </header>
-        <section class="choix" aria-label="Ton exercice">
-          <div class="seg seg-level" role="radiogroup" aria-label="Niveau">
-            <button type="button" role="radio" data-level="1" aria-checked="${!lv2}"><b class="lv">1</b><span>Les notes</span></button>
-            <button type="button" role="radio" data-level="2" aria-checked="${lv2}"><b class="lv">2</b><span>Notes et rythme</span></button>
-          </div>
-          <p class="choix-dit" id="choix-dit"></p>
-        </section>
         <section class="card" aria-label="Phrase en cours">
           <div class="card-top">
             <ol class="strip" aria-label="Phrases">${pills}</ol>
             <p class="count" id="count"></p>
           </div>
           <div class="panels">${panels}</div>
-          <div class="ecoute">
-            <button class="btn" id="b-phrase" type="button" aria-label="Écouter la phrase 1"><span class="ic">${ICON.play}</span>${lbl2('Phrase' + NB + '1', 'ph-n')}</button>
-            <button class="btn" id="b-all" type="button" aria-label="Écouter toute la comptine"><span class="ic">${ICON.play}</span>${lbl2(LISTEN_ALL)}</button>${lv2 ? '' : `
-            <button class="btn ph-to" id="b-to" type="button" disabled aria-label="Écouter la phrase jusqu’à la note à trouver" title="Jusqu’à la note à trouver"><span class="q" aria-hidden="true">?</span><span class="lbl">Jusqu’à la note</span></button>`}
-          </div>
         </section>
-        <div class="go-row">${goBtn}</div>
         <div class="done-card" id="done" hidden></div>
         <footer class="play-foot"><button type="button" id="b-reset">${ICON.reset}<span>Recommencer</span></button><a href="#${next.id}">Suivante : ${titleHtml(next.title)} →</a></footer>
       </section>
-      <section class="dock" aria-label="Le micro">
-        <p class="hint" id="hint" aria-live="polite"></p>
-        <div class="ear" id="ear">
-          <div class="ear-off is-starting" id="ear-off">
-            <p class="ear-text" id="ear-text">${earText()}</p>
-            <div class="ear-row"><button class="btn-big" id="mic-on" type="button"><span class="ic">${ICON.mic}</span><span>Allumer le micro</span></button></div>
-            <div class="ear-msg" id="ear-msg" hidden></div>
+      <section class="pupitre" aria-label="À toi" data-band="repos">
+        <div class="pu-top">
+          <div class="seg seg-level" role="radiogroup" aria-label="Niveau">
+            <button type="button" role="radio" data-level="1" aria-checked="${!lv2}"><b class="lv">1</b><span>Les notes</span></button>
+            <button type="button" role="radio" data-level="2" aria-checked="${lv2}"><b class="lv">2</b><span>Notes et rythme</span></button>
           </div>
-          <div class="ear-on" id="ear-on" hidden>
-            <div class="heard" id="heard"><span class="heard-n" id="heard-n">…</span></div>
-            <div class="ear-mid">
-              <p class="ear-cap" id="ear-cap">J’écoute…</p>
-              <div class="tuner" aria-hidden="true"><i class="tz"></i><b class="needle" id="needle"></b><span class="t-lo">bas</span><span class="t-mid">juste</span><span class="t-hi">haut</span></div>
-            </div>
+          <p class="hint" id="hint" aria-live="polite" hidden></p>
+        </div>
+        <div class="pu-row">
+          <div class="pu-slot">
+            ${side('b-phrase', ICON.play, `Phrase${NB}1`, 'Écouter la phrase 1', false)}
+            ${side('b-stop', ICON.stop, 'Arrêter')}
+            ${side('b-level', lv2 ? ICON.note : ICON.metro, lv2 ? `Niveau${NB}1` : `Niveau${NB}2`, lv2 ? 'Niveau 1 : les notes' : 'Niveau 2 : notes et rythme')}
+          </div>
+          <div class="pu-mid">
+            <button class="pu-go" id="b-go" type="button"><span class="ic">${ICON.metro}</span><b class="pu-go-t" id="go-t">À toi</b> <span class="pu-go-s" id="go-s">de jouer${NB}!</span></button>
+            <div class="pu-ear" id="ear" hidden>${GAUGE}<span class="g-lo" aria-hidden="true">bas</span><span class="g-hi" aria-hidden="true">haut</span><div class="heard" id="heard"><span class="heard-n" id="heard-n">…</span><span class="heard-s" id="heard-s"></span></div></div>
+          </div>
+          <div class="pu-slot">
+            ${side('b-all', ICON.play, LISTEN_ALL, 'Écouter toute la comptine', false)}
+            ${side('b-restart', ICON.reset, 'Recommencer')}
+            ${lv2 ? '' : side('b-to', Q_ICON, 'Jusqu’à la note', 'Écouter la phrase jusqu’à la note à trouver')}
+            ${side('b-hear', ICON.play, 'Réécouter', 'Réécouter la note')}
+            ${side('b-again', ICON.reset, 'Tout rejouer', 'Rejouer toute la comptine')}
+            <a class="pu-side" id="a-next" href="#${next.id}" aria-label="Comptine suivante : ${esc(nb(next.title))}" hidden><span class="pu-ic">${ICON.next}</span><span class="pu-lbl">Suivante</span></a>
           </div>
         </div>
-        <div class="dock-bar"${inst().sing ? '' : ' hidden'}>
-          <div class="seg seg-cal"><button type="button" id="b-cal" title="La page apprend comment tu chantes do, ré, mi…">Régler ma voix</button></div>
-        </div>
+        <div class="pu-msg" id="ear-msg" hidden></div>
       </section>
     </main>`;
 
@@ -22517,30 +22536,33 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
       bPhrase: app.querySelector('#b-phrase'),
       bTo: app.querySelector('#b-to'),
       bGo: app.querySelector('#b-go'),
+      goT: app.querySelector('#go-t'),
+      goS: app.querySelector('#go-s'),
+      bStop: app.querySelector('#b-stop'),
+      bLevel: app.querySelector('#b-level'),
+      bRestart: app.querySelector('#b-restart'),
+      bHear: app.querySelector('#b-hear'),
+      bAgain: app.querySelector('#b-again'),
+      aNext: app.querySelector('#a-next'),
       bRg: app.querySelector('#b-rg'),
       instr: app.querySelector('#instr'),
       count: app.querySelector('#count'),
       card: app.querySelector('.card'),
       done: app.querySelector('#done'),
+      pu: app.querySelector('.pupitre'),
+      seg: app.querySelector('.pu-top .seg-level'),
       hint: app.querySelector('#hint'),
-      dock: app.querySelector('.dock'),
       beads: [...app.querySelectorAll('.bead')].sort((a, b) => a.dataset.n - b.dataset.n),
       syls: [...app.querySelectorAll('.syl')].sort((a, b) => a.dataset.n - b.dataset.n),
       panels: [...app.querySelectorAll('.panel')],
       pills: [...app.querySelectorAll('.pill')],
       ear: app.querySelector('#ear'),
-      earOff: app.querySelector('#ear-off'),
-      earOn: app.querySelector('#ear-on'),
       earMsg: app.querySelector('#ear-msg'),
       heard: app.querySelector('#heard'),
       heardN: app.querySelector('#heard-n'),
-      earCap: app.querySelector('#ear-cap'),
+      heardS: app.querySelector('#heard-s'),
       needle: app.querySelector('#needle'),
       ipName: app.querySelector('#ip-name'),
-      dit: app.querySelector('#choix-dit'),
-      goSub: app.querySelector('#go-sub'),
-      bCal: app.querySelector('#b-cal'),
-      earText: app.querySelector('#ear-text'),
     };
     song.notes.forEach((_, n) => paintBead(n));
     song.phrases.forEach((_, p) => paintPill(p));
@@ -22550,27 +22572,69 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     bindSong();
     setCursor(null);
     applyMode();
-    choixDit();
     idleHint();
+    bandUI();
     // comptine ouverte directement (lien partagé), instrument jamais choisi : on le demande d'abord
     welcome(() => { if (G && view === 'song') { idleHint(); if (el.bGo) el.bGo.focus({ preventScroll: true }); } });
   }
 
-  /* L'exercice, en une phrase, sous le niveau : d'abord toute la comptine d'un coup, puis les phrases à corriger */
-  function choixDit() {
-    if (!G || !el.dit) return;
-    const v = singing() ? 'Chante' : 'Joue';
-    const whole = G.stage === 'whole';
-    el.dit.textContent = G.level === 2
-      ? (whole ? `${v} toute la comptine d’un coup, en mesure, après le décompte. Ensuite, la page te ramène sur les phrases à corriger.` : `${v} en mesure les phrases entourées de rouge, après le décompte.`)
-      : (whole ? `${v} toute la comptine d’un coup, sans aide. Ensuite, la page te ramène sur les phrases à corriger.` : 'Corrige les phrases entourées de rouge, à ton rythme\u00a0: la page t’aide si tu te trompes.');
+  /* ================= LE PUPITRE (en bas) =================
+     Deux étages de taille fixe ; seul leur contenu change avec le moment de la partie :
+       repos : en haut le niveau ; ▶ la phrase affichée · le grand rond « À toi de jouer ! » · ▶ toute la comptine
+       jeu   : la consigne (écoute, décompte, « note n sur N », la réponse) ; Arrêter · le grand rond devient la note
+               entendue, avec sa jauge · Recommencer (niveau 1, pendant la correction d'une phrase : « Jusqu'à la note »)
+       apres : le bilan, la phrase à corriger ; ▶ cette phrase · « Corriger la phrase n » · Tout rejouer
+       cal   : le réglage de la voix ; Arrêter · la note entendue · Réécouter
+       fin   : « Comptine terminée ! » ; l'autre niveau · « Rejouer » · Suivante */
+  function bandState() {
+    if (!G) return 'repos';
+    if (G.done) return 'fin';
+    if (G.cal) return 'cal';
+    if (busy() || (el.main && el.main.classList.contains('is-taking'))) return 'jeu';
+    return G.stage === 'review' ? 'apres' : 'repos';
   }
-  // sous « À toi de jouer ! » : ce qu'il va lancer
-  function goSub() {
-    if (!G || !el.goSub) return;
-    if (G.stage === 'whole') { el.goSub.textContent = 'Toute la comptine'; return; }
-    const q = G.moveTo != null ? G.moveTo : G.view;
-    el.goSub.textContent = `Phrase ${q + 1}${G.stage === 'review' && G.queue.includes(q) && !isDone(q) ? ' · à corriger' : ''}`;
+  const SIDES = { repos: ['bPhrase', 'bAll'], jeu: ['bStop', 'bRestart'], apres: ['bPhrase', 'bAgain'], cal: ['bStop', 'bHear'], fin: ['bLevel', 'aNext'] };
+  const SIDE_KEYS = ['bPhrase', 'bStop', 'bLevel', 'bAll', 'bRestart', 'bTo', 'bHear', 'bAgain', 'aNext'];
+  function bandUI() {
+    if (!G || !el.pu || !document.contains(el.pu)) return;
+    const st = bandState();
+    const shown = SIDES[st].slice();
+    if (st === 'jeu' && el.bTo && G.stage === 'review' && G.live && !G.live.full) shown[1] = 'bTo';
+    const had = el.pu.contains(document.activeElement) ? document.activeElement : null;
+    el.pu.dataset.band = st;
+    SIDE_KEYS.forEach((k) => { if (el[k]) el[k].hidden = !shown.includes(k); });
+    const ear = st === 'jeu' || st === 'cal';
+    el.bGo.hidden = ear;
+    el.ear.hidden = !ear;
+    // en haut : le niveau tant que rien n'a commencé (sauf un message à lire, le temps de le lire), sinon ce que dit la page
+    const seg = st === 'repos' && !(G.flashUntil > performance.now());
+    el.seg.hidden = !seg;
+    el.hint.hidden = seg;
+    goLabel(st);
+    // le bouton qui avait le clavier vient de laisser sa place : le clavier passe au bouton principal du moment
+    if (had && had.closest('[hidden]')) {
+      const to = ear ? el.bStop : el.bGo;
+      if (to && !to.hidden) to.focus({ preventScroll: true });
+    }
+  }
+  // ce que lance le grand rond : toute la comptine ; la phrase à corriger (ou affichée) ; à la fin, toute la comptine encore
+  function goLabel(st = bandState()) {
+    if (!G || !el.goT) return;
+    let t = 'À toi', s = `de jouer${NB}!`;
+    if (st === 'fin') { t = 'Rejouer'; s = 'la comptine'; } else if (G.stage === 'review') {
+      const q = G.moveTo != null ? G.moveTo : G.view;
+      t = G.queue.includes(q) && !isDone(q) ? 'Corriger' : 'Rejouer';
+      s = `la phrase${NB}${q + 1}`;
+    }
+    el.goT.textContent = t;
+    el.goS.textContent = s;
+  }
+  // un message à lire au repos (le niveau occupe la ligne du haut) : il prend sa place quelques secondes
+  function flashTop(ms = 2800) {
+    if (!G) return;
+    G.flashUntil = performance.now() + ms;
+    bandUI();
+    later(() => { if (G) bandUI(); }, ms + 30);
   }
 
   function info() {
@@ -22633,6 +22697,8 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     delete h.dataset.whole;
     h.className = 'hint' + (cls ? ' ' + cls : '');
     h.innerHTML = html;
+    // une longue phrase tient sur deux lignes, en plus petit (la ligne du haut du pupitre a une hauteur fixe)
+    h.classList.toggle('long', h.textContent.trim().length > 34);
     void h.offsetWidth;
     h.classList.add('pop');
   }
@@ -22659,9 +22725,8 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     G.song.phrases.forEach((_, i) => paintPill(i));
     from.hidden = true;
     to.hidden = false;
-    goSub();
     phraseUI();
-    toUI();
+    goLabel();
     if (G.results && G.results[p]) showResult(p);
     if (!animate || RM.matches || !to.animate) return;
     to.animate([{ transform: `translateX(${dir * 28}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' });
@@ -22689,18 +22754,13 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     if (hint) cursorHint();
   }
 
-  // « Jusqu'à la note » : seulement pendant un essai phrase par phrase, quand la phrase de la note cherchée est affichée
-  function toUI() {
-    if (!el.bTo) return;
-    const n = G.cursor, p = n == null ? -1 : G.song.notes[n].phrase;
-    el.bTo.disabled = n == null || G.stage === 'whole' || G.view !== p;
-  }
-  // « Phrase n » : écoute la phrase affichée
+  // le pupitre suit l'essai (au niveau 1, « Jusqu'à la note » paraît pendant la correction d'une phrase)
+  function toUI() { bandUI(); }
+  // « Phrase n » : écoute la phrase affichée (pendant qu'elle passe, son rond dit « Arrêter »)
   function phraseUI() {
-    if (!el.bPhrase) return;
-    const t = el.bPhrase.querySelector('.ph-n');
-    if (t) t.textContent = `Phrase${NB}${G.view + 1}`;
-    if (!el.bPhrase.classList.contains('is-on')) el.bPhrase.setAttribute('aria-label', `Écouter la phrase ${G.view + 1}`);
+    if (!el.bPhrase || el.bPhrase.classList.contains('is-on')) return;
+    el.bPhrase.querySelector('.pu-lbl').textContent = `Phrase${NB}${G.view + 1}`;
+    el.bPhrase.setAttribute('aria-label', `Écouter la phrase ${G.view + 1}`);
   }
 
   function expectNext() {
@@ -22726,26 +22786,27 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   const isDone = (q) => (G.level === 2 ? G.passed.has(q) : G.song.phrases[q].notes.every((m) => G.found.has(m)));
   const stopSrc = (x) => { try { if (x) x.stop(); } catch (err) { /* déjà joué */ } };
 
-  // le message quand rien ne se passe : ce que « À toi de jouer ! » va lancer
+  // le message quand rien ne se passe ; après la comptine entière, la phrase à corriger
   function idleHint() {
     if (!G || !el.hint || G.done || busy()) return;
     const q = G.view;
-    let html = `Touche «${NB}${GO}${NB}»`, cls = '', ready = false;
-    if (G.stage === 'whole') html = G.level === 2 ? 'Toute la comptine, en rythme' : 'Toute la comptine, sans aide';
-    // la voix pas encore réglée : on le propose avant le premier essai
-    const fresh = !G.found.size && !G.passed.size && !G.errors && !G.fails;
-    if (singing() && !hasMyVoice() && fresh && !G.calAsked) html = `Touche «${NB}${GO}${NB}»${NB}: d’abord, la page apprend ta voix`;
-    else if (G.stage === 'review' && G.queue.includes(q) && !isDone(q)) { html = `À corriger${NB}: phrase ${q + 1}`; cls = 'up'; ready = true; }
-    else if (isDone(q)) { html = `Phrase ${q + 1} ${G.level === 2 ? 'réussie' : 'retrouvée'}${NB}!`; cls = 'ok'; }
+    // au repos, la ligne du haut montre le niveau : ce message ne se lit qu'après la comptine entière (phrases à corriger)
+    let html = G.level === 2 ? 'Toute la comptine, en rythme' : 'Toute la comptine, sans aide', cls = '', ready = false;
+    if (G.stage === 'review') {
+      if (G.queue.includes(q) && !isDone(q)) { html = `À corriger${NB}: phrase ${q + 1}`; cls = 'up'; ready = true; }
+      else if (isDone(q)) { html = `Phrase ${q + 1} ${G.level === 2 ? 'réussie' : 'retrouvée'}${NB}!`; cls = 'ok'; }
+      else html = `Phrase ${q + 1}`;
+    }
     setHint(html, cls);
     if (el.bGo) el.bGo.classList.toggle('is-ready', ready);
-    goSub();
+    goLabel();
   }
-  // une note jouée hors essai : on rappelle comment commencer
+  // une note jouée hors essai : on rappelle comment commencer (au repos, à la place du niveau, le temps de le lire)
   function nudge() {
     if (G.nudged || G.done) return;
     G.nudged = true;
-    setHint(`Pour commencer${NB}: «${NB}${GO}${NB}»`, '');
+    setHint(`Pour commencer, touche «${NB}${el.goT ? `${el.goT.textContent} ${el.goS.textContent}` : GO}${NB}»`, '');
+    flashTop(3600);
   }
 
   function wholeHint() {
@@ -22774,7 +22835,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
 
   function goAttempt(sc) {
     if (!G || G.done) return;
-    if (G.cal) { G.cal = null; applyVoice(); voiceUI(); }
+    if (G.cal) { G.cal = null; applyVoice(); }
     // la voix jamais réglée sur cet appareil : le premier essai commence par « Régler ma voix » (on peut l'arrêter)
     if (singing() && !hasMyVoice() && !G.calAsked) { G.calAsked = true; calStart(true); return; }
     cancelAttempt(true);
@@ -22786,6 +22847,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     }
     if (!Sound.ensure()) return;
     sc = sc || scope();
+    G.attemptSc = sc;
     const song = G.song;
     const ids = sc.full ? song.notes.map((_, n) => n) : song.phrases[sc.p].notes;
     if (G.level === 1) resetNotes(ids);
@@ -22904,7 +22966,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     const text = bad.length ? `À corriger : ${whichPh(bad)}` : 'Toute la comptine, sans une erreur !';
     G.fullRes = { pass: !bad.length, text, status, sum: bad.length ? `Toute la comptine d’un coup : ${right} notes justes sur ${N}.` : 'Toute la comptine d’un coup, sans une erreur !' };
     track('bilan', { c: song.id, niveau: 1, notes: true, reussi: !bad.length, parfait: !bad.length, justes: right, sur: N, phrases: status.map((st) => (st === 'ok' ? 2 : 0)) });
-    if (!bad.length) { setHint(text, 'ok'); D.react(el.stage, 'complete', info()); later(() => { if (G && !G.done) finish(); }, 900); return; }
+    if (!bad.length) { setHint(text, 'ok'); flashTop(1400); D.react(el.stage, 'complete', info()); later(() => { if (G && !G.done) finish(); }, 900); return; }
     toReview(bad, text);
   }
 
@@ -22921,9 +22983,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   function setStage(stage) {
     G.stage = stage;
     el.main.dataset.stage = stage;
-    toUI();
-    choixDit();
-    goSub();
+    bandUI();
   }
 
   // nouvelle partie de la même comptine, toute la comptine d'abord (go : l'essai démarre tout de suite)
@@ -23065,7 +23125,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     // à la fin de l'écoute, on revient à la phrase où l'on en était (même quand cette écoute en remplace une autre)
     const home = G.playing ? G.playing.home : G.view;
     stopPlayback(true, true);
-    if (!Sound.ensure()) { setHint('Le son n’est pas disponible dans ce navigateur.', ''); goBack(home); return; }
+    if (!Sound.ensure()) { setHint('Le son n’est pas disponible dans ce navigateur.', ''); flashTop(4500); goBack(home); return; }
     let a = 0;
     while (a < evs.length && evs[a].rest) a++;
     evs = evs.slice(a);
@@ -23151,22 +23211,21 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     D.note(el.stage, n, on);
   }
 
+  // pendant une écoute, son petit rond devient « Arrêter »
+  function sideBusy(b, on, ic, lbl, aria) {
+    if (!b) return;
+    b.classList.toggle('is-on', on);
+    b.querySelector('.pu-ic').innerHTML = on ? ICON.stop : ic;
+    b.querySelector('.pu-lbl').textContent = on ? 'Arrêter' : lbl;
+    b.setAttribute('aria-label', on ? 'Arrêter l’écoute' : aria);
+  }
+  const Q_ICON = '<span class="q" aria-hidden="true">?</span>';
   function setPlayingUI(kind, on) {
     el.main.classList.toggle('is-playing', on);
-    if (kind === 'all') {
-      if (el.bAll) {
-        el.bAll.querySelector('.ic').innerHTML = on ? ICON.stop : ICON.play;
-        el.bAll.classList.toggle('is-on', on);
-      }
-      const dp = el.done && el.done.querySelector('#d-play .lbl');
-      if (dp) dp.textContent = on ? 'Arrêter' : 'Réécouter';
-    } else if (kind === 'to') {
-      if (el.bTo) { el.bTo.classList.toggle('is-on', on); el.bTo.querySelector('.q').innerHTML = on ? ICON.stop : '?'; }
-    } else if (kind.startsWith('p') && el.bPhrase) {
-      el.bPhrase.querySelector('.ic').innerHTML = on ? ICON.stop : ICON.play;
-      el.bPhrase.classList.toggle('is-on', on);
-      el.bPhrase.setAttribute('aria-label', on ? 'Arrêter' : `Écouter la phrase ${G.view + 1}`);
-    }
+    if (kind === 'all') sideBusy(el.bAll, on, ICON.play, LISTEN_ALL, 'Écouter toute la comptine');
+    else if (kind === 'to') sideBusy(el.bTo, on, Q_ICON, 'Jusqu’à la note', 'Écouter la phrase jusqu’à la note à trouver');
+    else if (kind.startsWith('p')) sideBusy(el.bPhrase, on, ICON.play, `Phrase${NB}${G.view + 1}`, `Écouter la phrase ${G.view + 1}`);
+    bandUI();
   }
 
   const LISTEN_ALL = 'Toute la comptine';
@@ -23226,13 +23285,11 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   }
 
 
-  // pendant un essai, le bouton principal devient « Arrêter »
+  // pendant un essai, le grand rond devient l'oreille (la note entendue) ; « Arrêter » paraît à sa gauche
   function setGoUI(on) {
     if (!el.bGo) return;
-    el.bGo.setAttribute('aria-pressed', String(on));
-    el.bGo.querySelector('.ic').innerHTML = on ? ICON.stop : ICON.metro;
-    el.bGo.classList.toggle('is-on', on);
     if (on) el.bGo.classList.remove('is-ready');
+    bandUI();
   }
 
   /* Niveau 2, une prise (après l'écoute) : décompte, puis l'élève joue
@@ -23398,7 +23455,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     });
     song.phrases.forEach((_, q) => showResult(q));
     setGoUI(false);
-    if (!r.played) { setHint('Je n’ai rien entendu…', 'up'); return; }
+    if (!r.played) { setHint('Je n’ai rien entendu…', 'up'); flashTop(3600); return; }
     const bad = status.map((st, q) => (st === 'bad' ? q : -1)).filter((q) => q >= 0);
     let text;
     if (!bad.length) text = r.perfect ? 'Juste et en rythme : parfait !' : 'Toute la comptine en rythme !';
@@ -23417,7 +23474,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     const st = info();
     D.update(el.stage, st);
     D.react(el.stage, bad.length ? 'phrase' : 'complete', st);
-    if (!bad.length) { setHint(text, 'ok'); later(() => { if (G && !busy() && !G.done) finish(); }, 1800); return; }
+    if (!bad.length) { setHint(text, 'ok'); flashTop(2300); later(() => { if (G && !busy() && !G.done) finish(); }, 1800); return; }
     toReview(bad, text);
   }
 
@@ -23488,9 +23545,8 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     later(() => { if (G && G.done && !G.playing) playAll(); }, 1500);
   }
 
+  // la carte de fin dit le résultat ; la suite (l'autre niveau, rejouer, la comptine suivante) est dans le pupitre
   function showDone() {
-    const song = G.song;
-    const next = LIB[(LIB.indexOf(song) + 1) % LIB.length];
     const stars = G.lastStars;
     const lv2 = G.level === 2;
     const e = lv2 ? G.fails : G.errors;
@@ -23506,23 +23562,16 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
       <div class="done-head"><div class="done-stars" aria-label="${stars} étoile${stars > 1 ? 's' : ''} sur 3">${[1, 2, 3].map((k) => star(k <= stars, 38)).join('')}</div>
       <h2>${lv2 ? 'Juste et en rythme&#160;!' : 'Toutes les notes sont revenues&#160;!'}</h2></div>
       <p>${msg}</p>
-      ${full}
-      <div class="done-actions">
-        <button class="btn-big" type="button" id="d-whole"><span class="ic">${lv2 ? ICON.metro : ICON.note}</span><span>${fr ? 'Rejouer' : 'Jouer'} toute la comptine</span></button>
-        ${lv2 ? '' : `<button class="btn" type="button" id="d-lv2">${ICON.metro}<span class="long">Niveau 2 : le rythme</span><span class="short">Niveau 2</span></button>`}
-        <a class="btn next-link" href="#${next.id}"><span class="long">Comptine suivante</span><span class="short">Suivante</span> →</a>
-      </div>`;
+      ${full}`;
     el.card.hidden = true;
     el.done.hidden = false;
     el.main.classList.add('fin');
-    el.done.querySelector('#d-whole').addEventListener('click', () => newRound(true));
-    const lvBtn = el.done.querySelector('#d-lv2');
-    if (lvBtn) lvBtn.addEventListener('click', () => setLevel(2));
+    bandUI();
     fitDone();
   }
 
-  /* Carte de fin : si elle ne tient pas à l'écran, l'écoute du micro se replie
-     le temps de la lire ; elle revient dès qu'on rejoue. */
+  /* Carte de fin : si elle ne tient pas à l'écran (ou ne laisse plus assez de décor sur téléphone), son message
+     se retire ; il reste les étoiles, le titre et le bilan de la comptine entière. */
   function fitDone() {
     if (!G || !el.main) return;
     el.main.classList.remove('tight');
@@ -23585,7 +23634,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   function pauseMicDone() {
     if (!Ear.active()) return;
     Ear.stop();
-    showEar(false, '<p>Micro coupé : la comptine est finie. Il se rallumera tout seul quand tu rejoueras.</p>');
+    showEar(false); // la comptine est finie : il se rallume tout seul quand on la rejoue
   }
   function applyMode() {
     applyVoice();
@@ -23610,16 +23659,13 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     return `<p>${text}</p>`;
   }
 
-  // blocked : le micro ne pourra pas marcher ici, inutile de proposer de l'allumer
-  // starting : le micro est en train de s'allumer (pas de bouton)
+  /* Le micro ne marche pas (refusé, introuvable, coupé…) : une bulle au-dessus du pupitre le dit, avec de quoi le
+     rallumer. blocked : il ne pourra pas marcher ici (pas de bouton) ; starting : il est en train de s'allumer. */
   function showEar(on, msgHtml, blocked, starting) {
-    el.earOn.hidden = !on;
-    el.earOff.hidden = on;
-    el.earOff.classList.toggle('is-blocked', !on && !!blocked);
-    el.earOff.classList.toggle('is-starting', !on && !!starting);
-    el.earMsg.hidden = !msgHtml;
-    el.earMsg.innerHTML = msgHtml || '';
-    voiceUI();
+    if (!el.earMsg) return;
+    const msg = on ? '' : msgHtml || '';
+    el.earMsg.hidden = !msg;
+    el.earMsg.innerHTML = !msg ? '' : (msg.startsWith('<') ? msg : `<p>${msg}</p>`) + (blocked || starting ? '' : `<button class="btn-big" id="mic-on" type="button"><span class="ic">${ICON.mic}</span><span>Allumer le micro</span></button>`);
   }
   const FATAL = (code) => (code === 'denied' && framed) || code === 'unsupported' || code === 'noaudio';
 
@@ -23645,10 +23691,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
       if (view === 'song' && el.ear && document.contains(el.ear)) {
         showEar(true); expectNext();
         if (G && G.live) cursorHint();
-        // page ouverte sans avoir encore été touchée : le navigateur attend un geste pour laisser passer le son
-        const ctx = Sound.ensure();
-        if (ctx && ctx.state !== 'running') el.earCap.textContent = 'Touche l’écran pour que je t’écoute.';
-        if (singing() && !Ear.voiceOk()) setHint('Ce navigateur ne me laisse pas reconnaître les noms chantés : je vérifie seulement la hauteur.', '');
+        if (singing() && !Ear.voiceOk()) { setHint('Ce navigateur ne me laisse pas reconnaître les noms chantés : je vérifie seulement la hauteur.', ''); flashTop(4500); }
       }
     } catch (e) {
       const code = (e && e.code) || 'other';
@@ -23662,16 +23705,13 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   function heardFrame(fr) {
     if (!el.heard || !document.contains(el.heard)) return;
     el.heard.style.setProperty('--lvl', fr.level.toFixed(2));
-    if (fr.gated) {
-      el.heard.classList.add('is-wait');
-      el.earCap.textContent = 'La page joue… écoute bien.';
-      return;
-    }
-    el.heard.classList.remove('is-wait');
+    // pendant que la page joue, l'oreille attend : la note entendue pâlit
+    el.heard.classList.toggle('is-wait', !!fr.gated);
+    if (fr.gated) return;
     if (fr.note == null) {
       el.heardN.textContent = '…';
+      el.heardS.textContent = '';
       delete el.heard.dataset.l;
-      el.earCap.textContent = 'J’écoute…';
       el.needle.style.setProperty('--c', '0');
       el.needle.classList.add('off');
       return;
@@ -23680,8 +23720,9 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     const pc = mod12(written), L = PC_LETTER[pc];
     el.heardN.textContent = PC_FR[pc];
     if (L) el.heard.dataset.l = L; else delete el.heard.dataset.l;
+    // la voix : sous la note entendue, le nom reconnu (seulement quand la reconnaissance est sûre)
     const sy = heardSyl && heardSyl.pc === mod12(fr.note) && performance.now() - heardSyl.t < 2500 ? heardSyl.s : null;
-    el.earCap.textContent = sy ? `J’entends «${NB}${SYL_FR[sy]}${NB}» sur ${PC_FR[pc]}` : `J’entends ${PC_FR[pc]}`;
+    el.heardS.textContent = sy ? `«${NB}${SYL_FR[sy]}${NB}»` : '';
     el.needle.classList.remove('off');
     el.needle.style.setProperty('--c', Math.max(-50, Math.min(50, fr.cents)).toFixed(1));
   }
@@ -23696,14 +23737,21 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   }
 
   function bindSong() {
-    if (el.bAll) el.bAll.addEventListener('click', () => { G.acts++; if (prepping()) { cancelAttempt(); return; } toggle('all', playAll)(); });
+    el.bAll.addEventListener('click', () => { G.acts++; if (prepping()) { cancelAttempt(); return; } toggle('all', playAll)(); });
     if (el.bTo) el.bTo.addEventListener('click', toggle('to', playToMystery));
     // « Phrase n » : la phrase affichée ; pendant qu'une phrase passe, le même bouton l'arrête
     el.bPhrase.addEventListener('click', () => {
       G.acts++;
       if (G.playing && G.playing.kind.startsWith('p')) stopPlayback(true); else playPhrase(G.view);
     });
-    if (el.bGo) el.bGo.addEventListener('click', goButton);
+    el.bGo.addEventListener('click', goButton);
+    // « Arrêter » : l'essai en cours, ou le réglage de la voix
+    el.bStop.addEventListener('click', () => { G.acts++; if (G.cal) calStop(); else cancelAttempt(); });
+    // « Recommencer » : le même essai depuis le début (l'écoute, puis le décompte)
+    el.bRestart.addEventListener('click', () => { G.acts++; goAttempt(G.attemptSc); });
+    el.bHear.addEventListener('click', () => { if (G.cal) calStep(); });
+    el.bAgain.addEventListener('click', () => { G.acts++; newRound(true); });
+    el.bLevel.addEventListener('click', () => setLevel(G.level === 2 ? 1 : 2));
     el.bRg.addEventListener('click', reglages);
     app.querySelector('#b-reset').addEventListener('click', reset);
     el.pills.forEach((pill, p) => pill.addEventListener('click', () => {
@@ -23724,15 +23772,10 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
         if (G.found.has(n) || G.song.given.has(n) || G.revealed.has(n)) { Sound.tap(voiceNow(), G.song.notes[n].midi, 0.5); retrigger(b, 'pop'); }
       });
     });
-    app.querySelectorAll('.seg-level [role="radio"]').forEach((b) => b.addEventListener('click', () => {
+    el.seg.querySelectorAll('[role="radio"]').forEach((b) => b.addEventListener('click', () => {
       if (+b.dataset.level !== G.level) setLevel(+b.dataset.level);
     }));
-    app.querySelector('#mic-on').addEventListener('click', startMic);
-    el.bCal.addEventListener('click', () => calStart(false));
-    el.hint.addEventListener('click', (ev) => {
-      if (ev.target.closest('[data-act="cal-stop"]')) { G.acts++; calStop(); }
-      else if (ev.target.closest('[data-act="cal-again"]') && G && G.cal) calStep();
-    });
+    el.earMsg.addEventListener('click', (ev) => { if (ev.target.closest('#mic-on')) startMic(); });
     if (FINE.matches) {
       let raf = 0;
       el.stage.addEventListener('pointermove', (e) => {
