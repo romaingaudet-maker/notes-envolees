@@ -137,7 +137,7 @@ const PitchKit = (() => {
        alors toujours par une consonne : un trou dans la hauteur (s, f) ou un creux du volume (m, l, d, r).
        Seuls ces deux signes comptent, et pas avant 0,18 s : dans « mi » ou « ré », la voyelle qui suit la
        consonne, déjà chantée à la bonne hauteur, fait remonter le volume sans être une nouvelle note. */
-    const T = { cand: null, held: null, silent: 0, tune: 0, expectPc: null, ring: null, hist: [], voice: false };
+    const T = { cand: null, held: null, silent: 0, tune: 0, expectPc: null, expectPcs: null, ring: null, hist: [], voice: false };
     const ATK = 2, HIST = 10;
     const remember = (rms) => { T.hist.push(rms); if (T.hist.length > HIST) T.hist.shift(); };
     // on : instant d'une attaque entendue dans cette trame (ou null)
@@ -158,7 +158,8 @@ const PitchKit = (() => {
           if (rise) T.cand.atk = true;
         } else T.cand = { r, n: 1, c: cents, t: now, atk: rise };
         const pc = ((r % 12) + 12) % 12;
-        const need = T.expectPc == null || pc === T.expectPc ? 3 : 5;
+        // 3 trames pour une note attendue (la prochaine, ou l'une des suivantes quand on chante en rythme), 5 sinon
+        const need = !T.expectPcs || T.expectPcs.includes(pc) ? 3 : 5;
         if (T.cand.n < need) return null;
         const masked = T.ring && !T.cand.atk && (T.ring.body || T.ring.pcs.has(pc));
         if (masked && (!T.held || T.held.pc !== pc)) T.held = { pc, peak: rms, min: rms, armed: false, ring: true };
@@ -224,7 +225,13 @@ const PitchKit = (() => {
           const ref = T.voice ? (L ? Math.max(...k.slice(-6)) : rms) : h.peak;
           if (!h.armed && rms < ref * (T.voice ? 0.3 : 0.55)) { h.armed = true; h.min = rms; }
           if (h.armed) h.min = Math.min(h.min, rms);
+          // la voix, consonne voisée (« do do », « ré ré ») : le volume ne baisse parfois que de 6 dB ; ce petit creux
+          // compte s'il est suivi d'une vraie attaque, entendue à l'instant (l'énergie fait presque doubler d'un coup),
+          // et seulement quand la même note est attendue de nouveau (une voyelle tenue n'est pas coupée en deux)
+          if (T.voice && !h.soft && rms < ref * 0.5) { h.soft = true; h.smin = rms; }
+          if (h.soft) h.smin = Math.min(h.smin, rms);
           const dip = h.armed && rms > h.min * (T.voice ? 2.5 : 1.8) && rms > gate * 1.3;
+          const soft = T.voice && !dip && h.soft && T.expectPc === pc && T.on != null && now - T.on < 0.075 && (h.t0 == null || T.on > h.t0 + 0.15) && rms > h.smin * 1.8 && rms > gate * 1.3;
           // une attaque entendue à l'instant (même hauteur juste après) : la même note, jouée de nouveau
           // Si c'est justement cette note qui est attendue de nouveau (Sol Sol Sol Sol), l'attaque suffit,
           // même plus douce que la précédente (le volume peut ne pas monter : l'étouffoir du piano coupe
@@ -232,9 +239,12 @@ const PitchKit = (() => {
           const onT = !T.voice && T.on != null && now - T.on < 0.075 && !h.ring && (h.t0 == null || T.on > h.t0 + 0.06) ? T.on : null;
           if (onT != null) { h.re = { t: onT, base: L ? k[L - 1] : rms, n: 0, k: T.expectPc === pc ? 0.75 : 1.1 }; T.on = null; }
           else if (restrike || dip) h.re = { t: now, base: restrike ? lo : h.min, n: 0, k: 1.15 };
+          else if (soft) { h.re = { t: T.on, base: h.smin, n: 0, k: 1.15 }; T.on = null; }
         } else if (!h.re) {
           if (!h.armed && rms < (T.voice && L ? Math.max(...k.slice(-6)) * 0.3 : h.peak * 0.55)) { h.armed = true; h.min = rms; }
           if (h.armed) h.min = Math.min(h.min, rms);
+          if (T.voice && L && !h.soft && rms < Math.max(...k.slice(-6)) * 0.5) { h.soft = true; h.smin = rms; }
+          if (h.soft) h.smin = Math.min(h.smin, rms);
         }
         k.push(rms); if (k.length > 9) k.shift();
         return null;
@@ -242,10 +252,13 @@ const PitchKit = (() => {
       T.silent++;
       const h = T.held;
       if (h) {
-        h.re = null;
+        // la voix : une trame sans hauteur pendant qu'une reprise se confirme (la voyelle qui s'installe) ne l'annule pas
+        if (T.voice && h.re && !h.re.miss) h.re.miss = true; else h.re = null;
         const ref = T.voice && h.lv && h.lv.length ? Math.max(...h.lv.slice(-6)) : h.peak;
         if (!h.armed && rms < ref * (T.voice ? 0.3 : 0.55)) { h.armed = true; h.min = rms; }
         else if (h.armed) h.min = Math.min(h.min, rms);
+        if (T.voice && !h.soft && rms < ref * 0.5) { h.soft = true; h.smin = rms; }
+        else if (h.soft) h.smin = Math.min(h.smin, rms);
       }
       // la voix : une voyelle tenue perd parfois sa hauteur deux ou trois trames (souffle) ; la note continue
       if (T.silent >= (T.voice ? 5 : 3)) { T.held = null; T.cand = null; }
@@ -489,7 +502,7 @@ const Ear = (() => {
     // pour le diagnostic (?diag) : traitements du micro, trames par seconde, retard du traitement
     dg: { proc: null, frames: 0, since: 0, fps: 0, lag: 0, lagMax: 0, rms: 0, f: 0 },
   };
-  let onNote = null, onFrame = null, onEnded = null;
+  let onNote = null, onFrame = null, onEnded = null, onPending = null;
 
   /* Le morceau de code qui tourne dans le fil audio : il découpe le son du micro
      en morceaux d'environ 28 ms et les envoie avec l'instant de leur dernier échantillon. */
@@ -543,7 +556,7 @@ registerProcessor('ne-ear', NeEar);`;
   const RAW = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, voiceIsolation: false };
 
   async function start(handlers) {
-    onNote = handlers.onNote; onFrame = handlers.onFrame; onEnded = handlers.onEnded;
+    onNote = handlers.onNote; onFrame = handlers.onFrame; onEnded = handlers.onEnded; onPending = handlers.onPending || null;
     if (S.on) return;
     const md = navigator.mediaDevices;
     if (!md || !md.getUserMedia) throw fail('unsupported');
@@ -694,6 +707,8 @@ registerProcessor('ne-ear', NeEar);`;
       const onT = hit.t - 0.035;
       S.wait.push({ hit, on: onT, prev: S.lastOn });
       S.lastOn = onT;
+      // la note est entendue, sa syllabe viendra un peu plus tard : la page peut déjà attendre la suivante
+      if (onPending) onPending(hit);
     } else if (hit && onNote) onNote(hit);
     frame(rms, res, false);
   }
@@ -725,7 +740,8 @@ registerProcessor('ne-ear', NeEar);`;
     setVoice: (models, mine) => { S.voice = models ? { models, mine: mine || null } : null; S.wait = []; S.T.voice = !!models; },
     voiceOk: () => S.mode === 'worklet',
     active: () => S.on,
-    expect: (pc) => { S.T.expectPc = pc; },
+    // pc : la note attendue (0 = do … 11 = si), ou une liste (la prochaine d'abord, puis les suivantes), ou null
+    expect: (pc) => { const l = pc == null ? null : [].concat(pc); S.T.expectPcs = l && l.length ? l : null; S.T.expectPc = S.T.expectPcs ? S.T.expectPcs[0] : null; },
     nudge: (c) => S.T.nudge(c),
   };
 })();

@@ -458,7 +458,6 @@ a { color: inherit; }
 }
 
 /* jouer la comptine : phrase par phrase, ou toute la comptine d'un coup (puis les phrases à revoir) */
-.seg-play button { flex: 1 1 0; justify-content: center; min-width: 0; white-space: nowrap; }
 .pill.is-redo { outline: 3px dashed #E5484D; outline-offset: 2px; }
 /* « À toi de jouer ! » proposé (phrases à revoir) : le bouton respire doucement */
 .btn-big.is-ready { animation: go-ready 1.6s ease-in-out infinite; }

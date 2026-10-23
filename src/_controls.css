@@ -226,10 +226,6 @@
 .choix .seg button { flex: 1 1 0; justify-content: center; min-width: 0; white-space: nowrap; }
 .choix .seg-level button span { overflow: hidden; text-overflow: ellipsis; }
 .choix-dit { margin: 0; font-size: 14.5px; line-height: 1.35; color: var(--text-soft); }
-@media (min-width: 1180px) {
-  .choix { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .choix-dit { grid-column: 1 / -1; }
-}
 .ecoute { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .ecoute .btn { height: 40px; padding: 0 14px; font-size: 14px; }
 .ecoute .btn .ic svg { width: 16px; height: 16px; }
@@ -257,6 +253,8 @@
 /* écrans peu hauts : l'explication de l'exercice se fait plus petite, puis disparaît */
 @media (min-width: 900px) and (max-height: 760px) { .choix-dit { font-size: 13.5px; } }
 @media (max-width: 899px) and (max-height: 700px) { .choix-dit { display: none; } }
+/* comptine finie : la carte de fin dit la suite, l'explication de l'exercice se retire */
+.song.fin .choix-dit { display: none; }
 
 /* ============ les réglages d'une comptine : l'instrument et la vitesse ============ */
 .ec-modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(12, 10, 30, .55); }
