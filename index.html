@@ -493,48 +493,85 @@ a { color: inherit; }
 .lbl2 .l-busy, .is-on > .lbl2 .l-idle { visibility: hidden; }
 .is-on > .lbl2 .l-busy { visibility: visible; }
 
-/* ============ l'élève : prénom et instrument (accueil, et par-dessus une comptine) ============ */
+/* ============ l'élève : la première visite (deux écrans), puis le rappel en haut de l'accueil ============ */
 .home-eleve { grid-column: 1 / -1; display: grid; gap: 10px; margin-top: 18px; position: relative; z-index: 2; }
 .eleve-card {
-  --ec-bg: var(--paper); --ec-ink: var(--ink); --ec-soft: var(--ink-soft); --ec-line: rgba(29, 35, 80, .2); --ec-on: #FFF3C9; --ec-accent: var(--ink);
-  position: relative; background: var(--ec-bg); color: var(--ec-ink); border-radius: 22px; padding: 14px 18px; box-shadow: 0 6px 0 rgba(29, 35, 80, .12);
+  --ec-bg: var(--paper); --ec-ink: var(--ink); --ec-soft: var(--ink-soft); --ec-on: #FFF3C9; --ec-accent: var(--ink);
+  position: relative; max-width: 560px; background: var(--ec-bg); color: var(--ec-ink); border-radius: 22px; padding: 10px 14px 10px 10px; box-shadow: 0 6px 0 rgba(29, 35, 80, .12);
 }
-.ec-sum { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; }
-.eleve-card.is-open .ec-sum, .eleve-card:not(.is-open) .ec-form { display: none; }
-.ec-hello { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 22px; line-height: 1.1; }
-.ec-inst { margin: 0; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: var(--ec-on); font-weight: 700; }
-.ec-inst svg { width: 18px; height: 18px; flex: none; }
-.ec-edit { margin-left: auto; height: 38px; padding: 0 16px; border-radius: 999px; border: 2px solid var(--ec-accent); background: transparent; color: inherit; font-weight: 700; font-size: 15px; cursor: pointer; }
-.ec-form { display: grid; gap: 12px; padding-block: 4px 2px; }
-.ec-title { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(24px, 3vw, 30px); line-height: 1.05; }
-.ec-name { display: grid; gap: 5px; max-width: 26em; }
-.ec-name label, .ec-insts legend { padding: 0; font-size: 13.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ec-soft); }
-.ec-name input { height: 50px; padding: 0 14px; border-radius: 14px; border: 2px solid var(--ec-accent); background: var(--ec-on); color: var(--ec-ink); font: inherit; font-size: 18px; min-width: 0; }
-.ec-name input::placeholder { color: var(--ec-soft); opacity: .8; }
-.ec-why { margin: 0; font-size: 14px; color: var(--ec-soft); }
-.ec-insts { border: 0; margin: 0; padding: 0; min-width: 0; }
-.ec-insts legend { margin-bottom: 8px; }
-.ec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(116px, 1fr)); gap: 8px; }
-.ec-tile { position: relative; display: block; cursor: pointer; }
-.ec-tile input { position: absolute; opacity: 0; pointer-events: none; }
-.ec-tile span { display: grid; align-content: center; justify-items: center; gap: 1px; min-height: 58px; padding: 6px 8px; border-radius: 14px; border: 2px solid var(--ec-line); text-align: center; line-height: 1.15; transition: background-color .15s, border-color .15s, transform .1s; }
-.ec-tile b { font-size: 16px; }
-.ec-tile small { font-size: 12.5px; color: var(--ec-soft); }
-.ec-tile:hover span { border-color: var(--ec-accent); }
-.ec-tile:active span { transform: scale(.97); }
-.ec-tile input:checked + span { border-color: var(--ec-accent); background: var(--ec-on); box-shadow: inset 0 0 0 1px var(--ec-accent); }
-.ec-tile input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
-.ec-note { margin: 0; font-size: 15px; color: var(--ec-soft); max-width: 46em; }
-.ec-go { justify-self: start; padding: 0 28px; }
-.ec-go:disabled { opacity: .4; cursor: default; box-shadow: none; }
+.ec-sum { display: flex; align-items: center; gap: 12px; }
+.ec-pic { flex: none; width: 54px; height: 54px; border-radius: 16px; background: var(--ec-on); display: grid; place-items: center; }
+.ec-pic svg { width: 46px; height: 46px; }
+.ec-txt { margin: 0; display: grid; min-width: 0; line-height: 1.15; }
+.ec-hello { font-family: var(--font-display); font-weight: 800; font-size: 21px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ec-inst { font-weight: 700; font-size: 15px; color: var(--ec-soft); }
+.ec-edit { margin-left: auto; flex: none; height: 38px; padding: 0 16px; border-radius: 999px; border: 2px solid var(--ec-accent); background: transparent; color: inherit; font-weight: 700; font-size: 15px; cursor: pointer; }
+
+/* les cartes à dessin des instruments (première visite, réglages d'une comptine) */
+.ic-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.ic-card {
+  display: grid; justify-items: center; align-content: start; gap: 2px; min-width: 0; min-height: 114px; padding: 10px 4px;
+  border: 0; border-radius: 18px; background: #FFFBF0; color: #1D2350; box-shadow: 0 4px 0 rgba(29, 35, 80, .2);
+  font: inherit; text-align: center; cursor: pointer; transition: transform .1s, box-shadow .1s;
+}
+.ic-pic { width: 64px; height: 64px; display: grid; place-items: center; }
+.ic-pic svg { width: 100%; height: 100%; }
+.ic-card b { font-size: 15.5px; line-height: 1.1; }
+.ic-card small { font-size: 12.5px; line-height: 1.1; opacity: .72; }
+.ic-card:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(29, 35, 80, .2); }
+.ic-card:focus-visible { outline: 3px solid #1D2350; outline-offset: 3px; }
+.ic-card[aria-pressed="true"] { box-shadow: 0 0 0 4px #1D2350, 0 4px 0 rgba(29, 35, 80, .2); }
+.ic-card.is-picked { animation: ic-pick .34s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes ic-pick { 45% { transform: scale(1.08); } }
+@media (hover: hover) { .ic-card:hover { transform: translateY(-2px); } }
+@media (min-width: 600px) { .ic-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 860px) { .ic-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+
+/* la première visite : en plein écran sur téléphone, au milieu de la page sur ordinateur */
+html.onb-open, html.onb-open body { overflow: hidden; }
+.onb {
+  --onb-bg: #F6C744; --onb-ink: #1D2350; --onb-title: #1D2350; --onb-soft: rgba(29, 35, 80, .78); --onb-btn: #E5484D; --onb-btn-ink: #FFFFFF; --onb-field: #FFFBF0;
+  position: fixed; inset: 0; z-index: 60; display: grid; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--onb-bg); color: var(--onb-ink); font-family: var(--font-text);
+  animation: onb-in .25s ease-out;
+}
+.onb.is-out { animation: onb-out .22s ease-in forwards; }
+@keyframes onb-in { from { opacity: 0; } }
+@keyframes onb-out { to { opacity: 0; } }
+.onb-in {
+  width: 100%; max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) max(28px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
+}
+.onb-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; }
+.onb-brand { font-family: var(--font-display); font-weight: 800; font-size: 16px; }
+.onb-dots { display: flex; gap: 6px; }
+.onb-dots i { width: 10px; height: 10px; border-radius: 6px; background: currentColor; opacity: .25; transition: width .25s, opacity .25s; }
+.onb-dots i.on { width: 28px; opacity: 1; }
+.onb-step { display: flex; flex-direction: column; gap: 14px; }
+.onb-step[hidden] { display: none; }
+.onb-t { margin: 8px 0 2px; font-family: var(--font-display); font-weight: 800; font-size: clamp(32px, 7.4vw, 50px); line-height: 1.04; color: var(--onb-title); text-wrap: balance; outline: none; }
+.onb-t span { display: block; }
+.onb-name { width: 100%; max-width: 520px; height: 64px; padding: 0 20px; border-radius: 20px; border: 3px solid var(--onb-ink); background: var(--onb-field); color: #1D2350; font: 700 26px var(--font-text); }
+.onb-name::placeholder { color: rgba(29, 35, 80, .42); }
+.onb-name:focus { outline: 4px solid color-mix(in srgb, var(--onb-btn) 55%, transparent); outline-offset: 2px; }
+.onb-why, .onb-sub { margin: 0; font-size: 16px; color: var(--onb-soft); }
+.onb .btn-big { align-self: flex-start; height: 58px; padding: 0 22px 0 30px; gap: 8px; background: var(--onb-btn); color: var(--onb-btn-ink); font-family: var(--font-display); font-weight: 800; font-size: 21px; box-shadow: 0 5px 0 color-mix(in srgb, var(--onb-btn) 55%, #000); }
+.onb .btn-big svg { width: 22px; height: 22px; }
+.onb-next { margin-top: 6px; }
+.onb-back { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; margin-top: 2px; padding: 8px 4px; border: 0; background: none; color: inherit; font: 700 16px var(--font-text); cursor: pointer; }
+.onb-back svg { width: 18px; height: 18px; }
 @media (max-width: 599px) {
-  .eleve-card { padding: 12px 14px; }
-  .ec-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-  .ec-tile span { min-height: 54px; padding: 4px; }
-  .ec-tile b { font-size: 14.5px; }
-  .ec-tile small { font-size: 11.5px; }
-  .ec-go { justify-self: stretch; justify-content: center; }
-  .ec-hello { font-size: 20px; }
+  .onb .btn-big { align-self: stretch; justify-content: center; }
+  .ic-card { min-height: 104px; padding-top: 8px; }
+  .ic-pic { width: 56px; height: 56px; }
+  .ic-card b { font-size: 14.5px; }
+  .eleve-card { padding: 8px 12px 8px 8px; }
+  .ec-hello { font-size: 19px; }
+}
+/* ordinateur : au milieu de la page, devant l'accueil ou la comptine assombris */
+@media (min-width: 900px) and (min-height: 600px) {
+  .onb { background: rgba(12, 10, 30, .55); padding: 24px; }
+  .onb-in { margin: auto; width: min(820px, 100%); border-radius: 28px; background: var(--onb-bg); padding: 22px 30px 30px; box-shadow: 0 30px 70px rgba(0, 0, 0, .35); }
 }
 
 /* ============ barre du décor : retour, instrument, comptine suivante ============ */
@@ -797,25 +834,36 @@ a { color: inherit; }
 @media (min-width: 900px) and (max-height: 760px) { .choix-dit { font-size: 13.5px; } }
 @media (max-width: 899px) and (max-height: 700px) { .choix-dit { display: none; } }
 
-/* ============ par-dessus une comptine : l'élève choisit d'abord son instrument ============ */
+/* ============ les réglages d'une comptine : l'instrument et la vitesse ============ */
 .ec-modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(12, 10, 30, .55); }
-.ec-sheet { width: min(640px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; border-radius: 24px; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); }
+.ec-sheet { width: min(720px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; border-radius: 24px; background: var(--panel); box-shadow: 0 24px 60px rgba(0, 0, 0, .35); }
 .ec-sheet:focus { outline: none; }
-/* les réglages d'une comptine : l'instrument et la vitesse */
+.rg-in { display: grid; gap: 10px; padding: 18px 20px 22px; color: var(--text); }
 .rg-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rg-title { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(24px, 3vw, 30px); line-height: 1.05; }
 .rg-x { flex: none; width: 42px; height: 42px; margin: -6px -8px -6px 0; border: 0; border-radius: 50%; background: transparent; color: inherit; display: grid; place-items: center; cursor: pointer; }
 .rg-x svg { width: 24px; height: 24px; }
-.rg-x:hover { background: var(--ec-on); }
-.rg-speed { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 8px; }
-.rg-speed legend { padding: 0; margin-bottom: 8px; font-size: 13.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ec-soft); }
+.rg-x:hover { background: var(--panel-2); }
+.rg-lbl { margin: 6px 0 0; font-size: 13.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-soft); }
+.rg-note { margin: 0; font-size: 14.5px; color: var(--text-soft); }
+.rg-grid { gap: 8px; }
+.rg-grid .ic-card { min-height: 96px; box-shadow: 0 0 0 2px rgba(29, 35, 80, .14); }
+.rg-grid .ic-card[aria-pressed="true"] { box-shadow: 0 0 0 4px #1D2350; }
+.rg-grid .ic-pic { width: 50px; height: 50px; }
 .rg-seg { display: flex; width: 100%; max-width: 420px; }
 .rg-seg button { flex: 1 1 0; justify-content: center; gap: 6px; }
 .rg-seg button svg { width: 22px; height: 22px; }
-.rg-card .ec-go { min-width: 140px; justify-content: center; }
-.ec-modal .eleve-card { --ec-bg: var(--panel); --ec-ink: var(--text); --ec-soft: var(--text-soft); --ec-line: var(--line-strong); --ec-on: var(--panel-2); --ec-accent: var(--text); border-radius: 24px; box-shadow: none; }
+.rg-ok { justify-self: start; min-width: 140px; justify-content: center; margin-top: 4px; padding: 0 28px; }
 @media (max-width: 599px) {
   .ec-modal { place-items: end stretch; padding: 0; }
-  .ec-sheet { width: 100%; max-height: 92dvh; border-radius: 24px 24px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px); background: var(--panel); }
+  .ec-sheet { width: 100%; max-height: 92dvh; border-radius: 24px 24px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .rg-in { padding: 16px 16px 18px; }
+  .rg-ok { justify-self: stretch; }
+  .rg-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .rg-grid .ic-card { min-height: 82px; padding: 6px 2px; border-radius: 14px; }
+  .rg-grid .ic-pic { width: 42px; height: 42px; }
+  .rg-grid .ic-card b { font-size: 12.5px; }
+  .rg-grid .ic-card small { font-size: 10.5px; }
 }
 
 /* ================================ DÉCORS ================================ */
@@ -4400,6 +4448,97 @@ const Suivi = (() => {
 })();
 
 /* ------------------------------------------------------------------
+   Les dessins des instruments, pour les choisir (première visite,
+   réglages d'une comptine, rappel sur l'accueil). Dessins originaux,
+   à plat, sur une grille de 64 × 64.
+------------------------------------------------------------------- */
+const INST_ICON = (() => {
+  const K = '#1D2350', GOLD = '#F2B53A', GOLD2 = '#FFD46B', SILVER = '#DCE1EA', WOOD = '#C8743A';
+  const svg = (body) => `<svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">${body}</svg>`;
+  // un tube de cuivre : contour sombre, puis la couleur par-dessus
+  const tube = (d, w, c = GOLD) => `<path d="${d}" fill="none" stroke="${K}" stroke-width="${w + 3.2}" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  // la famille du violon : caisse, éclisses en C, ouïes, touche, chevalet, cordier
+  const fiddle = (wood, tf, extra = '') => `<g transform="${tf}">
+    <path d="M32 21C38.5 21 42 23.5 41.5 28.5C41 31.5 37.5 32 37.5 35C37.5 37.5 42.5 38.5 43 44C43.5 52 38 57 32 57C26 57 20.5 52 21 44C21.5 38.5 26.5 37.5 26.5 35C26.5 32 23 31.5 22.5 28.5C22 23.5 25.5 21 32 21Z" fill="${wood}" stroke="${K}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M26.8 39q-1.6 3.2 0 6.4M37.2 39q1.6 3.2 0 6.4" fill="none" stroke="${K}" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M30.5 5.5h3l.7 35.5h-4.4z" fill="${K}"/>
+    <path d="M30.6 6.5v-2.5a1.4 1.4 0 0 1 2.8 0v2.5z" fill="${K}"/><circle cx="32" cy="2.9" r="2.1" fill="${K}"/>
+    <path d="M28.3 45.6h7.4" stroke="${K}" stroke-width="2" stroke-linecap="round"/>
+    <path d="M30.3 47.6h3.4l-.7 7.4h-2z" fill="${K}"/>
+    <path d="M31.4 7.5V47M32.6 7.5V47" stroke="#F6E7C8" stroke-width=".7"/>${extra}
+  </g>`;
+  const note = (x, y, c, s = 1) => `<g transform="translate(${x} ${y}) scale(${s})"><ellipse cx="-2.6" cy="9.6" rx="3.4" ry="2.6" transform="rotate(-20 -2.6 9.6)" fill="${c}" stroke="${K}" stroke-width="1.4"/><path d="M.4 9.2V-2.2c2.6 1.6 5.2 2.4 5.2 6" fill="none" stroke="${K}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+  return {
+    flute: svg(`<g transform="rotate(-35 32 32)">
+      <rect x="3" y="28" width="58" height="8" rx="4" fill="${SILVER}" stroke="${K}" stroke-width="2.2"/>
+      <path d="M6 30.4H58" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".8"/>
+      <rect x="17" y="27.5" width="2.2" height="9" rx="1" fill="${K}"/><rect x="52.5" y="27.5" width="2.2" height="9" rx="1" fill="${K}" opacity=".55"/>
+      <ellipse cx="10.5" cy="32" rx="2.6" ry="1.7" fill="${K}"/>
+      <circle cx="26" cy="32" r="2.1" fill="${K}"/><circle cx="32" cy="32" r="2.1" fill="${K}"/><circle cx="38" cy="32" r="2.1" fill="${K}"/><circle cx="44" cy="32" r="2.1" fill="${K}"/>
+    </g>`),
+    clarinette: svg(`<g transform="rotate(-32 32 32)">
+      <path d="M29.6 2.5h4.8l.7 6.5h-6.2z" fill="${K}"/>
+      <rect x="28.3" y="8.5" width="7.4" height="5.5" rx="1.6" fill="#33354F" stroke="${K}" stroke-width="2"/>
+      <rect x="28.8" y="13.5" width="6.4" height="35" rx="1.4" fill="#33354F" stroke="${K}" stroke-width="2"/>
+      <path d="M28.8 47L23.8 58.6Q32 62 40.2 58.6L35.2 47Z" fill="#33354F" stroke="${K}" stroke-width="2" stroke-linejoin="round"/>
+      <rect x="27.6" y="29.6" width="8.8" height="2.4" rx="1.2" fill="${SILVER}" stroke="${K}" stroke-width="1"/>
+      <circle cx="32" cy="19" r="1.7" fill="${SILVER}"/><circle cx="32" cy="24.2" r="1.7" fill="${SILVER}"/><circle cx="32" cy="36.4" r="1.7" fill="${SILVER}"/><circle cx="32" cy="41.6" r="1.7" fill="${SILVER}"/>
+    </g>`),
+    saxalto: svg(`${tube('M13 10C18 7.2 23.5 8.5 26 13.5', 3)}
+      ${tube('M26 13.5L27 44C27 55.5 43.5 56.5 43.5 45L43.5 37', 7)}
+      <path d="M38.8 38.5C38.4 33.6 36.6 29.6 34 26.6L53 26.6C50.4 29.6 48.6 33.6 48.2 38.5Z" fill="${GOLD}" stroke="${K}" stroke-width="2.2" stroke-linejoin="round"/>
+      <ellipse cx="43.5" cy="26.6" rx="9.5" ry="2.8" fill="${GOLD2}" stroke="${K}" stroke-width="2.2"/>
+      <path d="M8.6 12.4L13.4 9.8" stroke="${K}" stroke-width="4.2" stroke-linecap="round"/>
+      <circle cx="27.2" cy="22" r="1.9" fill="${K}"/><circle cx="27.4" cy="28" r="1.9" fill="${K}"/><circle cx="27.6" cy="34" r="1.9" fill="${K}"/><circle cx="27.8" cy="40" r="1.9" fill="${K}"/>`),
+    trompette: svg(`${tube('M20 30V38Q20 43.5 25.5 43.5H38.5Q44 43.5 44 38V30', 3.4)}
+      ${tube('M7.5 30H44', 3.4)}
+      <rect x="23.6" y="20.5" width="4.4" height="13.5" rx="1.2" fill="${GOLD}" stroke="${K}" stroke-width="1.8"/>
+      <rect x="29.8" y="20.5" width="4.4" height="13.5" rx="1.2" fill="${GOLD}" stroke="${K}" stroke-width="1.8"/>
+      <rect x="36" y="20.5" width="4.4" height="13.5" rx="1.2" fill="${GOLD}" stroke="${K}" stroke-width="1.8"/>
+      <rect x="22.8" y="17.4" width="6" height="3.4" rx="1.4" fill="${GOLD2}" stroke="${K}" stroke-width="1.6"/>
+      <rect x="29" y="17.4" width="6" height="3.4" rx="1.4" fill="${GOLD2}" stroke="${K}" stroke-width="1.6"/>
+      <rect x="35.2" y="17.4" width="6" height="3.4" rx="1.4" fill="${GOLD2}" stroke="${K}" stroke-width="1.6"/>
+      <path d="M43.5 26.4C49.6 26 54 22 58.5 16.5L58.5 43.5C54 38 49.6 34 43.5 33.6Z" fill="${GOLD}" stroke="${K}" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M3 30H8" stroke="${K}" stroke-width="3.8" stroke-linecap="round"/>`),
+    trombone: svg(`${tube('M42 37H13Q8 37 8 42Q8 47 13 47H42', 3)}
+      ${tube('M42 37H51Q56 37 56 32V29Q56 24 51 24H27', 3)}
+      <path d="M28 21.4C22.6 21 17.4 16.8 12 11L12 37C17.4 31.2 22.6 27 28 26.6Z" fill="${GOLD}" stroke="${K}" stroke-width="2.2" stroke-linejoin="round"/>
+      <rect x="38.5" y="34.2" width="3.4" height="15.6" rx="1.4" fill="${GOLD2}" stroke="${K}" stroke-width="1.6"/>
+      <path d="M42 47H49" stroke="${K}" stroke-width="3.6" stroke-linecap="round"/>`),
+    cor: svg(`${tube('M27 15A16.5 16.5 0 1 1 26.9 15', 5.6)}
+      ${tube('M27 23.5A8.5 8.5 0 1 1 26.9 23.5', 3.2)}
+      <path d="M36.5 43C42.5 47.5 45.5 51.5 47 57.5L59.5 49C53.8 47.6 49.4 44.5 44.4 38.8Z" fill="${GOLD}" stroke="${K}" stroke-width="2.2" stroke-linejoin="round"/>
+      ${tube('M13.5 21.5L7.5 15.5', 2.4)}
+      <circle cx="22.5" cy="15.5" r="2.6" fill="${GOLD2}" stroke="${K}" stroke-width="1.6"/><circle cx="28.5" cy="14.6" r="2.6" fill="${GOLD2}" stroke="${K}" stroke-width="1.6"/><circle cx="34.5" cy="15.8" r="2.6" fill="${GOLD2}" stroke="${K}" stroke-width="1.6"/>`),
+    violon: svg(fiddle(WOOD, 'rotate(28 32 32) translate(32 32) scale(.86) translate(-32 -30)')),
+    alto: svg(fiddle('#A9592C', 'rotate(28 32 32) translate(32 32) scale(1) translate(-32 -30)')),
+    // le violoncelle : debout sur sa pique, la caisse plus grande par rapport au manche
+    violoncelle: svg(fiddle('#9A4E27', 'translate(32 .6) scale(1.04) translate(-32 -.8)', '<path d="M32 57v4" stroke="#1D2350" stroke-width="2.2" stroke-linecap="round"/>')),
+    piano: svg(`<rect x="5" y="13" width="54" height="37" rx="5" fill="${K}"/>
+      <rect x="9" y="17" width="46" height="4" rx="2" fill="${GOLD}"/>
+      <rect x="8.5" y="24" width="47" height="22.5" rx="2" fill="#fff"/>
+      <path d="M15.2 24V46.5M21.9 24V46.5M28.6 24V46.5M35.4 24V46.5M42.1 24V46.5M48.8 24V46.5" stroke="${K}" stroke-width="1.3"/>
+      <rect x="13.1" y="24" width="4.2" height="13.5" rx="1" fill="${K}"/><rect x="19.8" y="24" width="4.2" height="13.5" rx="1" fill="${K}"/>
+      <rect x="33.3" y="24" width="4.2" height="13.5" rx="1" fill="${K}"/><rect x="40" y="24" width="4.2" height="13.5" rx="1" fill="${K}"/><rect x="46.7" y="24" width="4.2" height="13.5" rx="1" fill="${K}"/>`),
+    xylophone: svg(`<path d="M7 25L57 31.5M7 47L57 40.5" stroke="#8A5A3C" stroke-width="3" stroke-linecap="round"/>
+      ${['#E5484D', '#F2803C', '#F5C32C', '#4CAF5A', '#1FA7A0', '#3E6FD8', '#8B57C9'].map((c, k) => `<rect x="${(8.6 + k * 6.9).toFixed(1)}" y="${(19 + k * 1.9).toFixed(1)}" width="5.4" height="${(34 - k * 3.8).toFixed(1)}" rx="1.6" fill="${c}" stroke="${K}" stroke-width="1.5"/>`).join('')}
+      <path d="M42 58.5L55 45M33 60L49 47.5" stroke="#8A5A3C" stroke-width="2.4" stroke-linecap="round"/>
+      <circle cx="55.6" cy="44.4" r="3.6" fill="${GOLD2}" stroke="${K}" stroke-width="1.6"/><circle cx="49.6" cy="46.9" r="3.6" fill="${GOLD2}" stroke="${K}" stroke-width="1.6"/>`),
+    voix: svg(`<circle cx="27" cy="36" r="17" fill="#FFD7AE" stroke="${K}" stroke-width="2.2"/>
+      <path d="M10.6 32C11.6 21.4 19.4 17.4 27.6 17.6C35.6 18 41.8 22.4 43 30.6C38.2 25.6 31.2 23.6 24.2 25.4C19 26.6 14.8 28.8 10.6 32Z" fill="#8A5A3C" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M18.4 34.4q2.6-2.6 5.2 0M30.4 34.4q2.6-2.6 5.2 0" fill="none" stroke="${K}" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="17.6" cy="41" r="2.6" fill="#F59AA0"/><circle cx="36.4" cy="41" r="2.6" fill="#F59AA0"/>
+      <ellipse cx="27" cy="45" rx="3.8" ry="4.6" fill="${K}"/><ellipse cx="27" cy="47.4" rx="2.3" ry="1.6" fill="#E5484D"/>
+      ${note(50, 9, '#3E6FD8')}${note(57, 26, '#E5484D', 0.8)}`),
+    none: svg(`<ellipse cx="22" cy="46" rx="8.4" ry="6.2" transform="rotate(-20 22 46)" fill="${K}"/>
+      <rect x="28" y="11" width="3.4" height="35" rx="1.2" fill="${K}"/>
+      <path d="M31.4 11C34.2 17.4 42.6 19.6 40.6 30C39.6 25 35.6 22 31.4 21Z" fill="${K}"/>
+      <circle cx="47" cy="41" r="11" fill="#E5484D" stroke="${K}" stroke-width="2"/>
+      <path d="M43 38.2q0-4.2 4-4.2t4 3.6c0 3-3.6 3.2-3.6 6.2" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="47.4" cy="47.6" r="1.7" fill="#fff"/>`),
+  };
+})();
+
+/* ------------------------------------------------------------------
    Les Notes Envolées — navigation, accueil, jeu
 ------------------------------------------------------------------- */
 (() => {
@@ -4550,78 +4689,119 @@ const Suivi = (() => {
   }
 
   /* ---------------- l'élève : son prénom et son instrument ----------------
-     Une carte en haut de l'accueil, ouverte tant que l'instrument n'a pas été choisi (première visite), puis repliée
-     en une ligne (« Bonjour, Léa ! · Flûte · Changer »). Dans une comptine ouverte directement (lien partagé par le
-     professeur), la même carte s'ouvre par-dessus tant que l'instrument n'a jamais été choisi. Le prénom est
-     facultatif ; quand le suivi est branché, il part avec les résultats (voir les mentions légales). */
+     Première visite (sur l'accueil, ou dans une comptine ouverte directement par un lien) : deux écrans, en plein
+     écran sur téléphone. « Comment t'appelles-tu ? » (facultatif), puis « Quel est ton instrument ? » : un dessin par
+     instrument, on le touche, c'est choisi. Ensuite, une ligne le rappelle en haut de l'accueil (« Bonjour, Léa ! »,
+     son instrument, « Changer »), et dans une comptine le bouton à son nom ouvre les réglages (instrument, vitesse).
+     Quand le suivi est branché, le prénom part avec les résultats (voir les mentions légales). */
   const INST_LIST = ['flute', 'clarinette', 'saxalto', 'trompette', 'trombone', 'cor', 'violon', 'alto', 'violoncelle', 'piano', 'xylophone', 'voix', 'none'];
-  const INST_TILE = {
-    flute: ['Flûte', ''], clarinette: ['Clarinette', 'en si♭'], saxalto: ['Saxophone', 'alto, en mi♭'], trompette: ['Trompette', 'en si♭'],
-    trombone: ['Trombone', ''], cor: ['Cor', 'en fa'], violon: ['Violon', ''], alto: ['Alto', ''], violoncelle: ['Violoncelle', ''],
-    piano: ['Piano', ''], xylophone: ['Xylophone', ''], voix: ['Voix', 'je chante'], none: ['Autre', 'instrument en do'],
-  };
-  const instShort = (k = settings.inst) => (INST_TILE[k] || INST_TILE.none)[0];
-  const instTiles = (kind) => INST_LIST.map((k) => {
-    const [t, s] = INST_TILE[k];
-    const on = settings.choisi && settings.inst === k;
-    return `<label class="ec-tile"><input type="radio" name="ec-inst-${kind}" value="${k}"${on ? ' checked' : ''}><span><b>${t}</b>${s ? `<small>${s}</small>` : ''}</span></label>`;
+  // nom court (bouton d'une comptine, rappel de l'accueil) ; sur les cartes à dessin, une précision si besoin
+  const INST_TILE = { flute: 'Flûte', clarinette: 'Clarinette', saxalto: 'Saxophone', trompette: 'Trompette', trombone: 'Trombone', cor: 'Cor', violon: 'Violon', alto: 'Alto', violoncelle: 'Violoncelle', piano: 'Piano', xylophone: 'Xylophone', voix: 'Voix', none: 'Autre' };
+  const INST_CARD = { saxalto: ['Saxophone', 'alto'], voix: ['Je chante', 'avec ma voix'], none: ['Autre', 'instrument'] };
+  const instShort = (k = settings.inst) => INST_TILE[k] || INST_TILE.none;
+  const instPic = (k = settings.inst) => (typeof INST_ICON !== 'undefined' && (INST_ICON[k] || INST_ICON.none)) || ICON.note;
+  // les cartes à dessin (l'instrument déjà choisi est marqué)
+  const instCards = () => INST_LIST.map((k) => {
+    const [t, sub] = INST_CARD[k] || [INST_TILE[k], ''];
+    return `<button class="ic-card" type="button" data-k="${k}" aria-pressed="${settings.choisi && settings.inst === k}"><span class="ic-pic">${instPic(k)}</span><b>${t}</b>${sub ? `<small>${sub}</small>` : ''}</button>`;
   }).join('');
-  const helloHtml = () => (settings.prenom ? `Bonjour, <b>${esc(settings.prenom)}</b> !` : 'Bonjour !');
-  function eleveHtml(kind) {
-    // kind : 'home' (accueil) ou 'modal' (par-dessus une comptine)
-    const open = kind === 'modal' || !settings.choisi;
-    const why = Suivi.configured ? 'Facultatif. Ton professeur le verra avec tes résultats.' : 'Facultatif. Il reste sur cet appareil.';
-    const tiles = instTiles(kind);
-    return `<section class="eleve-card${open ? ' is-open' : ''}" data-kind="${kind}" aria-label="Toi et ton instrument">
+  const helloHtml = () => (settings.prenom ? `Bonjour, <b>${esc(settings.prenom)}</b>${NB}!` : `Bonjour${NB}!`);
+  // le rappel, en haut de l'accueil des deux versions
+  function eleveHtml() {
+    return `<section class="eleve-card" aria-label="Toi et ton instrument">
       <div class="ec-sum">
-        <p class="ec-hello">${helloHtml()}</p>
-        <p class="ec-inst">${ICON.note}<span>${esc(instShort())}</span></p>
+        <span class="ec-pic">${instPic()}</span>
+        <p class="ec-txt"><span class="ec-hello">${helloHtml()}</span><span class="ec-inst">${esc(instShort())}</span></p>
         <button class="ec-edit" type="button">Changer</button>
       </div>
-      <form class="ec-form" novalidate>
-        <h2 class="ec-title">${settings.choisi ? 'Toi et ton instrument' : 'Bienvenue !'}</h2>
-        <div class="ec-name">
-          <label for="ec-prenom-${kind}">Ton prénom</label>
-          <input type="text" id="ec-prenom-${kind}" name="prenom" maxlength="30" autocomplete="given-name" autocapitalize="words" spellcheck="false" placeholder="Écris ton prénom" value="${esc(settings.prenom)}">
-          <p class="ec-why">${why}</p>
-        </div>
-        <fieldset class="ec-insts"><legend>Ton instrument</legend><div class="ec-grid">${tiles}</div></fieldset>
-        <p class="ec-note" aria-live="polite">${settings.choisi ? esc(instNote()) : 'Touche ton instrument : la page jouera dans son ton, avec son vrai son.'}</p>
-        <button class="ec-go btn-big" type="submit"${settings.choisi ? '' : ' disabled'}><span>C’est parti !</span></button>
-      </form>
     </section>`;
   }
-  // onDone : l'élève a validé (la carte se replie, ou la fenêtre se ferme)
-  function bindEleve(card, onDone) {
+  function eleveRefresh(card) {
+    if (!card || !document.contains(card)) return;
+    card.querySelector('.ec-pic').innerHTML = instPic();
+    card.querySelector('.ec-hello').innerHTML = helloHtml();
+    card.querySelector('.ec-inst').textContent = instShort();
+  }
+  // « Changer » : les deux écrans de la première visite, déjà remplis
+  function bindEleve(card) {
     if (!card) return;
-    const form = card.querySelector('.ec-form'), go = card.querySelector('.ec-go'), note = card.querySelector('.ec-note');
-    const name = card.querySelector('input[name="prenom"]');
+    card.querySelector('.ec-edit').addEventListener('click', () => onboard({ onDone: () => eleveRefresh(card) }));
+  }
+  // la première visite : à l'accueil comme dans une comptine ouverte directement, tant que l'instrument n'est pas choisi
+  function welcome(onDone) { if (!settings.choisi) onboard({ onDone }); }
+  function onboard({ onDone } = {}) {
+    if (app.querySelector('.onb')) return;
+    const why = Suivi.configured ? 'Ce n’est pas obligatoire. Ton professeur le verra avec tes résultats.' : 'Ce n’est pas obligatoire. Il reste sur cet appareil.';
+    const wrap = document.createElement('div');
+    wrap.className = 'onb';
+    wrap.setAttribute('role', 'dialog');
+    wrap.setAttribute('aria-modal', 'true');
+    wrap.innerHTML = `<div class="onb-in">
+      <div class="onb-top"><span class="onb-brand">Les Notes Envolées</span><span class="onb-dots" aria-hidden="true"><i class="on"></i><i></i></span></div>
+      <form class="onb-step onb-s1" novalidate>
+        <h2 class="onb-t" id="onb-t1" tabindex="-1">Bonjour !<span>Comment t’appelles-tu ?</span></h2>
+        <input class="onb-name" name="prenom" type="text" maxlength="30" autocomplete="given-name" autocapitalize="words" spellcheck="false" enterkeyhint="next" placeholder="Ton prénom" aria-label="Ton prénom" value="${esc(settings.prenom)}">
+        <p class="onb-why">${why}</p>
+        <button class="btn-big onb-next" type="submit"><span>Suivant</span>${ICON.next}</button>
+      </form>
+      <section class="onb-step onb-s2" hidden aria-labelledby="onb-t2">
+        <h2 class="onb-t" id="onb-t2" tabindex="-1"></h2>
+        <p class="onb-sub">Touche son dessin.</p>
+        <div class="ic-grid">${instCards()}</div>
+        <button class="onb-back" type="button">${ICON.back}<span>Mon prénom</span></button>
+      </section>
+    </div>`;
+    // la page derrière ne réagit plus, et ne défile plus
+    const behind = [...app.children];
+    behind.forEach((c) => { c.inert = true; });
+    app.appendChild(wrap);
+    document.documentElement.classList.add('onb-open');
+    const s1 = wrap.querySelector('.onb-s1'), s2 = wrap.querySelector('.onb-s2'), name = wrap.querySelector('.onb-name');
+    const t2 = wrap.querySelector('#onb-t2'), dots = wrap.querySelectorAll('.onb-dots i');
+    const step = (k) => {
+      s1.hidden = k !== 1;
+      s2.hidden = k !== 2;
+      dots.forEach((d, i) => d.classList.toggle('on', i === k - 1));
+      wrap.setAttribute('aria-labelledby', k === 1 ? 'onb-t1' : 'onb-t2');
+      wrap.scrollTop = 0;
+      if (k === 2) {
+        t2.innerHTML = settings.prenom ? `${esc(settings.prenom)}, quel est ton instrument${NB}?` : `Quel est ton instrument${NB}?`;
+        t2.focus({ preventScroll: true });
+      } else if (FINE.matches) name.focus({ preventScroll: true }); // au clavier, on écrit tout de suite (pas sur téléphone : le clavier cacherait l'écran)
+      else wrap.querySelector('#onb-t1').focus({ preventScroll: true });
+    };
     const saveName = () => {
       const v = cleanName(name.value);
       if (v !== settings.prenom) { settings.prenom = v; save(SET_KEY, settings); }
     };
-    name.addEventListener('change', saveName);
-    name.addEventListener('blur', saveName);
-    name.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveName(); name.blur(); } });
-    card.querySelectorAll('.ec-tile input').forEach((r) => r.addEventListener('change', () => {
-      settings.choisi = true;
-      setInst(r.value); // enregistre aussi « choisi »
-      note.textContent = instNote();
-      go.disabled = false;
-    }));
-    card.querySelector('.ec-edit').addEventListener('click', () => {
-      card.classList.add('is-open');
-      card.querySelector('.ec-title').textContent = 'Toi et ton instrument';
-    });
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      saveName();
-      if (!settings.choisi) { note.textContent = 'Choisis d’abord ton instrument.'; return; }
-      card.querySelector('.ec-hello').innerHTML = helloHtml();
-      card.querySelector('.ec-inst span').textContent = instShort();
-      card.classList.remove('is-open');
+    s1.addEventListener('submit', (e) => { e.preventDefault(); saveName(); name.blur(); step(2); });
+    wrap.querySelector('.onb-back').addEventListener('click', () => step(1));
+    let done = false;
+    const onKey = (e) => {
+      // Échap : seulement quand l'instrument est déjà choisi (« Changer ») ; à la première visite, il faut le choisir
+      if (e.key === 'Escape' && settings.choisi) { e.preventDefault(); close(); }
+    };
+    function close() {
+      if (done) return;
+      done = true;
+      document.removeEventListener('keydown', onKey, true);
+      behind.forEach((c) => { c.inert = false; });
+      document.documentElement.classList.remove('onb-open');
+      wrap.classList.add('is-out');
+      setTimeout(() => wrap.remove(), RM.matches ? 0 : 220);
       if (onDone) onDone();
-    });
+    }
+    document.addEventListener('keydown', onKey, true);
+    wrap.querySelectorAll('.ic-card').forEach((b) => b.addEventListener('click', () => {
+      if (done) return;
+      saveName();
+      wrap.querySelectorAll('.ic-card').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      b.classList.add('is-picked');
+      settings.choisi = true;
+      setInst(b.dataset.k);
+      setTimeout(close, RM.matches ? 0 : 340);
+    }));
+    step(1);
   }
   /* Les réglages d'une comptine (le bouton à son nom, en haut) : l'instrument et la vitesse (la tortue : la page joue
      plus lentement ; au niveau 2, le décompte et la mesure aussi). La tortue reste dessinée sur le bouton tant que la
@@ -4634,30 +4814,28 @@ const Suivi = (() => {
     if (ic) ic.hidden = !G.slow;
   }
   function reglages() {
-    if (!G || app.querySelector('.ec-modal')) return;
+    if (!G || app.querySelector('.ec-modal, .onb')) return;
     const wrap = document.createElement('div');
     wrap.className = 'ec-modal rg-modal';
     wrap.innerHTML = `<div class="ec-sheet" role="dialog" aria-modal="true" aria-labelledby="rg-title">
-      <section class="eleve-card is-open rg-card">
-        <div class="ec-form">
-          <div class="rg-head"><h2 class="ec-title" id="rg-title">Réglages</h2><button class="rg-x" type="button" aria-label="Fermer">${ICON.close}</button></div>
-          <fieldset class="ec-insts"><legend>Ton instrument</legend><div class="ec-grid">${instTiles('rg')}</div></fieldset>
-          <p class="ec-note" aria-live="polite">${esc(instNote())}</p>
-          <fieldset class="rg-speed"><legend>Vitesse</legend>
-            <div class="seg rg-seg" role="radiogroup" aria-label="Vitesse">
-              <button type="button" role="radio" data-slow="0" aria-checked="${!G.slow}">Normale</button>
-              <button type="button" role="radio" data-slow="1" aria-checked="${G.slow}">${ICON.turtle}<span>Lente</span></button>
-            </div>
-            <p class="ec-why">Lente${NB}: la page joue plus lentement${G.level === 2 ? ', et compte plus lentement avant que tu joues' : ''}.</p>
-          </fieldset>
-          <button class="ec-go btn-big" type="button"><span>OK</span></button>
+      <div class="rg-in">
+        <div class="rg-head"><h2 class="rg-title" id="rg-title">Réglages</h2><button class="rg-x" type="button" aria-label="Fermer">${ICON.close}</button></div>
+        <p class="rg-lbl">Vitesse</p>
+        <div class="seg rg-seg" role="radiogroup" aria-label="Vitesse">
+          <button type="button" role="radio" data-slow="0" aria-checked="${!G.slow}">Normale</button>
+          <button type="button" role="radio" data-slow="1" aria-checked="${G.slow}">${ICON.turtle}<span>Lente</span></button>
         </div>
-      </section>
+        <p class="rg-note">Lente : la page joue plus lentement${G.level === 2 ? ', et compte plus lentement avant que tu joues' : ''}.</p>
+        <p class="rg-lbl">Ton instrument</p>
+        <div class="ic-grid rg-grid">${instCards()}</div>
+        <p class="rg-note rg-inst-note" aria-live="polite">${esc(instNote())}</p>
+        <button class="btn-big rg-ok" type="button"><span>OK</span></button>
+      </div>
     </div>`;
     const behind = [...app.children];
     behind.forEach((c) => { c.inert = true; });
     app.appendChild(wrap);
-    const sheet = wrap.querySelector('.ec-sheet'), note = wrap.querySelector('.ec-note');
+    const sheet = wrap.querySelector('.ec-sheet'), note = wrap.querySelector('.rg-inst-note');
     sheet.tabIndex = -1;
     sheet.focus({ preventScroll: true });
     const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
@@ -4670,35 +4848,17 @@ const Suivi = (() => {
     document.addEventListener('keydown', onKey, true);
     wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); }); // toucher à côté : on ferme
     wrap.querySelector('.rg-x').addEventListener('click', close);
-    wrap.querySelector('.ec-go').addEventListener('click', close);
-    wrap.querySelectorAll('.ec-tile input').forEach((r) => r.addEventListener('change', () => {
+    wrap.querySelector('.rg-ok').addEventListener('click', close);
+    wrap.querySelectorAll('.ic-card').forEach((b) => b.addEventListener('click', () => {
+      wrap.querySelectorAll('.ic-card').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
       settings.choisi = true;
-      setInst(r.value);
+      setInst(b.dataset.k);
       note.textContent = instNote();
     }));
     wrap.querySelectorAll('.rg-seg [role="radio"]').forEach((b) => b.addEventListener('click', () => {
       setSlow(b.dataset.slow === '1');
       wrap.querySelectorAll('.rg-seg [role="radio"]').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
     }));
-  }
-  // dans une comptine ouverte directement, tant que l'instrument n'a jamais été choisi
-  function eleveModal() {
-    if (app.querySelector('.ec-modal')) return;
-    const wrap = document.createElement('div');
-    wrap.className = 'ec-modal';
-    wrap.innerHTML = `<div class="ec-sheet" role="dialog" aria-modal="true" aria-label="Toi et ton instrument">${eleveHtml('modal')}</div>`;
-    // la comptine derrière ne réagit plus (ni toucher, ni clavier) tant que la carte est ouverte
-    const behind = [...app.children];
-    behind.forEach((c) => { c.inert = true; });
-    app.appendChild(wrap);
-    const sheet = wrap.querySelector('.ec-sheet');
-    sheet.tabIndex = -1;
-    sheet.focus({ preventScroll: true });
-    bindEleve(wrap.querySelector('.eleve-card'), () => {
-      behind.forEach((c) => { c.inert = false; });
-      wrap.remove();
-      if (G && view === 'song') { idleHint(); if (el.bGo) el.bGo.focus({ preventScroll: true }); }
-    });
   }
 
   /* ---------------- la justesse ----------------
@@ -4888,7 +5048,10 @@ const Suivi = (() => {
     D.leave();
     D = PAPER;
     setWorld(null);
-    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, decorFor, GO, eleveHtml, bindEleve, HOWTO })) return;
+    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, decorFor, GO, eleveHtml, bindEleve, HOWTO })) {
+      welcome(() => eleveRefresh(app.querySelector('.eleve-card')));
+      return;
+    }
     const medals = LIB.map((s, i) => {
       const best = +records[s.id] || 0, best2 = +records[s.id + '@2'] || 0;
       const badge = best ? `<span class="medal-badge" aria-label="Record : ${best} étoile${best > 1 ? 's' : ''}">${[1, 2, 3].map((k) => star(k <= best, 15)).join('')}</span>` : '';
@@ -4913,7 +5076,7 @@ const Suivi = (() => {
           <p class="eyebrow">Jeu d’oreille · ${LIB.length} comptines en do majeur</p>
           <h1 class="home-title"><span class="w">Les Notes</span><span class="w">Envol<span class="lift c1">é</span><span class="lift c2">e</span><span class="lift c3">s</span><span class="flyaway" aria-hidden="true"><i style="--c:var(--n-do);--dl:-.3s"></i><i style="--c:var(--n-sol);--dl:-1.1s;translate:0 -.25em"></i><i style="--c:var(--n-la);--dl:-1.9s;translate:0 -.55em"></i></span></span></h1>
           <p class="home-lede">Dans chaque comptine, les notes se sont envolées. <strong>Seule la première note de chaque phrase est restée.</strong> Joue-la sur ton instrument (ou chante-la), puis retrouve les suivantes à l’oreille : la page t’écoute avec le micro.</p>
-          <div class="home-eleve">${eleveHtml('home')}${micNote}</div>
+          <div class="home-eleve">${eleveHtml()}${micNote}</div>
         </header>
         <section class="score" id="score" aria-label="Les comptines, de la plus facile à la plus difficile">
           <svg class="staff" aria-hidden="true"></svg>
@@ -4935,16 +5098,15 @@ const Suivi = (() => {
           : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Le micro s’allume tout seul dans une comptine (le navigateur demande d’abord l’autorisation). Sur ordinateur, la barre d’espace lance «${NB}${GO}${NB}». Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0). Reconnaissance des noms chantés : modèles tirés des voix de synthèse Kokoro (licence Apache 2.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
       </div>
     </main>`;
-    bindEleve(app.querySelector('.eleve-card'), () => {
-      const s = app.querySelector('#score');
-      if (s) s.scrollIntoView({ behavior: RM.matches ? 'auto' : 'smooth', block: 'start' });
-    });
+    const card = app.querySelector('.eleve-card');
+    bindEleve(card);
+    welcome(() => eleveRefresh(card));
     layoutMedals();
   }
 
   // « Comment jouer », sur l'accueil des deux versions
   const HOWTO = [
-    'Écris ton prénom et choisis ton instrument, en haut de la page. Les noms de notes sont ceux de ta partition : la page joue dans le ton de ton instrument, avec son vrai son.',
+    'La première fois, la page te demande ton prénom et ton instrument : touche son dessin. Pour en changer, touche « Changer » en haut de l’accueil, ou le nom de ton instrument en haut d’une comptine. Les noms de notes sont ceux de ta partition : la page joue dans le ton de ton instrument, avec son vrai son.',
     'Choisis une comptine. Les plus faciles sont au début du chemin.',
     'Choisis ton exercice. Niveau 1, les notes : retrouve-les à ton rythme. Niveau 2, notes et rythme : joue en mesure après le décompte. Phrase par phrase, avec de l’aide, ou toute la comptine d’un coup, sans aide : la page te ramène ensuite sur les phrases à revoir.',
     'Touche « À toi de jouer ! » : la page joue la phrase, compte « 1, 2, 3, 4 », puis c’est à toi. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. La page t’écoute au micro. Avec la voix, chante chaque note en disant son nom.',
@@ -5155,7 +5317,7 @@ const Suivi = (() => {
     choixDit();
     idleHint();
     // comptine ouverte directement (lien partagé), instrument jamais choisi : on le demande d'abord
-    if (!settings.choisi) eleveModal();
+    welcome(() => { if (G && view === 'song') { idleHint(); if (el.bGo) el.bGo.focus({ preventScroll: true }); } });
   }
 
   /* L'exercice choisi, en une phrase, sous les deux choix (niveau ; phrase par phrase ou toute la comptine) */
@@ -6363,7 +6525,7 @@ const Suivi = (() => {
 
   document.addEventListener('keydown', (e) => {
     if (view !== 'song' || !G || e.metaKey || e.ctrlKey || e.altKey) return;
-    if (app.querySelector('.ec-modal')) return; // la carte de l'élève est ouverte par-dessus
+    if (app.querySelector('.ec-modal, .onb')) return; // la première visite ou les réglages, par-dessus
     if (e.target.closest && e.target.closest('select, input')) return;
     if (e.code === 'Space' && !(e.target.closest && e.target.closest('button, a'))) {
       e.preventDefault();

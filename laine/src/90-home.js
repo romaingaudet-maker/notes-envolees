@@ -323,7 +323,7 @@ const HomeSkin = (() => {
           </div>
         </div>
       </section>
-      <section class="lh-eleve" id="lh-eleve" aria-label="Toi et ton instrument">${eleveHtml('home')}${micNote}</section>
+      <section class="lh-eleve" id="lh-eleve" aria-label="Toi et ton instrument">${eleveHtml()}${micNote}</section>
       <section class="lh-path" id="lh-path" aria-label="Les comptines, de la plus facile à la plus difficile">
         <header class="lh-path-head">
           <h2>Le fil des comptines</h2>
@@ -354,13 +354,8 @@ const HomeSkin = (() => {
       const p = app.querySelector('#lh-path');
       p.scrollIntoView({ behavior: RM.matches ? 'auto' : 'smooth', block: 'start' });
     };
-    bindEleve(app.querySelector('.eleve-card'), toPath);
-    // instrument pas encore choisi : « Choisir une comptine » mène d'abord à la carte de l'élève
-    app.querySelector('#lh-go').addEventListener('click', () => {
-      const open = app.querySelector('.eleve-card.is-open');
-      if (open) open.scrollIntoView({ behavior: RM.matches ? 'auto' : 'smooth', block: 'start' });
-      else toPath();
-    });
+    bindEleve(app.querySelector('.eleve-card'));
+    app.querySelector('#lh-go').addEventListener('click', toPath);
     layoutHoops();
     // les portraits : le fichier, ou (s'il manque) fabriqué ici
     queue = [];

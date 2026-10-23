@@ -258,23 +258,34 @@
 @media (min-width: 900px) and (max-height: 760px) { .choix-dit { font-size: 13.5px; } }
 @media (max-width: 899px) and (max-height: 700px) { .choix-dit { display: none; } }
 
-/* ============ par-dessus une comptine : l'élève choisit d'abord son instrument ============ */
+/* ============ les réglages d'une comptine : l'instrument et la vitesse ============ */
 .ec-modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(12, 10, 30, .55); }
-.ec-sheet { width: min(640px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; border-radius: 24px; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); }
+.ec-sheet { width: min(720px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; border-radius: 24px; background: var(--panel); box-shadow: 0 24px 60px rgba(0, 0, 0, .35); }
 .ec-sheet:focus { outline: none; }
-/* les réglages d'une comptine : l'instrument et la vitesse */
+.rg-in { display: grid; gap: 10px; padding: 18px 20px 22px; color: var(--text); }
 .rg-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rg-title { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(24px, 3vw, 30px); line-height: 1.05; }
 .rg-x { flex: none; width: 42px; height: 42px; margin: -6px -8px -6px 0; border: 0; border-radius: 50%; background: transparent; color: inherit; display: grid; place-items: center; cursor: pointer; }
 .rg-x svg { width: 24px; height: 24px; }
-.rg-x:hover { background: var(--ec-on); }
-.rg-speed { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 8px; }
-.rg-speed legend { padding: 0; margin-bottom: 8px; font-size: 13.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ec-soft); }
+.rg-x:hover { background: var(--panel-2); }
+.rg-lbl { margin: 6px 0 0; font-size: 13.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-soft); }
+.rg-note { margin: 0; font-size: 14.5px; color: var(--text-soft); }
+.rg-grid { gap: 8px; }
+.rg-grid .ic-card { min-height: 96px; box-shadow: 0 0 0 2px rgba(29, 35, 80, .14); }
+.rg-grid .ic-card[aria-pressed="true"] { box-shadow: 0 0 0 4px #1D2350; }
+.rg-grid .ic-pic { width: 50px; height: 50px; }
 .rg-seg { display: flex; width: 100%; max-width: 420px; }
 .rg-seg button { flex: 1 1 0; justify-content: center; gap: 6px; }
 .rg-seg button svg { width: 22px; height: 22px; }
-.rg-card .ec-go { min-width: 140px; justify-content: center; }
-.ec-modal .eleve-card { --ec-bg: var(--panel); --ec-ink: var(--text); --ec-soft: var(--text-soft); --ec-line: var(--line-strong); --ec-on: var(--panel-2); --ec-accent: var(--text); border-radius: 24px; box-shadow: none; }
+.rg-ok { justify-self: start; min-width: 140px; justify-content: center; margin-top: 4px; padding: 0 28px; }
 @media (max-width: 599px) {
   .ec-modal { place-items: end stretch; padding: 0; }
-  .ec-sheet { width: 100%; max-height: 92dvh; border-radius: 24px 24px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px); background: var(--panel); }
+  .ec-sheet { width: 100%; max-height: 92dvh; border-radius: 24px 24px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .rg-in { padding: 16px 16px 18px; }
+  .rg-ok { justify-self: stretch; }
+  .rg-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .rg-grid .ic-card { min-height: 82px; padding: 6px 2px; border-radius: 14px; }
+  .rg-grid .ic-pic { width: 42px; height: 42px; }
+  .rg-grid .ic-card b { font-size: 12.5px; }
+  .rg-grid .ic-card small { font-size: 10.5px; }
 }

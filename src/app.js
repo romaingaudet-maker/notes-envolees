@@ -149,78 +149,119 @@
   }
 
   /* ---------------- l'élève : son prénom et son instrument ----------------
-     Une carte en haut de l'accueil, ouverte tant que l'instrument n'a pas été choisi (première visite), puis repliée
-     en une ligne (« Bonjour, Léa ! · Flûte · Changer »). Dans une comptine ouverte directement (lien partagé par le
-     professeur), la même carte s'ouvre par-dessus tant que l'instrument n'a jamais été choisi. Le prénom est
-     facultatif ; quand le suivi est branché, il part avec les résultats (voir les mentions légales). */
+     Première visite (sur l'accueil, ou dans une comptine ouverte directement par un lien) : deux écrans, en plein
+     écran sur téléphone. « Comment t'appelles-tu ? » (facultatif), puis « Quel est ton instrument ? » : un dessin par
+     instrument, on le touche, c'est choisi. Ensuite, une ligne le rappelle en haut de l'accueil (« Bonjour, Léa ! »,
+     son instrument, « Changer »), et dans une comptine le bouton à son nom ouvre les réglages (instrument, vitesse).
+     Quand le suivi est branché, le prénom part avec les résultats (voir les mentions légales). */
   const INST_LIST = ['flute', 'clarinette', 'saxalto', 'trompette', 'trombone', 'cor', 'violon', 'alto', 'violoncelle', 'piano', 'xylophone', 'voix', 'none'];
-  const INST_TILE = {
-    flute: ['Flûte', ''], clarinette: ['Clarinette', 'en si♭'], saxalto: ['Saxophone', 'alto, en mi♭'], trompette: ['Trompette', 'en si♭'],
-    trombone: ['Trombone', ''], cor: ['Cor', 'en fa'], violon: ['Violon', ''], alto: ['Alto', ''], violoncelle: ['Violoncelle', ''],
-    piano: ['Piano', ''], xylophone: ['Xylophone', ''], voix: ['Voix', 'je chante'], none: ['Autre', 'instrument en do'],
-  };
-  const instShort = (k = settings.inst) => (INST_TILE[k] || INST_TILE.none)[0];
-  const instTiles = (kind) => INST_LIST.map((k) => {
-    const [t, s] = INST_TILE[k];
-    const on = settings.choisi && settings.inst === k;
-    return `<label class="ec-tile"><input type="radio" name="ec-inst-${kind}" value="${k}"${on ? ' checked' : ''}><span><b>${t}</b>${s ? `<small>${s}</small>` : ''}</span></label>`;
+  // nom court (bouton d'une comptine, rappel de l'accueil) ; sur les cartes à dessin, une précision si besoin
+  const INST_TILE = { flute: 'Flûte', clarinette: 'Clarinette', saxalto: 'Saxophone', trompette: 'Trompette', trombone: 'Trombone', cor: 'Cor', violon: 'Violon', alto: 'Alto', violoncelle: 'Violoncelle', piano: 'Piano', xylophone: 'Xylophone', voix: 'Voix', none: 'Autre' };
+  const INST_CARD = { saxalto: ['Saxophone', 'alto'], voix: ['Je chante', 'avec ma voix'], none: ['Autre', 'instrument'] };
+  const instShort = (k = settings.inst) => INST_TILE[k] || INST_TILE.none;
+  const instPic = (k = settings.inst) => (typeof INST_ICON !== 'undefined' && (INST_ICON[k] || INST_ICON.none)) || ICON.note;
+  // les cartes à dessin (l'instrument déjà choisi est marqué)
+  const instCards = () => INST_LIST.map((k) => {
+    const [t, sub] = INST_CARD[k] || [INST_TILE[k], ''];
+    return `<button class="ic-card" type="button" data-k="${k}" aria-pressed="${settings.choisi && settings.inst === k}"><span class="ic-pic">${instPic(k)}</span><b>${t}</b>${sub ? `<small>${sub}</small>` : ''}</button>`;
   }).join('');
-  const helloHtml = () => (settings.prenom ? `Bonjour, <b>${esc(settings.prenom)}</b> !` : 'Bonjour !');
-  function eleveHtml(kind) {
-    // kind : 'home' (accueil) ou 'modal' (par-dessus une comptine)
-    const open = kind === 'modal' || !settings.choisi;
-    const why = Suivi.configured ? 'Facultatif. Ton professeur le verra avec tes résultats.' : 'Facultatif. Il reste sur cet appareil.';
-    const tiles = instTiles(kind);
-    return `<section class="eleve-card${open ? ' is-open' : ''}" data-kind="${kind}" aria-label="Toi et ton instrument">
+  const helloHtml = () => (settings.prenom ? `Bonjour, <b>${esc(settings.prenom)}</b>${NB}!` : `Bonjour${NB}!`);
+  // le rappel, en haut de l'accueil des deux versions
+  function eleveHtml() {
+    return `<section class="eleve-card" aria-label="Toi et ton instrument">
       <div class="ec-sum">
-        <p class="ec-hello">${helloHtml()}</p>
-        <p class="ec-inst">${ICON.note}<span>${esc(instShort())}</span></p>
+        <span class="ec-pic">${instPic()}</span>
+        <p class="ec-txt"><span class="ec-hello">${helloHtml()}</span><span class="ec-inst">${esc(instShort())}</span></p>
         <button class="ec-edit" type="button">Changer</button>
       </div>
-      <form class="ec-form" novalidate>
-        <h2 class="ec-title">${settings.choisi ? 'Toi et ton instrument' : 'Bienvenue !'}</h2>
-        <div class="ec-name">
-          <label for="ec-prenom-${kind}">Ton prénom</label>
-          <input type="text" id="ec-prenom-${kind}" name="prenom" maxlength="30" autocomplete="given-name" autocapitalize="words" spellcheck="false" placeholder="Écris ton prénom" value="${esc(settings.prenom)}">
-          <p class="ec-why">${why}</p>
-        </div>
-        <fieldset class="ec-insts"><legend>Ton instrument</legend><div class="ec-grid">${tiles}</div></fieldset>
-        <p class="ec-note" aria-live="polite">${settings.choisi ? esc(instNote()) : 'Touche ton instrument : la page jouera dans son ton, avec son vrai son.'}</p>
-        <button class="ec-go btn-big" type="submit"${settings.choisi ? '' : ' disabled'}><span>C’est parti !</span></button>
-      </form>
     </section>`;
   }
-  // onDone : l'élève a validé (la carte se replie, ou la fenêtre se ferme)
-  function bindEleve(card, onDone) {
+  function eleveRefresh(card) {
+    if (!card || !document.contains(card)) return;
+    card.querySelector('.ec-pic').innerHTML = instPic();
+    card.querySelector('.ec-hello').innerHTML = helloHtml();
+    card.querySelector('.ec-inst').textContent = instShort();
+  }
+  // « Changer » : les deux écrans de la première visite, déjà remplis
+  function bindEleve(card) {
     if (!card) return;
-    const form = card.querySelector('.ec-form'), go = card.querySelector('.ec-go'), note = card.querySelector('.ec-note');
-    const name = card.querySelector('input[name="prenom"]');
+    card.querySelector('.ec-edit').addEventListener('click', () => onboard({ onDone: () => eleveRefresh(card) }));
+  }
+  // la première visite : à l'accueil comme dans une comptine ouverte directement, tant que l'instrument n'est pas choisi
+  function welcome(onDone) { if (!settings.choisi) onboard({ onDone }); }
+  function onboard({ onDone } = {}) {
+    if (app.querySelector('.onb')) return;
+    const why = Suivi.configured ? 'Ce n’est pas obligatoire. Ton professeur le verra avec tes résultats.' : 'Ce n’est pas obligatoire. Il reste sur cet appareil.';
+    const wrap = document.createElement('div');
+    wrap.className = 'onb';
+    wrap.setAttribute('role', 'dialog');
+    wrap.setAttribute('aria-modal', 'true');
+    wrap.innerHTML = `<div class="onb-in">
+      <div class="onb-top"><span class="onb-brand">Les Notes Envolées</span><span class="onb-dots" aria-hidden="true"><i class="on"></i><i></i></span></div>
+      <form class="onb-step onb-s1" novalidate>
+        <h2 class="onb-t" id="onb-t1" tabindex="-1">Bonjour !<span>Comment t’appelles-tu ?</span></h2>
+        <input class="onb-name" name="prenom" type="text" maxlength="30" autocomplete="given-name" autocapitalize="words" spellcheck="false" enterkeyhint="next" placeholder="Ton prénom" aria-label="Ton prénom" value="${esc(settings.prenom)}">
+        <p class="onb-why">${why}</p>
+        <button class="btn-big onb-next" type="submit"><span>Suivant</span>${ICON.next}</button>
+      </form>
+      <section class="onb-step onb-s2" hidden aria-labelledby="onb-t2">
+        <h2 class="onb-t" id="onb-t2" tabindex="-1"></h2>
+        <p class="onb-sub">Touche son dessin.</p>
+        <div class="ic-grid">${instCards()}</div>
+        <button class="onb-back" type="button">${ICON.back}<span>Mon prénom</span></button>
+      </section>
+    </div>`;
+    // la page derrière ne réagit plus, et ne défile plus
+    const behind = [...app.children];
+    behind.forEach((c) => { c.inert = true; });
+    app.appendChild(wrap);
+    document.documentElement.classList.add('onb-open');
+    const s1 = wrap.querySelector('.onb-s1'), s2 = wrap.querySelector('.onb-s2'), name = wrap.querySelector('.onb-name');
+    const t2 = wrap.querySelector('#onb-t2'), dots = wrap.querySelectorAll('.onb-dots i');
+    const step = (k) => {
+      s1.hidden = k !== 1;
+      s2.hidden = k !== 2;
+      dots.forEach((d, i) => d.classList.toggle('on', i === k - 1));
+      wrap.setAttribute('aria-labelledby', k === 1 ? 'onb-t1' : 'onb-t2');
+      wrap.scrollTop = 0;
+      if (k === 2) {
+        t2.innerHTML = settings.prenom ? `${esc(settings.prenom)}, quel est ton instrument${NB}?` : `Quel est ton instrument${NB}?`;
+        t2.focus({ preventScroll: true });
+      } else if (FINE.matches) name.focus({ preventScroll: true }); // au clavier, on écrit tout de suite (pas sur téléphone : le clavier cacherait l'écran)
+      else wrap.querySelector('#onb-t1').focus({ preventScroll: true });
+    };
     const saveName = () => {
       const v = cleanName(name.value);
       if (v !== settings.prenom) { settings.prenom = v; save(SET_KEY, settings); }
     };
-    name.addEventListener('change', saveName);
-    name.addEventListener('blur', saveName);
-    name.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveName(); name.blur(); } });
-    card.querySelectorAll('.ec-tile input').forEach((r) => r.addEventListener('change', () => {
-      settings.choisi = true;
-      setInst(r.value); // enregistre aussi « choisi »
-      note.textContent = instNote();
-      go.disabled = false;
-    }));
-    card.querySelector('.ec-edit').addEventListener('click', () => {
-      card.classList.add('is-open');
-      card.querySelector('.ec-title').textContent = 'Toi et ton instrument';
-    });
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      saveName();
-      if (!settings.choisi) { note.textContent = 'Choisis d’abord ton instrument.'; return; }
-      card.querySelector('.ec-hello').innerHTML = helloHtml();
-      card.querySelector('.ec-inst span').textContent = instShort();
-      card.classList.remove('is-open');
+    s1.addEventListener('submit', (e) => { e.preventDefault(); saveName(); name.blur(); step(2); });
+    wrap.querySelector('.onb-back').addEventListener('click', () => step(1));
+    let done = false;
+    const onKey = (e) => {
+      // Échap : seulement quand l'instrument est déjà choisi (« Changer ») ; à la première visite, il faut le choisir
+      if (e.key === 'Escape' && settings.choisi) { e.preventDefault(); close(); }
+    };
+    function close() {
+      if (done) return;
+      done = true;
+      document.removeEventListener('keydown', onKey, true);
+      behind.forEach((c) => { c.inert = false; });
+      document.documentElement.classList.remove('onb-open');
+      wrap.classList.add('is-out');
+      setTimeout(() => wrap.remove(), RM.matches ? 0 : 220);
       if (onDone) onDone();
-    });
+    }
+    document.addEventListener('keydown', onKey, true);
+    wrap.querySelectorAll('.ic-card').forEach((b) => b.addEventListener('click', () => {
+      if (done) return;
+      saveName();
+      wrap.querySelectorAll('.ic-card').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      b.classList.add('is-picked');
+      settings.choisi = true;
+      setInst(b.dataset.k);
+      setTimeout(close, RM.matches ? 0 : 340);
+    }));
+    step(1);
   }
   /* Les réglages d'une comptine (le bouton à son nom, en haut) : l'instrument et la vitesse (la tortue : la page joue
      plus lentement ; au niveau 2, le décompte et la mesure aussi). La tortue reste dessinée sur le bouton tant que la
@@ -233,30 +274,28 @@
     if (ic) ic.hidden = !G.slow;
   }
   function reglages() {
-    if (!G || app.querySelector('.ec-modal')) return;
+    if (!G || app.querySelector('.ec-modal, .onb')) return;
     const wrap = document.createElement('div');
     wrap.className = 'ec-modal rg-modal';
     wrap.innerHTML = `<div class="ec-sheet" role="dialog" aria-modal="true" aria-labelledby="rg-title">
-      <section class="eleve-card is-open rg-card">
-        <div class="ec-form">
-          <div class="rg-head"><h2 class="ec-title" id="rg-title">Réglages</h2><button class="rg-x" type="button" aria-label="Fermer">${ICON.close}</button></div>
-          <fieldset class="ec-insts"><legend>Ton instrument</legend><div class="ec-grid">${instTiles('rg')}</div></fieldset>
-          <p class="ec-note" aria-live="polite">${esc(instNote())}</p>
-          <fieldset class="rg-speed"><legend>Vitesse</legend>
-            <div class="seg rg-seg" role="radiogroup" aria-label="Vitesse">
-              <button type="button" role="radio" data-slow="0" aria-checked="${!G.slow}">Normale</button>
-              <button type="button" role="radio" data-slow="1" aria-checked="${G.slow}">${ICON.turtle}<span>Lente</span></button>
-            </div>
-            <p class="ec-why">Lente${NB}: la page joue plus lentement${G.level === 2 ? ', et compte plus lentement avant que tu joues' : ''}.</p>
-          </fieldset>
-          <button class="ec-go btn-big" type="button"><span>OK</span></button>
+      <div class="rg-in">
+        <div class="rg-head"><h2 class="rg-title" id="rg-title">Réglages</h2><button class="rg-x" type="button" aria-label="Fermer">${ICON.close}</button></div>
+        <p class="rg-lbl">Vitesse</p>
+        <div class="seg rg-seg" role="radiogroup" aria-label="Vitesse">
+          <button type="button" role="radio" data-slow="0" aria-checked="${!G.slow}">Normale</button>
+          <button type="button" role="radio" data-slow="1" aria-checked="${G.slow}">${ICON.turtle}<span>Lente</span></button>
         </div>
-      </section>
+        <p class="rg-note">Lente : la page joue plus lentement${G.level === 2 ? ', et compte plus lentement avant que tu joues' : ''}.</p>
+        <p class="rg-lbl">Ton instrument</p>
+        <div class="ic-grid rg-grid">${instCards()}</div>
+        <p class="rg-note rg-inst-note" aria-live="polite">${esc(instNote())}</p>
+        <button class="btn-big rg-ok" type="button"><span>OK</span></button>
+      </div>
     </div>`;
     const behind = [...app.children];
     behind.forEach((c) => { c.inert = true; });
     app.appendChild(wrap);
-    const sheet = wrap.querySelector('.ec-sheet'), note = wrap.querySelector('.ec-note');
+    const sheet = wrap.querySelector('.ec-sheet'), note = wrap.querySelector('.rg-inst-note');
     sheet.tabIndex = -1;
     sheet.focus({ preventScroll: true });
     const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
@@ -269,35 +308,17 @@
     document.addEventListener('keydown', onKey, true);
     wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); }); // toucher à côté : on ferme
     wrap.querySelector('.rg-x').addEventListener('click', close);
-    wrap.querySelector('.ec-go').addEventListener('click', close);
-    wrap.querySelectorAll('.ec-tile input').forEach((r) => r.addEventListener('change', () => {
+    wrap.querySelector('.rg-ok').addEventListener('click', close);
+    wrap.querySelectorAll('.ic-card').forEach((b) => b.addEventListener('click', () => {
+      wrap.querySelectorAll('.ic-card').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
       settings.choisi = true;
-      setInst(r.value);
+      setInst(b.dataset.k);
       note.textContent = instNote();
     }));
     wrap.querySelectorAll('.rg-seg [role="radio"]').forEach((b) => b.addEventListener('click', () => {
       setSlow(b.dataset.slow === '1');
       wrap.querySelectorAll('.rg-seg [role="radio"]').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
     }));
-  }
-  // dans une comptine ouverte directement, tant que l'instrument n'a jamais été choisi
-  function eleveModal() {
-    if (app.querySelector('.ec-modal')) return;
-    const wrap = document.createElement('div');
-    wrap.className = 'ec-modal';
-    wrap.innerHTML = `<div class="ec-sheet" role="dialog" aria-modal="true" aria-label="Toi et ton instrument">${eleveHtml('modal')}</div>`;
-    // la comptine derrière ne réagit plus (ni toucher, ni clavier) tant que la carte est ouverte
-    const behind = [...app.children];
-    behind.forEach((c) => { c.inert = true; });
-    app.appendChild(wrap);
-    const sheet = wrap.querySelector('.ec-sheet');
-    sheet.tabIndex = -1;
-    sheet.focus({ preventScroll: true });
-    bindEleve(wrap.querySelector('.eleve-card'), () => {
-      behind.forEach((c) => { c.inert = false; });
-      wrap.remove();
-      if (G && view === 'song') { idleHint(); if (el.bGo) el.bGo.focus({ preventScroll: true }); }
-    });
   }
 
   /* ---------------- la justesse ----------------
@@ -487,7 +508,10 @@
     D.leave();
     D = PAPER;
     setWorld(null);
-    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, decorFor, GO, eleveHtml, bindEleve, HOWTO })) return;
+    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, decorFor, GO, eleveHtml, bindEleve, HOWTO })) {
+      welcome(() => eleveRefresh(app.querySelector('.eleve-card')));
+      return;
+    }
     const medals = LIB.map((s, i) => {
       const best = +records[s.id] || 0, best2 = +records[s.id + '@2'] || 0;
       const badge = best ? `<span class="medal-badge" aria-label="Record : ${best} étoile${best > 1 ? 's' : ''}">${[1, 2, 3].map((k) => star(k <= best, 15)).join('')}</span>` : '';
@@ -512,7 +536,7 @@
           <p class="eyebrow">Jeu d’oreille · ${LIB.length} comptines en do majeur</p>
           <h1 class="home-title"><span class="w">Les Notes</span><span class="w">Envol<span class="lift c1">é</span><span class="lift c2">e</span><span class="lift c3">s</span><span class="flyaway" aria-hidden="true"><i style="--c:var(--n-do);--dl:-.3s"></i><i style="--c:var(--n-sol);--dl:-1.1s;translate:0 -.25em"></i><i style="--c:var(--n-la);--dl:-1.9s;translate:0 -.55em"></i></span></span></h1>
           <p class="home-lede">Dans chaque comptine, les notes se sont envolées. <strong>Seule la première note de chaque phrase est restée.</strong> Joue-la sur ton instrument (ou chante-la), puis retrouve les suivantes à l’oreille : la page t’écoute avec le micro.</p>
-          <div class="home-eleve">${eleveHtml('home')}${micNote}</div>
+          <div class="home-eleve">${eleveHtml()}${micNote}</div>
         </header>
         <section class="score" id="score" aria-label="Les comptines, de la plus facile à la plus difficile">
           <svg class="staff" aria-hidden="true"></svg>
@@ -534,16 +558,15 @@
           : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Le micro s’allume tout seul dans une comptine (le navigateur demande d’abord l’autorisation). Sur ordinateur, la barre d’espace lance «${NB}${GO}${NB}». Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0). Reconnaissance des noms chantés : modèles tirés des voix de synthèse Kokoro (licence Apache 2.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
       </div>
     </main>`;
-    bindEleve(app.querySelector('.eleve-card'), () => {
-      const s = app.querySelector('#score');
-      if (s) s.scrollIntoView({ behavior: RM.matches ? 'auto' : 'smooth', block: 'start' });
-    });
+    const card = app.querySelector('.eleve-card');
+    bindEleve(card);
+    welcome(() => eleveRefresh(card));
     layoutMedals();
   }
 
   // « Comment jouer », sur l'accueil des deux versions
   const HOWTO = [
-    'Écris ton prénom et choisis ton instrument, en haut de la page. Les noms de notes sont ceux de ta partition : la page joue dans le ton de ton instrument, avec son vrai son.',
+    'La première fois, la page te demande ton prénom et ton instrument : touche son dessin. Pour en changer, touche « Changer » en haut de l’accueil, ou le nom de ton instrument en haut d’une comptine. Les noms de notes sont ceux de ta partition : la page joue dans le ton de ton instrument, avec son vrai son.',
     'Choisis une comptine. Les plus faciles sont au début du chemin.',
     'Choisis ton exercice. Niveau 1, les notes : retrouve-les à ton rythme. Niveau 2, notes et rythme : joue en mesure après le décompte. Phrase par phrase, avec de l’aide, ou toute la comptine d’un coup, sans aide : la page te ramène ensuite sur les phrases à revoir.',
     'Touche « À toi de jouer ! » : la page joue la phrase, compte « 1, 2, 3, 4 », puis c’est à toi. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. La page t’écoute au micro. Avec la voix, chante chaque note en disant son nom.',
@@ -754,7 +777,7 @@
     choixDit();
     idleHint();
     // comptine ouverte directement (lien partagé), instrument jamais choisi : on le demande d'abord
-    if (!settings.choisi) eleveModal();
+    welcome(() => { if (G && view === 'song') { idleHint(); if (el.bGo) el.bGo.focus({ preventScroll: true }); } });
   }
 
   /* L'exercice choisi, en une phrase, sous les deux choix (niveau ; phrase par phrase ou toute la comptine) */
@@ -1962,7 +1985,7 @@
 
   document.addEventListener('keydown', (e) => {
     if (view !== 'song' || !G || e.metaKey || e.ctrlKey || e.altKey) return;
-    if (app.querySelector('.ec-modal')) return; // la carte de l'élève est ouverte par-dessus
+    if (app.querySelector('.ec-modal, .onb')) return; // la première visite ou les réglages, par-dessus
     if (e.target.closest && e.target.closest('select, input')) return;
     if (e.code === 'Space' && !(e.target.closest && e.target.closest('button, a'))) {
       e.preventDefault();
