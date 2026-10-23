@@ -12,12 +12,17 @@
 .stage-bar .next-song { margin-left: auto; }
 .inst-pill {
   position: relative; display: inline-flex; align-items: center; gap: 6px;
-  height: 42px; min-width: 0; padding: 0 32px 0 12px; border-radius: 999px;
+  height: 42px; min-width: 0; padding: 0 32px 0 12px; border-radius: 999px; border: 0;
   background: var(--paper); color: var(--ink); box-shadow: 0 4px 0 rgba(0, 0, 0, .16);
+  font: inherit; cursor: pointer;
 }
 .inst-pill > svg:first-child { width: 20px; height: 20px; flex: none; }
 .inst-pill .ip-name { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 10em; }
-.inst-pill:focus-within { outline: 3px solid var(--accent); outline-offset: 3px; }
+.inst-pill .ip-slow { display: inline-grid; place-items: center; flex: none; }
+.inst-pill .ip-slow[hidden] { display: none; }
+.inst-pill .ip-slow svg { width: 22px; height: 22px; }
+.inst-pill:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.inst-pill:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, .16); }
 .inst-pill select, .home-select select {
   appearance: none; -webkit-appearance: none;
   border: 0; background: transparent; color: inherit;
@@ -49,7 +54,7 @@
 .hint.go { color: var(--accent); font-size: 26px; }
 .card.beat { animation: card-beat .24s ease-out; }
 @keyframes card-beat { from { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 55%, transparent); } to { box-shadow: 0 0 0 0 transparent; } }
-.is-taking .ecoute .btn, .is-taking .strip, .is-taking .ph-play, .is-taking .ph-to, .is-taking .choix, .is-taking .dock-bar { opacity: .45; pointer-events: none; }
+.is-taking .ecoute .btn, .is-taking .strip, .is-taking .choix, .is-taking .dock-bar, .is-taking .inst-pill { opacity: .45; pointer-events: none; }
 
 /* verdict de chaque note : un anneau autour de la perle */
 .bead.r-ok, .bead.r-near, .bead.r-far, .bead.r-wrong, .bead.r-miss { outline-offset: 2px; }
@@ -191,29 +196,20 @@
 /* niveau 2, carte de fin : son grand bouton remplace « À toi » (qui revient en « Arrêter » pendant la prise) */
 .song:has(#done:not([hidden])) .go-row { display: none; }
 
-/* ============ rangement : la phrase et ses écoutes, les réglages en bas ============
-   carte : ▶ (la phrase) | paroles | ? (jusqu'à la note, niveau 1) ;
-   sous l'écoute du micro : niveau · lentement (· régler ma voix) */
-.ph-play { grid-column: 1; grid-row: 1; }
-.ph-lyric { grid-column: 2; grid-row: 1; }
-.ph-to { grid-column: 3; grid-row: 1; height: 42px; padding: 0 14px 0 8px; font-size: 14px; }
+/* ============ rangement : la carte de la phrase ============
+   les paroles, les notes, puis les écoutes sur une seule ligne : « Phrase n », « Toute la comptine »
+   et « ? » (jusqu'à la note à trouver, niveau 1) ; la vitesse est dans les réglages (le bouton de l'instrument) */
 .ph-to .q { display: grid; place-items: center; }
 .ph-to .q svg { width: 12px; height: 12px; }
-.song[data-level="1"] .panel { grid-template-columns: 46px minmax(0, 1fr) auto; }
-.seg-slow button { padding: 0 12px; }
+.ecoute .ph-to { flex: none; padding: 0 14px 0 8px; }
 .seg-cal[hidden] { display: none; }
-.seg-slow button svg { width: 22px; height: 22px; }
 .seg button[aria-pressed="true"] { background: var(--text); color: var(--panel); }
-@media (min-width: 900px) {
-  .song[data-level="1"] .panel { grid-template-columns: clamp(46px, 5.8vh, 56px) minmax(0, 1fr) auto; }
-}
 @media (max-width: 1359px) {
   .ph-to .lbl { display: none; }
-  .ph-to { width: 42px; padding: 0; justify-content: center; border-radius: 50%; }
+  .ecoute .ph-to { width: 40px; padding: 0; justify-content: center; border-radius: 50%; }
 }
 @media (max-width: 899px) {
-  .song[data-level="1"] .panel { grid-template-columns: 40px minmax(0, 1fr) auto; }
-  .ph-to { width: 40px; height: 40px; }
+  .ecoute .ph-to { width: 38px; }
 }
 /* diagnostic du micro (?diag) */
 .ear-diag { position: fixed; right: 8px; top: calc(76px + env(safe-area-inset-top, 0px)); z-index: 2147483646; max-width: 70vw; padding: 6px 9px; border-radius: 10px; background: rgba(0, 0, 0, .78); color: #fff; font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace; pointer-events: none; }
@@ -237,7 +233,6 @@
 .ecoute { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .ecoute .btn { height: 40px; padding: 0 14px; font-size: 14px; }
 .ecoute .btn .ic svg { width: 16px; height: 16px; }
-#b-slow svg { width: 22px; height: 22px; }
 .go-row { display: flex; }
 .btn-big.go { height: auto; min-height: 56px; padding: 6px 24px 6px 8px; }
 .go-txt { display: grid; justify-items: start; gap: 1px; line-height: 1.1; text-align: left; }
@@ -249,7 +244,7 @@
   .choix .seg button { height: 34px; padding: 0 8px; font-size: 13.5px; }
   .choix-dit { font-size: 13.5px; }
   .ecoute .btn { height: 38px; padding: 0 12px; font-size: 13.5px; }
-  #b-all { flex: 1 1 auto; min-width: 0; justify-content: center; }
+  #b-phrase, #b-all { flex: 1 1 auto; min-width: 0; justify-content: center; }
   .go-row .btn-big { flex: 1 1 auto; justify-content: center; min-height: 52px; }
   .go-row .btn-big .ic { margin-right: auto; }
   .go-row .btn-big .go-txt { margin-right: auto; justify-items: center; text-align: center; }
@@ -267,6 +262,17 @@
 .ec-modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(12, 10, 30, .55); }
 .ec-sheet { width: min(640px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; border-radius: 24px; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); }
 .ec-sheet:focus { outline: none; }
+/* les réglages d'une comptine : l'instrument et la vitesse */
+.rg-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rg-x { flex: none; width: 42px; height: 42px; margin: -6px -8px -6px 0; border: 0; border-radius: 50%; background: transparent; color: inherit; display: grid; place-items: center; cursor: pointer; }
+.rg-x svg { width: 24px; height: 24px; }
+.rg-x:hover { background: var(--ec-on); }
+.rg-speed { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 8px; }
+.rg-speed legend { padding: 0; margin-bottom: 8px; font-size: 13.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ec-soft); }
+.rg-seg { display: flex; width: 100%; max-width: 420px; }
+.rg-seg button { flex: 1 1 0; justify-content: center; gap: 6px; }
+.rg-seg button svg { width: 22px; height: 22px; }
+.rg-card .ec-go { min-width: 140px; justify-content: center; }
 .ec-modal .eleve-card { --ec-bg: var(--panel); --ec-ink: var(--text); --ec-soft: var(--text-soft); --ec-line: var(--line-strong); --ec-on: var(--panel-2); --ec-accent: var(--text); border-radius: 24px; box-shadow: none; }
 @media (max-width: 599px) {
   .ec-modal { place-items: end stretch; padding: 0; }

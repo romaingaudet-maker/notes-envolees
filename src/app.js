@@ -74,6 +74,7 @@
     metro: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 3.2h6.8l4.2 17.3H4.4z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M5.6 16.2h12.8" stroke="currentColor" stroke-width="2.2"/><path d="M12 16.2l5.2-11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="14.6" cy="10.7" r="2" fill="currentColor"/></svg>',
     note: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17.2V5.4l10.5-2.4v12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><ellipse cx="6.4" cy="17.4" rx="3" ry="2.4" fill="currentColor"/><ellipse cx="16.9" cy="15.1" rx="3" ry="2.4" fill="currentColor"/></svg>',
     chev: '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5l5.5 5.5 5.5-5.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>',
   };
   const star = (on, size = 24) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.45 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z" fill="${on ? '#F5C32C' : 'none'}" stroke="${on ? '#C8901A' : 'currentColor'}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
   const chip = (letter, name) => `<span class="nchip" data-l="${letter}">${name}</span>`;
@@ -159,16 +160,17 @@
     piano: ['Piano', ''], xylophone: ['Xylophone', ''], voix: ['Voix', 'je chante'], none: ['Autre', 'instrument en do'],
   };
   const instShort = (k = settings.inst) => (INST_TILE[k] || INST_TILE.none)[0];
+  const instTiles = (kind) => INST_LIST.map((k) => {
+    const [t, s] = INST_TILE[k];
+    const on = settings.choisi && settings.inst === k;
+    return `<label class="ec-tile"><input type="radio" name="ec-inst-${kind}" value="${k}"${on ? ' checked' : ''}><span><b>${t}</b>${s ? `<small>${s}</small>` : ''}</span></label>`;
+  }).join('');
   const helloHtml = () => (settings.prenom ? `Bonjour, <b>${esc(settings.prenom)}</b> !` : 'Bonjour !');
   function eleveHtml(kind) {
     // kind : 'home' (accueil) ou 'modal' (par-dessus une comptine)
     const open = kind === 'modal' || !settings.choisi;
     const why = Suivi.configured ? 'Facultatif. Ton professeur le verra avec tes résultats.' : 'Facultatif. Il reste sur cet appareil.';
-    const tiles = INST_LIST.map((k) => {
-      const [t, s] = INST_TILE[k];
-      const on = settings.choisi && settings.inst === k;
-      return `<label class="ec-tile"><input type="radio" name="ec-inst-${kind}" value="${k}"${on ? ' checked' : ''}><span><b>${t}</b>${s ? `<small>${s}</small>` : ''}</span></label>`;
-    }).join('');
+    const tiles = instTiles(kind);
     return `<section class="eleve-card${open ? ' is-open' : ''}" data-kind="${kind}" aria-label="Toi et ton instrument">
       <div class="ec-sum">
         <p class="ec-hello">${helloHtml()}</p>
@@ -219,6 +221,64 @@
       card.classList.remove('is-open');
       if (onDone) onDone();
     });
+  }
+  /* Les réglages d'une comptine (le bouton à son nom, en haut) : l'instrument et la vitesse (la tortue : la page joue
+     plus lentement ; au niveau 2, le décompte et la mesure aussi). La tortue reste dessinée sur le bouton tant que la
+     vitesse lente est choisie. */
+  function setSlow(on) {
+    if (!G) return;
+    G.slow = !!on;
+    if (G.slow) G.usedSlow = true;
+    const ic = app.querySelector('#ip-slow');
+    if (ic) ic.hidden = !G.slow;
+  }
+  function reglages() {
+    if (!G || app.querySelector('.ec-modal')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'ec-modal rg-modal';
+    wrap.innerHTML = `<div class="ec-sheet" role="dialog" aria-modal="true" aria-labelledby="rg-title">
+      <section class="eleve-card is-open rg-card">
+        <div class="ec-form">
+          <div class="rg-head"><h2 class="ec-title" id="rg-title">Réglages</h2><button class="rg-x" type="button" aria-label="Fermer">${ICON.close}</button></div>
+          <fieldset class="ec-insts"><legend>Ton instrument</legend><div class="ec-grid">${instTiles('rg')}</div></fieldset>
+          <p class="ec-note" aria-live="polite">${esc(instNote())}</p>
+          <fieldset class="rg-speed"><legend>Vitesse</legend>
+            <div class="seg rg-seg" role="radiogroup" aria-label="Vitesse">
+              <button type="button" role="radio" data-slow="0" aria-checked="${!G.slow}">Normale</button>
+              <button type="button" role="radio" data-slow="1" aria-checked="${G.slow}">${ICON.turtle}<span>Lente</span></button>
+            </div>
+            <p class="ec-why">Lente${NB}: la page joue plus lentement${G.level === 2 ? ', et compte plus lentement avant que tu joues' : ''}.</p>
+          </fieldset>
+          <button class="ec-go btn-big" type="button"><span>OK</span></button>
+        </div>
+      </section>
+    </div>`;
+    const behind = [...app.children];
+    behind.forEach((c) => { c.inert = true; });
+    app.appendChild(wrap);
+    const sheet = wrap.querySelector('.ec-sheet'), note = wrap.querySelector('.ec-note');
+    sheet.tabIndex = -1;
+    sheet.focus({ preventScroll: true });
+    const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
+    function close() {
+      behind.forEach((c) => { c.inert = false; });
+      wrap.remove();
+      document.removeEventListener('keydown', onKey, true);
+      if (el.bRg && document.contains(el.bRg)) el.bRg.focus({ preventScroll: true });
+    }
+    document.addEventListener('keydown', onKey, true);
+    wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); }); // toucher à côté : on ferme
+    wrap.querySelector('.rg-x').addEventListener('click', close);
+    wrap.querySelector('.ec-go').addEventListener('click', close);
+    wrap.querySelectorAll('.ec-tile input').forEach((r) => r.addEventListener('change', () => {
+      settings.choisi = true;
+      setInst(r.value);
+      note.textContent = instNote();
+    }));
+    wrap.querySelectorAll('.rg-seg [role="radio"]').forEach((b) => b.addEventListener('click', () => {
+      setSlow(b.dataset.slow === '1');
+      wrap.querySelectorAll('.rg-seg [role="radio"]').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
+    }));
   }
   // dans une comptine ouverte directement, tant que l'instrument n'a jamais été choisi
   function eleveModal() {
@@ -488,7 +548,7 @@
     'Choisis ton exercice. Niveau 1, les notes : retrouve-les à ton rythme. Niveau 2, notes et rythme : joue en mesure après le décompte. Phrase par phrase, avec de l’aide, ou toute la comptine d’un coup, sans aide : la page te ramène ensuite sur les phrases à revoir.',
     'Touche « À toi de jouer ! » : la page joue la phrase, compte « 1, 2, 3, 4 », puis c’est à toi. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. La page t’écoute au micro. Avec la voix, chante chaque note en disant son nom.',
     'Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée se pose à sa hauteur et le décor s’anime.',
-    'Pour écouter : le bouton rond à côté des paroles joue la phrase, « Écouter toute la comptine » joue tout, « ? » rejoue la phrase jusqu’à la note à trouver. La tortue fait tout jouer plus lentement.',
+    'Pour écouter : « Phrase 1 » joue la phrase affichée, « Toute la comptine » joue tout, « ? » rejoue la phrase jusqu’à la note à trouver. Pour que la page joue plus lentement, touche le nom de ton instrument, en haut : « Vitesse : lente ».',
   ];
 
   let medalRO = null;
@@ -576,17 +636,13 @@
     const span = song.maxStep - song.minStep;
     const panels = song.phrases.map((ph, p) => `
       <div class="panel" data-p="${p}"${p ? ' hidden' : ''}>
-        <button class="ph-play" type="button" data-p="${p}" aria-label="Écouter la phrase ${p + 1}">${ICON.play}</button>${lv2 ? '' : `
-        <button class="btn ph-to" type="button" disabled aria-label="Écouter jusqu’à la note à trouver" title="Jusqu’à la note"><span class="q" aria-hidden="true">?</span><span class="lbl">Jusqu’à la note</span></button>`}
-        <div class="ph-body">
-          <p class="ph-lyric">${ph.notes.map((n) => `<span class="syl" data-n="${n}">${esc(song.notes[n].syl)}</span>`).join('')}</p>
-          <div class="beads" style="--span:${span};--cols:${ph.notes.map((n) => `${wOf(song.notes[n].dur)}fr`).join(' ')}">${ph.notes.map((n) => `<span class="bc"><button class="bead" type="button" data-n="${n}"><span>?</span></button></span>`).join('')}</div>
-          <div class="rstrip" aria-hidden="true" hidden></div>
-        </div>
+        <p class="ph-lyric">${ph.notes.map((n) => `<span class="syl" data-n="${n}">${esc(song.notes[n].syl)}</span>`).join('')}</p>
+        <div class="beads" style="--span:${span};--cols:${ph.notes.map((n) => `${wOf(song.notes[n].dur)}fr`).join(' ')}">${ph.notes.map((n) => `<span class="bc"><button class="bead" type="button" data-n="${n}"><span>?</span></button></span>`).join('')}</div>
+        <div class="rstrip" aria-hidden="true" hidden></div>
       </div>`).join('');
     const pills = song.phrases.map((ph, p) => `<li><button class="pill" type="button" data-p="${p}" aria-label="Phrase ${p + 1}">${p + 1}</button></li>`).join('');
     // chaque bouton garde la largeur de son plus long libellé : « Arrêter » ne fait rien bouger
-    const lbl2 = (idle) => `<span class="lbl lbl2"><span class="l-idle">${idle}</span><span class="l-busy">Arrêter</span></span>`;
+    const lbl2 = (idle, cls = '') => `<span class="lbl lbl2"><span class="l-idle${cls ? ' ' + cls : ''}">${idle}</span><span class="l-busy">Arrêter</span></span>`;
     // « À toi de jouer ! » dit aussi ce qu'il va lancer (la phrase affichée, ou toute la comptine)
     const goBtn = `<button class="btn-big go" id="b-go" type="button" aria-pressed="false"><span class="ic">${ICON.metro}</span><span class="go-txt">${lbl2(GO)}<small class="go-sub" id="go-sub"></small></span></button>`;
     app.innerHTML = `
@@ -595,7 +651,7 @@
         ${D.markup(song, info())}
         <div class="stage-bar">
           <a class="back" href="#" aria-label="Les comptines">${ICON.back}<span>Les comptines</span></a>
-          <label class="inst-pill" title="Ton instrument : toucher pour en changer">${ICON.note}<span class="ip-name" id="ip-name">${esc(instShort())}</span>${ICON.chev}<select class="inst-sel" id="inst-sel" aria-label="Ton instrument">${instOptions()}</select></label>
+          <button class="inst-pill" id="b-rg" type="button" aria-haspopup="dialog" aria-label="Réglages : ton instrument et la vitesse" title="Réglages : ton instrument et la vitesse">${ICON.note}<span class="ip-name" id="ip-name">${esc(instShort())}</span><span class="ip-slow" id="ip-slow"${G.slow ? '' : ' hidden'}>${ICON.turtle}</span>${ICON.chev}</button>
           <div class="stage-title" aria-hidden="true"><span>Comptine ${song.level} · ${LEVEL(song.level)}</span><b>${titleHtml(song.title)}</b></div>
           <a class="next-song" href="#${next.id}" aria-label="Comptine suivante : ${esc(nb(next.title))}">${ICON.next}</a>
         </div>
@@ -624,8 +680,9 @@
           </div>
           <div class="panels">${panels}</div>
           <div class="ecoute">
-            <button class="btn" id="b-all" type="button"><span class="ic">${ICON.play}</span>${lbl2(LISTEN_ALL)}</button>
-            <button class="btn" id="b-slow" type="button" aria-pressed="${G.slow}" title="Tout jouer plus lentement">${ICON.turtle}<span>Lent</span></button>
+            <button class="btn" id="b-phrase" type="button" aria-label="Écouter la phrase 1"><span class="ic">${ICON.play}</span>${lbl2('Phrase' + NB + '1', 'ph-n')}</button>
+            <button class="btn" id="b-all" type="button" aria-label="Écouter toute la comptine"><span class="ic">${ICON.play}</span>${lbl2(LISTEN_ALL)}</button>${lv2 ? '' : `
+            <button class="btn ph-to" id="b-to" type="button" disabled aria-label="Écouter la phrase jusqu’à la note à trouver" title="Jusqu’à la note à trouver"><span class="q" aria-hidden="true">?</span><span class="lbl">Jusqu’à la note</span></button>`}
           </div>
         </section>
         <div class="go-row">${goBtn}</div>
@@ -658,9 +715,10 @@
       main: app.querySelector('.song'),
       stage: app.querySelector('.stage'),
       bAll: app.querySelector('#b-all'),
-      bTos: [...app.querySelectorAll('.ph-to')],
+      bPhrase: app.querySelector('#b-phrase'),
+      bTo: app.querySelector('#b-to'),
       bGo: app.querySelector('#b-go'),
-      bSlow: app.querySelector('#b-slow'),
+      bRg: app.querySelector('#b-rg'),
       instr: app.querySelector('#instr'),
       count: app.querySelector('#count'),
       card: app.querySelector('.card'),
@@ -679,7 +737,6 @@
       heardN: app.querySelector('#heard-n'),
       earCap: app.querySelector('#ear-cap'),
       needle: app.querySelector('#needle'),
-      instSel: app.querySelector('#inst-sel'),
       ipName: app.querySelector('#ip-name'),
       dit: app.querySelector('#choix-dit'),
       goSub: app.querySelector('#go-sub'),
@@ -804,6 +861,8 @@
     from.hidden = true;
     to.hidden = false;
     goSub();
+    phraseUI();
+    toUI();
     if (G.results && G.results[p]) showResult(p);
     if (!animate || RM.matches || !to.animate) return;
     to.animate([{ transform: `translateX(${dir * 28}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' });
@@ -831,10 +890,18 @@
     if (hint) cursorHint();
   }
 
-  // « Jusqu'à la note » : seulement pendant un essai phrase par phrase, sur la phrase de la note cherchée
+  // « Jusqu'à la note » : seulement pendant un essai phrase par phrase, quand la phrase de la note cherchée est affichée
   function toUI() {
+    if (!el.bTo) return;
     const n = G.cursor, p = n == null ? -1 : G.song.notes[n].phrase;
-    el.bTos.forEach((b, q) => { b.disabled = n == null || G.stage === 'whole' || q !== p; });
+    el.bTo.disabled = n == null || G.stage === 'whole' || G.view !== p;
+  }
+  // « Phrase n » : écoute la phrase affichée
+  function phraseUI() {
+    if (!el.bPhrase) return;
+    const t = el.bPhrase.querySelector('.ph-n');
+    if (t) t.textContent = `Phrase${NB}${G.view + 1}`;
+    if (!el.bPhrase.classList.contains('is-on')) el.bPhrase.setAttribute('aria-label', `Écouter la phrase ${G.view + 1}`);
   }
 
   function expectNext() {
@@ -1321,15 +1388,15 @@
       const dp = el.done && el.done.querySelector('#d-play .lbl');
       if (dp) dp.textContent = on ? 'Arrêter' : 'Réécouter';
     } else if (kind === 'to') {
-      el.bTos.forEach((b) => { b.classList.toggle('is-on', on); b.querySelector('.q').innerHTML = on ? ICON.stop : '?'; });
-    } else if (kind.startsWith('p')) {
-      const b = el.panels[+kind.slice(1)].querySelector('.ph-play');
-      b.firstElementChild.outerHTML = on ? ICON.stop : ICON.play;
-      b.setAttribute('aria-label', (on ? 'Arrêter' : 'Écouter') + ' la phrase ' + (+kind.slice(1) + 1));
+      if (el.bTo) { el.bTo.classList.toggle('is-on', on); el.bTo.querySelector('.q').innerHTML = on ? ICON.stop : '?'; }
+    } else if (kind.startsWith('p') && el.bPhrase) {
+      el.bPhrase.querySelector('.ic').innerHTML = on ? ICON.stop : ICON.play;
+      el.bPhrase.classList.toggle('is-on', on);
+      el.bPhrase.setAttribute('aria-label', on ? 'Arrêter' : `Écouter la phrase ${G.view + 1}`);
     }
   }
 
-  const LISTEN_ALL = 'Écouter toute la comptine';
+  const LISTEN_ALL = 'Toute la comptine';
   function playAll() { playEvents(G.song.events, 'all'); }
   function playPhrase(p, onEnd) { playEvents(G.song.phrases[p].events, 'p' + p, onEnd); }
   function playToMystery() {
@@ -1845,13 +1912,14 @@
   function bindSong() {
     if (el.bAll) el.bAll.addEventListener('click', () => { G.acts++; if (prepping()) { cancelAttempt(); return; } toggle('all', playAll)(); });
     app.querySelectorAll('.seg-play [role="radio"]').forEach((b) => b.addEventListener('click', () => choosePlay(b.dataset.play)));
-    el.bTos.forEach((b) => b.addEventListener('click', toggle('to', playToMystery)));
-    if (el.bGo) el.bGo.addEventListener('click', goButton);
-    el.bSlow.addEventListener('click', () => {
-      G.slow = !G.slow;
-      if (G.slow) G.usedSlow = true;
-      el.bSlow.setAttribute('aria-pressed', String(G.slow));
+    if (el.bTo) el.bTo.addEventListener('click', toggle('to', playToMystery));
+    // « Phrase n » : la phrase affichée ; pendant qu'une phrase passe, le même bouton l'arrête
+    el.bPhrase.addEventListener('click', () => {
+      G.acts++;
+      if (G.playing && G.playing.kind.startsWith('p')) stopPlayback(true); else playPhrase(G.view);
     });
+    if (el.bGo) el.bGo.addEventListener('click', goButton);
+    el.bRg.addEventListener('click', reglages);
     app.querySelector('#b-reset').addEventListener('click', reset);
     el.pills.forEach((pill, p) => pill.addEventListener('click', () => {
       G.acts++;
@@ -1862,10 +1930,8 @@
       showPhrase(p);
       idleHint();
     }));
-    el.panels.forEach((panel, p) => {
-      panel.querySelector('.ph-play').addEventListener('click', () => { G.acts++; });
-      panel.querySelector('.ph-play').addEventListener('click', toggle('p' + p, () => playPhrase(p)));
-      panel.querySelector('.ph-body').addEventListener('click', (e) => {
+    el.panels.forEach((panel) => {
+      panel.addEventListener('click', (e) => {
         const b = e.target.closest('.bead');
         if (!b) return;
         const n = +b.dataset.n;
@@ -1882,7 +1948,6 @@
       if (ev.target.closest('[data-act="cal-stop"]')) { G.acts++; calStop(); }
       else if (ev.target.closest('[data-act="cal-again"]') && G && G.cal) calStep();
     });
-    el.instSel.addEventListener('change', () => setInst(el.instSel.value));
     if (FINE.matches) {
       let raf = 0;
       el.stage.addEventListener('pointermove', (e) => {
