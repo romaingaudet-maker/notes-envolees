@@ -283,8 +283,20 @@ const HomeSkin = (() => {
     // le mode de jeu : comptines fermées et prochaine à jouer (Aventure), essais du Défi
     const songState = ctx.songState || (() => ({ open: true, next: false }));
     const NX = ctx.nextToPlay ? ctx.nextToPlay() : null;
-    // en Défi, la course des 20 comptines prend la place du fil des comptines (couleurs des décors en laine)
-    const dh = ctx.defiHomeHtml ? ctx.defiHomeHtml((t) => (SCENES[t] && SCENES[t].color) || '#3A2A52') : '';
+    // en Défi, la course des 20 comptines prend la place du fil des comptines (couleurs des décors en laine) ;
+    // l'étape du moment se montre comme sur le fil : le tambour de son décor en 3D (le dessin, tant que l'image manque)
+    const colorOf = (t) => (SCENES[t] && SCENES[t].color) || '#3A2A52';
+    const picOf = (s) => portraits.get(s.theme) || (SCENES[s.theme] ? `${PORTRAITS_BASE}${s.theme}.webp` : '');
+    const dhDisc = (s) => {
+      const pic = picOf(s);
+      return `<a class="dh-hoop${portraits.has(s.theme) ? ' has-pic' : ''}" href="#${s.id}" data-theme="${s.theme}" style="--c:${colorOf(s.theme)}" tabindex="-1" aria-hidden="true">
+            <span class="hoop-ring"><span class="hoop-cloth">
+              <span class="hoop-emb">${typeof Scenes !== 'undefined' ? Scenes.emblem(s.theme) : ''}</span>
+              <span class="hoop-pic">${pic ? `<img src="${pic}" alt="" decoding="async">` : ''}</span>
+            </span><span class="hoop-screw"><i></i></span></span>
+          </a>`;
+    };
+    const dh = ctx.defiHomeHtml ? ctx.defiHomeHtml(colorOf, dhDisc) : '';
     const NBS = '\u00a0';
     const LEGAL_URL = ctx.LEGAL_URL || 'mentions-legales.html';
     const gl = Engine.supported();
@@ -295,7 +307,7 @@ const HomeSkin = (() => {
       const c = (SCENES[s.theme] && SCENES[s.theme].color) || '#3A2A52';
       const stars = best ? `<span class="hoop-stars" aria-label="Record : ${best} étoile${best > 1 ? 's' : ''}">${[1, 2, 3].map((k) => star(k <= best, 14)).join('')}</span>` : '';
       const r2 = best2 ? `<span class="hoop-r2" aria-label="Niveau 2 : ${best2} étoile${best2 > 1 ? 's' : ''}">${ICON.metro}${'★'.repeat(best2)}</span>` : '';
-      const pic = portraits.get(s.theme) || (SCENES[s.theme] ? `${PORTRAITS_BASE}${s.theme}.webp` : '');
+      const pic = picOf(s);
       return `<li class="hoop-li${st.open ? '' : ' is-locked'}${st.next ? ' is-next' : ''}" data-i="${i}" data-theme="${s.theme}" style="--c:${c};--tilt:${((hashi(i, 3) - 0.5) * 7).toFixed(1)}deg">
         <a class="hoop${portraits.has(s.theme) ? ' has-pic' : ''}" href="#${s.id}">
           <span class="hoop-ring">
@@ -365,11 +377,11 @@ const HomeSkin = (() => {
     bindEleve(app.querySelector('.eleve-card'));
     app.querySelector('#lh-go').addEventListener('click', toPath);
     if (!dh) layoutHoops();
-    // les portraits : le fichier, ou (s'il manque) fabriqué ici
+    // les portraits (tambours du fil, ou de l'étape du Défi) : le fichier, ou (s'il manque) fabriqué ici
     queue = [];
     app.querySelectorAll('.hoop-pic img').forEach((img) => {
-      const li = img.closest('.hoop-li'), song = LIB.find((s) => s.theme === li.dataset.theme);
-      const ok = () => li.querySelector('.hoop').classList.add('has-pic');
+      const box = img.closest('[data-theme]'), song = LIB.find((s) => s.theme === box.dataset.theme);
+      const ok = () => (box.querySelector('.hoop') || box).classList.add('has-pic');
       if (img.complete && img.naturalWidth) ok();
       else {
         img.addEventListener('load', ok, { once: true });
@@ -572,11 +584,11 @@ const HomeSkin = (() => {
     const cv = await strip(song);
     const url = await new Promise((res) => cv.toBlob((b) => res(b ? URL.createObjectURL(b) : cv.toDataURL('image/jpeg', 0.86)), 'image/webp', 0.86));
     portraits.set(song.theme, url);
-    const li = root && root.querySelector(`.hoop-li[data-theme="${song.theme}"]`);
-    if (li) {
-      li.querySelector('.hoop-pic').innerHTML = `<img src="${url}" alt="" decoding="async">`;
-      requestAnimationFrame(() => li.querySelector('.hoop').classList.add('has-pic'));
-    }
+    if (!root) return;
+    root.querySelectorAll(`.hoop-li[data-theme="${song.theme}"], .dh-hoop[data-theme="${song.theme}"]`).forEach((box) => {
+      box.querySelector('.hoop-pic').innerHTML = `<img src="${url}" alt="" decoding="async">`;
+      requestAnimationFrame(() => (box.querySelector('.hoop') || box).classList.add('has-pic'));
+    });
   }
 
   // outils/portraits.mjs : { thème: image webp en data URL } pour toutes les comptines de l'accueil

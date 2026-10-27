@@ -806,8 +806,9 @@
      « Repartir » après un retour au départ) ; la course des 20 comptines (celles réussies dans cette course, celle
      du moment avec l'instrument de l'élève comme pion, le drapeau du record) ; le numéro du départ et le record.
      Après une erreur, la page le rappelle ; le Défi terminé, on peut le recommencer. colorOf : la couleur d'un décor
-     (papier ou laine). */
-  function defiHomeHtml(colorOf) {
+     (papier ou laine) ; discOf : l'image de l'étape du moment (en laine, le tambour de son décor en 3D ; sinon, le
+     dessin du décor). */
+  function defiHomeHtml(colorOf, discOf) {
     if (jeu() !== 'defi') return '';
     const N = LIB.length, i = defi.pos, cur = defiSong(), last = defi.last;
     const msg = !last ? ''
@@ -815,7 +816,7 @@
         : last.type === 'ok' && last.rec && i === last.at + 1 ? `<p class="dh-msg is-ok">Nouveau record${NB}: ${defi.best} comptine${defi.best > 1 ? 's' : ''} d’affilée${NB}!</p>` : '';
     const now = cur
       ? `<div class="dh-now">
-          <span class="dh-disc" style="--c:${colorOf(cur.theme)}" aria-hidden="true">${Scenes.emblem(cur.theme)}</span>
+          ${discOf ? discOf(cur) : `<span class="dh-disc" style="--c:${colorOf(cur.theme)}" aria-hidden="true">${Scenes.emblem(cur.theme)}</span>`}
           <div class="dh-now-t">
             <p class="dh-k">Étape ${i + 1} sur ${N}</p>
             <h3 class="dh-title">${titleHtml(cur.title)}</h3>
