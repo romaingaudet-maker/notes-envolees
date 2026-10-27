@@ -31,9 +31,10 @@ Pas de compte : chaque navigateur reçoit un identifiant tiré au hasard, gardé
 
 ## La page de suivi
 
-- **En haut** : élèves actifs cette semaine, comptines terminées, temps de jeu, part des parties jouées au micro.
+- **En haut** : élèves actifs cette semaine (avec leurs prénoms), comptines terminées, temps de jeu, part des parties jouées au micro.
 - **Élèves** : une fiche courte par élève (un navigateur), la plus récente en premier : prénom s'il l'a donné, instrument, au micro ou au xylophone de l'écran, dernière activité, chemin des 20 comptines à chaque niveau (une case par comptine, plus foncée avec plus d'étoiles), ce qui coince (comptine quittée plusieurs fois sans être terminée, micro qui n'a pas marché), adresse IP et code. **Détail** ouvre ses épreuves : étoiles, erreurs, durée, abandons, « toute la comptine en rythme » ; et les autres prénoms donnés sur cet appareil, s'il en a changé.
-- **Par instrument** (niveau 1 ou 2) : élèves, part jouée au micro, comptines terminées, difficulté (facile, moyen, difficile : erreurs par note au niveau 1, essais ratés par phrase au niveau 2, avec les mêmes seuils que les étoiles), abandons ; puis la difficulté de chaque comptine selon l'instrument (toucher ou survoler une case pour les chiffres).
+- **Par instrument** (niveau 1 ou 2) : élèves (leurs prénoms sous le nom de l'instrument), part jouée au micro, comptines terminées, difficulté (facile, moyen, difficile : erreurs par note au niveau 1, essais ratés par phrase au niveau 2, avec les mêmes seuils que les étoiles), abandons ; puis la difficulté de chaque comptine selon l'instrument (toucher ou survoler une case pour les chiffres, et le résultat de chaque élève : étoiles, erreurs, abandons, le plus en difficulté d'abord).
+- **Les prénoms** : un élève qui a écrit son prénom sur l'accueil est nommé partout, sur sa fiche comme dans les statistiques ; les autres sont comptés « sans prénom » (dans le résultat d'une comptine : « Élève #k3x9 », le code de sa fiche). Le même prénom sur deux appareils n'est écrit qu'une fois, avec le nombre d'appareils (« Léa (2 appareils) ») ; dans le résultat d'une comptine, le code de la fiche les distingue.
 - **Tes appareils ne sont pas comptés** : ouvrir la page de suivi sur un appareil (téléphone, ordinateur) le reconnaît comme le tien. Le jeu n'y envoie plus rien, et ses parties passées sont masquées partout (sans être effacées). Pour un autre navigateur où tu as joué, ouvre sa fiche : **C'est moi : ne plus afficher**. **Réafficher**, en bas de la page, annule.
 
 ## Bon à savoir
