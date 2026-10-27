@@ -333,16 +333,14 @@ const HomeSkin = (() => {
         <div class="lh-hero-in">
           <h1 class="lh-h1"><span class="lh-fallback">Les Notes <span>Envolées</span></span><span class="lh-sr">Les Notes Envolées</span></h1>
           <div class="lh-intro">
-            <p class="lh-eyebrow">Jeu d’oreille · décors en laine</p>
+            <div class="lh-eleve" id="lh-eleve">${eleveHtml()}${micNote}</div>
             <p class="lh-lede"><strong>Les notes se sont envolées.</strong> Retrouve-les à l’oreille : la page t’écoute au micro.</p>
             <div class="lh-actions">
               <button class="lh-cta" type="button" id="lh-go">${dh ? 'Voir le Défi' : 'Choisir une comptine'}</button>
-              <p class="lh-hint" id="lh-hint">${gl ? 'Touche les notes qui volent : elles chantent.' : ''}</p>
             </div>
           </div>
         </div>
       </section>
-      <section class="lh-eleve" id="lh-eleve" aria-label="Toi et ton instrument">${eleveHtml()}${micNote}</section>
       ${dh ? `<section class="lh-path lh-dh" id="lh-path" aria-labelledby="dh-t"><div class="dh">${dh}</div></section>` : `<section class="lh-path" id="lh-path" aria-label="Les comptines, de la plus facile à la plus difficile">
         <header class="lh-path-head">
           <h2>Le fil des comptines</h2>
@@ -494,8 +492,6 @@ const HomeSkin = (() => {
       if (!o) return;
       const L = H.hit(o);
       if (L && typeof Sound !== 'undefined' && Sound.ensure()) Sound.tap(voice(), MIDI[L], 0.6);
-      const hint = root && root.querySelector('#lh-hint');
-      if (hint && L) hint.textContent = `Do, ré, mi… celle-ci, c’est ${({ C: 'do', D: 'ré', E: 'mi', F: 'fa', G: 'sol', A: 'la', B: 'si' })[L]} !`;
       Engine.poke();
     };
     let last = 0;

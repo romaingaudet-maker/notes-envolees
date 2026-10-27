@@ -4,7 +4,7 @@ Un jeu d'oreille pour les enfants : vingt comptines traditionnelles, toutes en d
 
 **Jouer : https://romaingaudet-maker.github.io/notes-envolees/**
 
-**Seconde version, en laine : https://romaingaudet-maker.github.io/notes-envolees/laine/** : le même jeu, mais chaque décor est une petite animation 3D en volume, image par image (12 images par seconde, comme un film d'animation tourné en stop-motion) : personnages au crochet, décors tricotés et pièces de feutrine cousues, éclairage de studio, profondeur de champ de maquette et particules (peluches dans la lumière, feuilles, pluie, confettis de feutrine). L'accueil est un petit théâtre : le titre en guirlande de lettres de feutrine, puis un fil rouge qui relie les vingt comptines, chacune dans un tambour à broder qui montre son décor.
+**Seconde version, en laine : https://romaingaudet-maker.github.io/notes-envolees/laine/** : le même jeu, mais chaque décor est une petite animation 3D en volume, image par image (12 images par seconde, comme un film d'animation tourné en stop-motion) : personnages au crochet, décors tricotés et pièces de feutrine cousues, éclairage de studio, profondeur de champ de maquette et particules (peluches dans la lumière, feuilles, pluie, confettis de feutrine). L'accueil est un petit théâtre : le titre en guirlande de lettres de feutrine ; juste en dessous (sur grand écran, à gauche sur la scène), le rappel de l'élève (« Bonjour, Léa ! », son instrument, son mode de jeu, « Changer »), l'introduction et le bouton « Choisir une comptine » ; puis un fil rouge qui relie les vingt comptines, chacune dans un tambour à broder qui montre son décor.
 
 ## Ce que fait la page
 

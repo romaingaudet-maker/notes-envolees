@@ -1492,7 +1492,6 @@ html.onb-open, html.onb-open body { overflow: hidden; }
 .lhome:not(.has-gl) .lh-fallback { display: block; position: absolute; top: 18%; left: 0; right: 0; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: clamp(52px, 11vw, 132px); line-height: .92; color: var(--lh-gold); text-shadow: 0 6px 0 rgba(0, 0, 0, .35); }
 .lhome:not(.has-gl) .lh-fallback span { display: block; color: var(--lh-thread); }
 .lh-intro { max-width: 36rem; pointer-events: auto; display: grid; gap: 10px; }
-.lh-eyebrow { margin: 0; font-size: 12.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--lh-gold); }
 .lh-lede { margin: 0; font-size: clamp(16px, 1.35vw, 19px); line-height: 1.5; color: var(--lh-ink); text-wrap: pretty; }
 .lh-lede strong { color: #FFF7EA; }
 .lh-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 4px; }
@@ -1505,7 +1504,6 @@ html.onb-open, html.onb-open body { overflow: hidden; }
 .lh-cta::before { content: ""; position: absolute; inset: 5px; border-radius: 999px; border: 2px dashed rgba(255, 238, 220, .55); pointer-events: none; }
 .lh-cta:hover { transform: translateY(-2px) rotate(-1deg); }
 .lh-cta:active { transform: translateY(3px); box-shadow: 0 2px 0 #8E2622, 0 8px 16px rgba(0, 0, 0, .3); }
-.lh-hint { margin: 0; font-size: 14px; color: var(--lh-soft); font-style: italic; min-height: 1.4em; }
 
 /* --- le fil des comptines --- */
 .lh-path { padding-block: clamp(36px, 6vh, 64px) 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1240px; margin: 0 auto; scroll-margin-top: 12px; }
@@ -1604,7 +1602,6 @@ html.onb-open, html.onb-open body { overflow: hidden; }
   .lh-stage { position: relative; height: clamp(300px, 52svh, 520px); }
   .lh-hero::after { display: none; }
   .lh-hero-in { position: relative; inset: auto; padding-block: 14px 8px; }
-  .lh-eleve { padding-block: 10px 0; }
   .lh-hoops { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 54px 12px; }
   .lhome { --hs: 146px; }
   .hoop-title { font-size: 16px; }
@@ -1614,8 +1611,9 @@ html.onb-open, html.onb-open body { overflow: hidden; }
   .hoop-ring, .lh-cta { transition: none; }
 }
 
-/* --- l'élève : son prénom et son instrument, juste sous la scène --- */
-.lh-eleve { max-width: 1240px; margin: 0 auto; padding-block: clamp(22px, 4vh, 36px) 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); scroll-margin-top: 12px; display: grid; gap: 10px; }
+/* --- l'élève : son prénom, son instrument et son mode de jeu, en tête de l'introduction (juste sous la scène
+   sur téléphone, sur la scène à gauche sur grand écran) --- */
+.lh-eleve { display: grid; gap: 10px; margin-bottom: 4px; }
 .lhome .eleve-card { --ec-bg: var(--lh-felt); --ec-ink: var(--lh-ink); --ec-soft: var(--lh-soft); --ec-on: rgba(247, 235, 221, .92); --ec-accent: var(--lh-gold); padding: 12px 16px 12px 12px; border-radius: 22px; box-shadow: 0 12px 26px rgba(6, 2, 12, .4); }
 .lhome .eleve-card::before { content: ""; position: absolute; inset: 6px; border-radius: 17px; border: 2px dashed rgba(247, 235, 221, .26); pointer-events: none; }
 .lhome .ec-hello { color: var(--lh-gold); }
@@ -21840,16 +21838,14 @@ const HomeSkin = (() => {
         <div class="lh-hero-in">
           <h1 class="lh-h1"><span class="lh-fallback">Les Notes <span>Envolées</span></span><span class="lh-sr">Les Notes Envolées</span></h1>
           <div class="lh-intro">
-            <p class="lh-eyebrow">Jeu d’oreille · décors en laine</p>
+            <div class="lh-eleve" id="lh-eleve">${eleveHtml()}${micNote}</div>
             <p class="lh-lede"><strong>Les notes se sont envolées.</strong> Retrouve-les à l’oreille : la page t’écoute au micro.</p>
             <div class="lh-actions">
               <button class="lh-cta" type="button" id="lh-go">${dh ? 'Voir le Défi' : 'Choisir une comptine'}</button>
-              <p class="lh-hint" id="lh-hint">${gl ? 'Touche les notes qui volent : elles chantent.' : ''}</p>
             </div>
           </div>
         </div>
       </section>
-      <section class="lh-eleve" id="lh-eleve" aria-label="Toi et ton instrument">${eleveHtml()}${micNote}</section>
       ${dh ? `<section class="lh-path lh-dh" id="lh-path" aria-labelledby="dh-t"><div class="dh">${dh}</div></section>` : `<section class="lh-path" id="lh-path" aria-label="Les comptines, de la plus facile à la plus difficile">
         <header class="lh-path-head">
           <h2>Le fil des comptines</h2>
@@ -22001,8 +21997,6 @@ const HomeSkin = (() => {
       if (!o) return;
       const L = H.hit(o);
       if (L && typeof Sound !== 'undefined' && Sound.ensure()) Sound.tap(voice(), MIDI[L], 0.6);
-      const hint = root && root.querySelector('#lh-hint');
-      if (hint && L) hint.textContent = `Do, ré, mi… celle-ci, c’est ${({ C: 'do', D: 'ré', E: 'mi', F: 'fa', G: 'sol', A: 'la', B: 'si' })[L]} !`;
       Engine.poke();
     };
     let last = 0;
