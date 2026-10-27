@@ -26,4 +26,4 @@ jobs:
       - name: Pages construites à jour (node build.mjs)
         run: |
           node build.mjs
-          git diff --exit-code -- index.html suivi.html mentions-legales.html laine/index.html manifest.webmanifest laine/manifest.webmanifest
+          git diff --exit-code -- index.html suivi.html comment-jouer.html mentions-legales.html laine/index.html manifest.webmanifest laine/manifest.webmanifest

@@ -1,0 +1,25 @@
+/* Les pages de texte (comment-jouer.html, mentions-legales.html), dans l'univers du jeu :
+   bandeau safran, encre bleu nuit sur papier, « Retour au jeu » en haut. */
+:root {
+  --cover: #F6C744; --ink: #1D2350; --ink-soft: #4B507E; --paper: #FFFBF0; --card: #FFF1D6; --line: rgba(29, 35, 80, .16); --red: #D93D43;
+  --font-display: 'Gluten', 'Trebuchet MS', 'Comic Sans MS', cursive;
+  --font-text: 'Andika', 'Verdana', 'Segoe UI', sans-serif;
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-text); font-size: 17px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:hover { color: var(--red); }
+:focus-visible { outline: 3px solid var(--red); outline-offset: 3px; }
+.band { background: var(--cover); padding-block: 22px 30px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.band-in { max-width: 46rem; margin: 0 auto; }
+.back { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; text-decoration: none; padding: 8px 14px 8px 10px; border-radius: 999px; background: var(--paper); box-shadow: 0 3px 0 rgba(0, 0, 0, .14); }
+.back svg { width: 18px; height: 18px; }
+h1 { margin: 22px 0 4px; font-family: var(--font-display); font-weight: 800; font-size: clamp(34px, 6vw, 52px); line-height: 1; text-wrap: balance; }
+.updated { margin: 6px 0 0; font-size: 14px; color: var(--ink-soft); }
+.wrap { padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: minmax(0, 46rem); justify-content: center; gap: 30px; }
+section { display: grid; gap: 10px; }
+h2 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 26px; line-height: 1.1; }
+h3 { margin: 8px 0 0; font-size: 18px; }
+p, ul, ol { margin: 0; }
+ul { padding-left: 1.2em; display: grid; gap: 6px; }

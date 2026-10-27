@@ -162,33 +162,11 @@ a { color: inherit; }
 .medal-link:hover .medal-disc, .medal-link:focus-visible .medal-disc { transform: translateY(-6px) rotate(-3deg) scale(1.04); }
 .medal-link:active .medal-disc { transform: translateY(2px) scale(.98); }
 
-.howto { margin-top: 58px; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 22px 40px; align-items: start; }
-.howto h2 { grid-column: 1 / -1; margin: 0; font-family: var(--font-display); font-size: clamp(26px, 3vw, 34px); font-weight: 800; }
-.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: s; }
-.steps li { counter-increment: s; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; align-items: start; }
-.steps li::before { content: counter(s); width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: var(--cover); display: grid; place-items: center; font: 800 20px/1 var(--font-display); }
-.steps p { margin: 7px 0 0; max-width: 38em; }
-.side-cards { display: grid; gap: 16px; }
-.legend { background: var(--paper); border-radius: 22px; padding: 18px 20px 20px; box-shadow: 0 6px 0 rgba(29, 35, 80, .12); border: 0; margin: 0; min-width: 0; }
-.legend h3, .legend legend { margin: 0 0 4px; padding: 0; font-size: 15px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
-.legend legend { float: left; width: 100%; }
-.legend p { margin: 0 0 12px; font-size: 15px; color: var(--ink-soft); clear: both; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip { min-width: 46px; height: 40px; padding: 0 10px; border-radius: 12px; display: grid; place-items: center; font-weight: 700; background: var(--nc); color: var(--nt); box-shadow: 0 3px 0 color-mix(in srgb, var(--nc) 65%, #000); }
-.inst-opts { display: grid; gap: 8px; }
-.inst-opt { display: block; cursor: pointer; }
-.inst-opt input { position: absolute; opacity: 0; pointer-events: none; }
-.inst-card { display: grid; gap: 2px; padding: 10px 14px 10px 44px; border-radius: 14px; border: 2px solid rgba(29, 35, 80, .16); position: relative; }
-.inst-card::before { content: ""; position: absolute; left: 14px; top: 13px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--ink-soft); }
-.inst-card b { font-size: 16px; color: var(--ink); }
-.inst-card small { font-size: 14px; color: var(--ink-soft); line-height: 1.3; }
-.inst-opt input:checked + .inst-card { border-color: var(--ink); background: #FFF3C9; }
-.inst-opt input:checked + .inst-card::before { border-color: var(--ink); background: radial-gradient(var(--ink) 45%, transparent 50%); }
-.inst-opt input:focus-visible + .inst-card { outline: 3px solid var(--red); outline-offset: 2px; }
 .inst-online { margin: 12px 0 0; padding: 10px 14px; border-radius: 14px; background: #FFF3C9; color: var(--ink); font-size: 15px; }
 .inst-online a { color: var(--ink); font-weight: 700; }
-.home-foot { margin-top: 36px; font-size: 14px; color: var(--ink-soft); max-width: 62em; }
-.home-foot .legal-link { display: block; width: fit-content; margin-top: 10px; color: var(--ink); font-weight: 700; text-underline-offset: 3px; }
+.home-foot { margin-top: 44px; display: flex; flex-wrap: wrap; gap: 6px 26px; font-size: 15px; }
+.home-foot a { color: var(--ink); font-weight: 700; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.home-foot a:hover { color: var(--red); }
 
 /* ================================ COMPTINE ================================ */
 :root[data-view="song"], :root[data-view="song"] body, :root[data-view="song"] #app { height: 100%; }
@@ -412,7 +390,6 @@ a { color: inherit; }
   .medal-link { transform: translateY(calc(var(--off, 0px) * .45)); }
   .home-head { grid-template-columns: minmax(0, 1fr); }
   .home-title { font-size: clamp(48px, 14.5vw, 96px); }
-  .howto { grid-template-columns: minmax(0, 1fr); }
 }
 @media (min-width: 700px) and (max-width: 1099px) { .medals { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 380px) {
@@ -743,14 +720,7 @@ html.onb-open, html.onb-open body { overflow: hidden; }
 .rstrip .dot.bad { background: #E5484D; border-radius: 2px; transform: rotate(45deg) scale(.85); }
 .rstrip .dot.extra { top: 5px; width: 8px; height: 8px; margin-left: -4px; background: var(--text-soft); }
 
-/* ============ accueil : liste des instruments, niveau ============ */
-.home-select { position: relative; display: flex; align-items: center; gap: 8px; height: 50px; padding-left: 14px; margin: 0 0 10px; border-radius: 14px; border: 2px solid var(--ink); background: #FFF3C9; color: var(--ink); }
-.home-select > svg:first-child { width: 22px; height: 22px; flex: none; }
-.home-select select { flex: 1; height: 100%; font-size: 17px; padding: 0 40px 0 0; }
-.home-select .chev { right: 14px; }
-.legend p.inst-note { margin: 0; font-size: 14px; }
-.legend .inst-opts { clear: both; }
-.level-set .inst-card b { font-family: var(--font-display); }
+/* ============ accueil : le record au niveau 2, sous un médaillon ============ */
 .medal-r2 { display: inline-flex; align-items: center; gap: 1px; margin-left: 6px; color: #B9800F; font-size: 12px; letter-spacing: -.02em; }
 .medal-r2 svg { width: 13px; height: 13px; margin-right: 2px; color: var(--ink-soft); }
 
@@ -1449,7 +1419,7 @@ html.onb-open, html.onb-open body { overflow: hidden; }
 /* ------------------------------------------------------------------
    Accueil de la version laine : un théâtre de velours prune, une
    poursuite chaude sur la guirlande du titre, puis le fil rouge qui
-   relie les tambours à broder (une comptine par tambour), puis l'établi.
+   relie les tambours à broder (une comptine par tambour) ; en bas, deux liens.
    Un seul univers, sombre par choix (le plateau d'un studio d'animation).
 ------------------------------------------------------------------- */
 :root[data-view="home"] { --bg: #231A33; --text: #F7EBDD; --accent: #F2C14E; color-scheme: dark; }
@@ -1552,42 +1522,14 @@ html.onb-open, html.onb-open body { overflow: hidden; }
 .hoop:focus-visible .hoop-ring { box-shadow: 0 0 0 4px var(--lh-gold), 0 16px 26px rgba(6, 2, 12, .55); }
 .hoop:hover .hoop-pic img { animation-duration: .4s; }
 
-/* --- l'établi --- */
-.lh-bench { max-width: 1240px; margin: 0 auto; padding-block: 28px 18px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; }
-.lh-bench .lh-how { grid-column: 1 / -1; order: 4; }
-.lh-bench .lh-how .lh-steps { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
-.lh-bench .lh-how .lh-steps li { grid-template-columns: minmax(0, 1fr); }
-@media (max-width: 959px) { .lh-bench { grid-template-columns: repeat(2, minmax(0, 1fr)); } .lh-bench .lh-how .lh-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 599px) { .lh-bench { grid-template-columns: minmax(0, 1fr); } .lh-bench .lh-how .lh-steps { grid-template-columns: minmax(0, 1fr); } .lh-bench .lh-how .lh-steps li { grid-template-columns: 30px minmax(0, 1fr); } }
-.lh-patch { position: relative; margin: 0; min-width: 0; padding: 24px 24px 26px; border: 0; border-radius: 24px; background: var(--lh-felt); box-shadow: 0 12px 26px rgba(6, 2, 12, .4); display: grid; gap: 12px; }
-.lh-patch::before { content: ""; position: absolute; inset: 8px; border-radius: 17px; border: 2px dashed rgba(247, 235, 221, .26); pointer-events: none; }
-.lh-patch:nth-child(odd) { rotate: -.5deg; }
-.lh-patch:nth-child(even) { rotate: .6deg; }
-.lh-patch h2, .lh-patch legend { margin: 0; padding: 0; font-family: var(--font-display); font-weight: 800; font-size: 23px; color: var(--lh-gold); }
-.lh-patch legend { float: left; width: 100%; margin-bottom: 12px; }
-.lh-patch p { margin: 0; color: var(--lh-soft); font-size: 15.5px; line-height: 1.5; }
-.lh-select { display: flex; align-items: center; gap: 10px; padding: 0 16px; height: 50px; border-radius: 999px; background: var(--lh-ink); color: #2A1E3A; font-weight: 700; box-shadow: 0 4px 0 rgba(0, 0, 0, .35); }
-.lh-select svg { width: 20px; height: 20px; flex: none; }
-.lh-select select { flex: 1; min-width: 0; appearance: none; border: 0; background: none; font-weight: 700; font-size: 16px; color: inherit; cursor: pointer; padding-block: 12px; }
-.lh-select select:focus-visible { outline: none; }
-.lh-select:focus-within { box-shadow: 0 0 0 3px var(--lh-gold), 0 4px 0 rgba(0, 0, 0, .35); }
-.lh-note { font-size: 14px !important; }
+/* dans claude.ai, sous le rappel : le micro n'y est pas disponible */
 .lh-online { color: var(--lh-ink) !important; }
 .lh-online a { color: var(--lh-gold); }
-.lh-opts { display: grid; gap: 10px; clear: both; }
-.lh-opt { position: relative; display: block; cursor: pointer; }
-.lh-opt input { position: absolute; opacity: 0; pointer-events: none; }
-.lh-optcard { display: grid; gap: 3px; padding: 12px 14px; border-radius: 14px; background: rgba(247, 235, 221, .06); border: 2px solid rgba(247, 235, 221, .12); transition: background .2s steps(2), border-color .2s steps(2); }
-.lh-optcard b { font-family: var(--font-display); font-size: 18px; color: var(--lh-ink); }
-.lh-optcard small { font-size: 14px; color: var(--lh-soft); line-height: 1.4; }
-.lh-opt input:checked + .lh-optcard { background: rgba(242, 193, 78, .12); border-color: var(--lh-gold); }
-.lh-opt input:focus-visible + .lh-optcard { box-shadow: 0 0 0 3px var(--lh-gold); }
-.lh-steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 10px; }
-.lh-steps li { counter-increment: s; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start; color: var(--lh-soft); font-size: 15px; line-height: 1.45; }
-.lh-steps li::before { content: counter(s); width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--lh-thread); color: #FFF7EA; font-family: var(--font-display); font-weight: 800; font-size: 15px; }
-.lh-foot { max-width: 1240px; margin: 0 auto; padding-block: 18px 44px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); font-size: 13px; line-height: 1.55; color: rgba(205, 187, 216, .78); }
-.lh-foot .legal-link { display: block; width: fit-content; margin-top: 10px; color: var(--lh-ink); font-weight: 700; text-decoration-color: var(--lh-gold); text-underline-offset: 3px; }
-.lh-foot .legal-link:hover { color: var(--lh-gold); }
+
+/* --- en bas : « Comment jouer » et les mentions légales, des pages à part --- */
+.lh-foot { max-width: 1240px; margin: 0 auto; padding-block: 14px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-wrap: wrap; gap: 6px 26px; font-size: 15px; }
+.lh-foot a { color: var(--lh-ink); font-weight: 700; text-decoration-color: var(--lh-gold); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.lh-foot a:hover { color: var(--lh-gold); }
 
 @media (min-width: 900px) and (min-aspect-ratio: 13/10) {
   .lh-hero-in { justify-content: center; padding-block: 40px; }
@@ -1682,7 +1624,7 @@ html.onb-open, html.onb-open body { overflow: hidden; }
 </defs></svg>
 <div id="app"></div>
 <div id="iris" class="iris" hidden></div>
-<script>window.NE_ONLINE_URL = "https://romaingaudet-maker.github.io/notes-envolees/laine/"; window.SONS_BASE = '../sons/'; window.NE_LEGAL_URL = '../mentions-legales.html';</script>
+<script>window.NE_ONLINE_URL = "https://romaingaudet-maker.github.io/notes-envolees/laine/"; window.SONS_BASE = '../sons/'; window.NE_HELP_URL = '../comment-jouer.html'; window.NE_LEGAL_URL = '../mentions-legales.html';</script>
 <script>/**
  * three.js r170 (https://threejs.org), version réduite (esbuild --minify) qui expose window.THREE.
  *
@@ -21510,8 +21452,8 @@ SCENES.provence = {
    s'envolent, des notes ailées qui chantent quand on les touche.
    Puis le fil rouge, qui passe de tambour à broder en tambour à broder :
    chaque tambour montre le décor de sa comptine (rendu par le même
-   moteur, quatre images qui frémissent). Enfin l'établi : instrument,
-   niveau, mode d'emploi.
+   moteur, quatre images qui frémissent). En bas, deux liens vers les
+   pages à part : « Comment jouer » et les mentions légales.
 ------------------------------------------------------------------- */
 const HOME_BG = '#231A33';
 
@@ -21784,7 +21726,7 @@ const HomeSkin = (() => {
   const MIDI = { C: 60, D: 62, E: 64, F: 65, G: 67, A: 69, B: 71 };
 
   function render(ctx) {
-    const { app, LIB, records, inst, star, ICON, esc, titleHtml, LEVEL, framed, ONLINE_URL, GO, eleveHtml, bindEleve, HOWTO } = ctx;
+    const { app, LIB, records, inst, star, ICON, esc, titleHtml, LEVEL, framed, ONLINE_URL, eleveHtml, bindEleve } = ctx;
     // le mode de jeu : comptines fermées et prochaine à jouer (Aventure), essais du Défi
     const songState = ctx.songState || (() => ({ open: true, next: false }));
     const NX = ctx.nextToPlay ? ctx.nextToPlay() : null;
@@ -21803,7 +21745,7 @@ const HomeSkin = (() => {
     };
     const dh = ctx.defiHomeHtml ? ctx.defiHomeHtml(colorOf, dhDisc) : '';
     const NBS = '\u00a0';
-    const LEGAL_URL = ctx.LEGAL_URL || 'mentions-legales.html';
+    const LEGAL_URL = ctx.LEGAL_URL || 'mentions-legales.html', HELP_URL = ctx.HELP_URL || 'comment-jouer.html';
     const gl = Engine.supported();
     lastLIB = LIB;
     const hoops = dh ? '' : LIB.map((s, i) => {
@@ -21829,7 +21771,6 @@ const HomeSkin = (() => {
         </a>
       </li>`;
     }).join('');
-    const chips = [['C', 'Do'], ['D', 'Ré'], ['E', 'Mi'], ['F', 'Fa'], ['G', 'Sol'], ['A', 'La'], ['B', 'Si']].map(([l, n]) => `<span class="chip" data-l="${l}">${n}</span>`).join('');
     const micNote = framed && ONLINE_URL ? `<p class="lh-online">Ici, dans claude.ai, le micro n’est pas disponible. Pour jouer avec ton instrument, ouvre la <a href="${esc(ONLINE_URL)}" target="_blank" rel="noopener">version en ligne</a>.</p>` : '';
     app.innerHTML = `
     <main class="lhome${gl ? ' has-gl' : ''}">
@@ -21857,20 +21798,7 @@ const HomeSkin = (() => {
         </div>
       </section>`}
       <section class="lh-defi" id="defi-board" aria-labelledby="db-t" hidden></section>
-      <section class="lh-bench" aria-label="Réglages et mode d’emploi">
-        <div class="lh-patch lh-how">
-          <h2>Comment jouer</h2>
-          <ol class="lh-steps">${HOWTO.map((t) => `<li>${t}</li>`).join('')}</ol>
-        </div>
-        <div class="lh-patch lh-colors">
-          <h2>Les couleurs des notes</h2>
-          <p>Toutes les comptines sont en do majeur : pas de dièse, pas de bémol. Les notes graves portent un point dessous, les aiguës un point dessus.</p>
-          <div class="chips">${chips}</div>
-        </div>
-      </section>
-      <p class="lh-foot">${typeof Suivi !== 'undefined' && Suivi.configured
-        ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour que ton professeur suive tes progrès et pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré avec ton prénom si tu l’as écrit et l’adresse IP de la connexion, puis effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
-        : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Le micro s’allume tout seul dans une comptine (le navigateur demande d’abord l’autorisation). Sur ordinateur, la barre d’espace lance « ${GO} ». Comptines traditionnelles du domaine public. Décors en 3D faits avec three.js (licence MIT) ; titre en police Gluten (SIL OFL). Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax et Black and Green Guitars (Karoryfer), Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0) et MS Basic de MuseScore, d’après Fluid R3 de Frank Wen (licence MIT). Reconnaissance des noms chantés : modèles tirés des voix de synthèse Kokoro (licence Apache 2.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
+      <nav class="lh-foot" aria-label="À propos du jeu"><a href="${esc(HELP_URL)}">Comment jouer</a><a href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></nav>
     </main>`;
     root = app.querySelector('.lhome');
     const toPath = () => {
@@ -22143,6 +22071,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   /* Adresse de la version en ligne, où le micro est autorisé (vide si aucune) */
   const ONLINE_URL = window.NE_ONLINE_URL || 'https://romaingaudet-maker.github.io/notes-envolees/';
   const LEGAL_URL = window.NE_LEGAL_URL || 'mentions-legales.html'; // mentions légales et confidentialité
+  const HELP_URL = window.NE_HELP_URL || 'comment-jouer.html'; // « Comment jouer » : le mode d'emploi, à part
   const RM = window.matchMedia('(prefers-reduced-motion: reduce)');
   const FINE = window.matchMedia('(hover: hover) and (pointer: fine)');
   const NARROW = window.matchMedia('(max-width: 899px)');
@@ -22912,7 +22841,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     D.leave();
     D = PAPER;
     setWorld(null);
-    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, decorFor, GO, eleveHtml, bindEleve, HOWTO, songState, nextToPlay, defiHomeHtml })) {
+    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, HELP_URL, decorFor, eleveHtml, bindEleve, songState, nextToPlay, defiHomeHtml })) {
       welcome(() => eleveRefresh(app.querySelector('.eleve-card')));
       homeExtras();
       return;
@@ -22932,8 +22861,6 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
         <span class="medal-meta">${LEVEL(s.level)} · ${s.notes.length} notes${best2 ? `<span class="medal-r2" aria-label="Niveau 2 : ${best2} étoile${best2 > 1 ? 's' : ''}">${ICON.metro}${'★'.repeat(best2)}</span>` : ''}</span>${st.lockedBy ? `<span class="vh">, fermée${NB}: termine d’abord «${NB}${esc(nb(st.lockedBy.title))}${NB}»</span>` : ''}${st.next ? '<span class="vh">, la prochaine à jouer</span>' : ''}
       </a></li>`;
     }).join('');
-    const chips = [['C', 'Do'], ['D', 'Ré'], ['E', 'Mi'], ['F', 'Fa'], ['G', 'Sol'], ['A', 'La'], ['B', 'Si']]
-      .map(([l, n]) => `<span class="chip" data-l="${l}">${n}</span>`).join('');
     const micNote = framed && ONLINE_URL
       ? `<p class="inst-online">Ici, dans claude.ai, le micro n’est pas disponible. Pour jouer avec ton instrument, ouvre la <a href="${esc(ONLINE_URL)}" target="_blank" rel="noopener">version en ligne</a>.</p>`
       : '';
@@ -22951,20 +22878,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
           <ol class="medals">${medals}</ol>
         </section>`}
         <section class="defi-board" id="defi-board" aria-labelledby="db-t" hidden></section>
-        <section class="howto">
-          <h2>Comment jouer</h2>
-          <ol class="steps">${HOWTO.map((t) => `<li><p>${t}</p></li>`).join('')}</ol>
-          <div class="side-cards">
-            <div class="legend">
-              <h3>Le code couleur des notes</h3>
-              <p>Toutes les comptines sont en do majeur : pas de dièse, pas de bémol. Les notes graves portent un point dessous, les aiguës un point dessus.</p>
-              <div class="chips">${chips}</div>
-            </div>
-          </div>
-        </section>
-        <p class="home-foot">${Suivi.configured
-          ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour que ton professeur suive tes progrès et pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré avec ton prénom si tu l’as écrit et l’adresse IP de la connexion, puis effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
-          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Le micro s’allume tout seul dans une comptine (le navigateur demande d’abord l’autorisation). Sur ordinateur, la barre d’espace lance «${NB}${GO}${NB}». Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax et Black and Green Guitars (Karoryfer), Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0) et MS Basic de MuseScore, d’après Fluid R3 de Frank Wen (licence MIT). Reconnaissance des noms chantés : modèles tirés des voix de synthèse Kokoro (licence Apache 2.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
+        <nav class="home-foot" aria-label="À propos du jeu"><a href="${esc(HELP_URL)}">Comment jouer</a><a href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></nav>
       </div>
     </main>`;
     const card = app.querySelector('.eleve-card');
@@ -23105,16 +23019,6 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     if (go) go.focus({ preventScroll: true });
     welcome(() => {});
   }
-
-  // « Comment jouer », sur l'accueil des deux versions
-  const HOWTO = [
-    'La première fois, la page te demande ton prénom, ton instrument (touche son dessin) et ta façon de jouer. Pour en changer, touche « Changer » en haut de l’accueil, ou le nom de ton instrument en haut d’une comptine : tout se change au même endroit, dans les réglages. Les noms de notes sont ceux de ta partition : la page joue dans le ton de ton instrument, avec son vrai son.',
-    'Choisis une comptine : les plus faciles sont au début du chemin. Trois façons de jouer. Aventure : les comptines s’ouvrent une à une, termine-en une pour ouvrir la suivante. Découverte : tout est ouvert. Défi : les 20 comptines dans l’ordre, en rythme, d’un coup et sans erreur ; une erreur, et c’est le retour au départ. Si tu le veux, ton record paraît au tableau d’honneur de l’accueil.',
-    'Choisis ton niveau. Niveau 1, les notes : retrouve-les à ton rythme. Niveau 2, notes et rythme : joue en mesure après le décompte. Au début, tu joues toute la comptine d’un coup ; ensuite, la page te ramène sur les phrases à corriger, une par une.',
-    'De chaque côté du grand rond, choisis ce que tu joues : « Toute la comptine » ou « Phrase 1 » (la phrase affichée). Touche ensuite le grand rond « À toi de jouer ! » : la page la joue, compte « 1, 2, 3, 4 », puis c’est à toi. Pendant que tu joues, le rond montre la note qu’il entend. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec la voix, chante chaque note en disant son nom.',
-    'Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée se pose à sa hauteur et le décor s’anime.',
-    'Au niveau 1, pendant que tu joues une phrase, « Jusqu’à la note » la rejoue jusqu’à la note à trouver. Pour que la page joue plus lentement, touche le nom de ton instrument, en haut : « Vitesse : lente ».',
-  ];
 
   let medalRO = null;
   function layoutMedals() {

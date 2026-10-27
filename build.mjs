@@ -75,14 +75,17 @@ const pExtra = QUALIF && PROD_SUIVI ? `<script>window.NE_SUIVI_LECTURE = ${JSON.
 const prof = doc(fill(pShell.slice(0, pCut), pCss, pJs).trim(), fill(pShell.slice(pCut), pCss, pJs).trim(), '#F6C744', icon, pExtra);
 write('suivi.html', prof);
 
-// 4) mentions légales et confidentialité (mentions-legales.html, liée depuis l'accueil des deux versions)
+// 4) les pages de texte, liées en bas de l'accueil des deux versions : « Comment jouer » (comment-jouer.html, à partir
+//    de src/aide.html) et les mentions légales et confidentialité (mentions-legales.html, à partir de src/mentions.html)
 {
-  const mShell = r('mentions.html');
-  const mCss = fontsCss.split('\n')[0] + '\n' + [font('Gluten', 800, 'gluten-latin-800-normal.woff2'), font('Andika', 400, 'andika-latin-400-normal.woff2'), font('Andika', 700, 'andika-latin-700-normal.woff2')].join('\n');
-  const mJs = ['suivi.js', 'mentions.js'].map(r).join('\n');
-  const mCut = mShell.indexOf('<header');
-  const legal = doc(fill(mShell.slice(0, mCut), mCss, mJs).trim(), fill(mShell.slice(mCut), mCss, mJs).trim(), '#F6C744');
-  write('mentions-legales.html', legal);
+  const tCss = fontsCss.split('\n')[0] + '\n' + [font('Gluten', 800, 'gluten-latin-800-normal.woff2'), font('Andika', 400, 'andika-latin-400-normal.woff2'), font('Andika', 700, 'andika-latin-700-normal.woff2')].join('\n') + '\n' + r('_page.css');
+  const textPage = (src, scripts, name) => {
+    const t = r(src), tJs = ['suivi.js', 'page-retour.js', ...scripts].map(r).join('\n');
+    const tCut = t.indexOf('<header');
+    write(name, doc(fill(t.slice(0, tCut), tCss, tJs).trim(), fill(t.slice(tCut), tCss, tJs).trim(), '#F6C744'));
+  };
+  textPage('aide.html', ['aide.js'], 'comment-jouer.html');
+  textPage('mentions.html', ['mentions.js'], 'mentions-legales.html');
 }
 
 /* 5) seconde version : décors en laine, en 3D image par image.
@@ -104,8 +107,8 @@ write('suivi.html', prof);
   const lfill = (t, pre) => t.replace('/*__CSS__*/', () => css2).replace('/*__PRE__*/', () => pre).replace('/*__THREE__*/', () => three).replace('/*__JS__*/', () => js2);
   // a) fragment publié comme artifact : les sons sont à côté (sons/)
   out('laine.html', lfill(lshell, `window.NE_ONLINE_URL = ${JSON.stringify(ONLINE)};`));
-  // b) document autonome, publié sur GitHub Pages dans laine/ : les sons et les mentions légales sont dans le dossier parent
-  const pre = `window.NE_ONLINE_URL = ${JSON.stringify(ONLINE)}; window.SONS_BASE = '../sons/'; window.NE_LEGAL_URL = '../mentions-legales.html';`;
+  // b) document autonome, publié sur GitHub Pages dans laine/ : les sons et les pages de texte sont dans le dossier parent
+  const pre = `window.NE_ONLINE_URL = ${JSON.stringify(ONLINE)}; window.SONS_BASE = '../sons/'; window.NE_HELP_URL = '../comment-jouer.html'; window.NE_LEGAL_URL = '../mentions-legales.html';`;
   const lcut = lshell.indexOf('<svg');
   const ldoc = doc(lfill(lshell.slice(0, lcut), pre).trim(), lfill(lshell.slice(lcut), pre).trim(), '#2B2350', iconOf('#2B2350', '#F2C14E'), INSTALL_V2);
   write('laine/index.html', ldoc);

@@ -73,14 +73,7 @@
 .rstrip .dot.bad { background: #E5484D; border-radius: 2px; transform: rotate(45deg) scale(.85); }
 .rstrip .dot.extra { top: 5px; width: 8px; height: 8px; margin-left: -4px; background: var(--text-soft); }
 
-/* ============ accueil : liste des instruments, niveau ============ */
-.home-select { position: relative; display: flex; align-items: center; gap: 8px; height: 50px; padding-left: 14px; margin: 0 0 10px; border-radius: 14px; border: 2px solid var(--ink); background: #FFF3C9; color: var(--ink); }
-.home-select > svg:first-child { width: 22px; height: 22px; flex: none; }
-.home-select select { flex: 1; height: 100%; font-size: 17px; padding: 0 40px 0 0; }
-.home-select .chev { right: 14px; }
-.legend p.inst-note { margin: 0; font-size: 14px; }
-.legend .inst-opts { clear: both; }
-.level-set .inst-card b { font-family: var(--font-display); }
+/* ============ accueil : le record au niveau 2, sous un médaillon ============ */
 .medal-r2 { display: inline-flex; align-items: center; gap: 1px; margin-left: 6px; color: #B9800F; font-size: 12px; letter-spacing: -.02em; }
 .medal-r2 svg { width: 13px; height: 13px; margin-right: 2px; color: var(--ink-soft); }
 

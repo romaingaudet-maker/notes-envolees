@@ -1,0 +1,127 @@
+<title>Comment jouer · Les Notes Envolées</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Comment jouer aux Notes Envolées, le jeu d'oreille : les réglages, les trois façons de jouer, les deux niveaux, le code couleur des notes.">
+<style>
+/*__CSS__*/
+/* propre à cette page (le reste : src/_page.css) */
+:root {
+  /* le code couleur des notes, le même que dans le jeu (src/_base.css) */
+  --n-do: #E5484D; --n-re: #F2803C; --n-mi: #F5C32C; --n-fa: #4CAF5A; --n-sol: #1FA7A0; --n-la: #3E6FD8; --n-si: #8B57C9;
+  --n-ink-light: #FFFFFF; --n-ink-dark: #2A1E06;
+}
+[data-l="C"] { --nc: var(--n-do); --nt: var(--n-ink-light); }
+[data-l="D"] { --nc: var(--n-re); --nt: var(--n-ink-dark); }
+[data-l="E"] { --nc: var(--n-mi); --nt: var(--n-ink-dark); }
+[data-l="F"] { --nc: var(--n-fa); --nt: var(--n-ink-light); }
+[data-l="G"] { --nc: var(--n-sol); --nt: var(--n-ink-light); }
+[data-l="A"] { --nc: var(--n-la); --nt: var(--n-ink-light); }
+[data-l="B"] { --nc: var(--n-si); --nt: var(--n-ink-light); }
+.cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.cards.duo { grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+.cards li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 2px 12px; align-content: start; padding: 14px 16px 16px; border-radius: 18px; background: var(--card); }
+.cards .ic { grid-row: span 2; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: var(--cover); font-family: var(--font-display); font-weight: 800; font-size: 21px; line-height: 1; }
+.cards .ic svg { width: 22px; height: 22px; }
+.cards b { font-family: var(--font-display); font-weight: 800; font-size: 21px; line-height: 1.15; padding-top: 2px; }
+.cards span:not(.ic) { font-size: 15.5px; line-height: 1.45; color: var(--ink-soft); }
+.steps { list-style: none; padding: 0; display: grid; gap: 12px; counter-reset: s; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; align-items: start; }
+.steps li::before { content: counter(s); width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: var(--cover); font-family: var(--font-display); font-weight: 800; font-size: 19px; line-height: 1; }
+.steps p { padding-top: 5px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { min-width: 54px; height: 44px; padding: 0 12px; border-radius: 12px; display: grid; place-items: center; font-weight: 700; font-size: 18px; line-height: 1; background: var(--nc); color: var(--nt); box-shadow: 0 3px 0 color-mix(in srgb, var(--nc) 65%, #000); }
+.chip > span { position: relative; }
+.chip.low > span::after, .chip.high > span::before { content: ""; position: absolute; left: 50%; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: currentColor; }
+.chip.low > span::after { bottom: -9px; }
+.chip.high > span::before { top: -9px; }
+.octs { display: flex; flex-wrap: wrap; gap: 14px 22px; margin: 4px 0 0; padding: 0; list-style: none; }
+.octs li { display: grid; justify-items: center; gap: 6px; font-size: 15px; color: var(--ink-soft); }
+.note-sm { font-size: 15.5px; color: var(--ink-soft); }
+.end { padding-top: 22px; border-top: 2px dashed var(--line); display: grid; gap: 10px; }
+.end p { font-size: 15.5px; color: var(--ink-soft); }
+.end .legal { font-weight: 700; font-size: 17px; }
+[hidden] { display: none !important; }
+/* sur un téléphone, les sept couleurs sur une ligne */
+@media (max-width: 480px) { .chips { gap: 6px; } .chip { min-width: 0; height: 40px; padding: 0 8px; font-size: 16px; flex: 1 1 0; } .octs .chip { flex: none; min-width: 52px; } }
+</style>
+<header class="band">
+  <div class="band-in">
+    <a class="back" id="back" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Retour au jeu</a>
+    <h1>Comment jouer</h1>
+    <p class="updated">Les Notes Envolées · le jeu d’oreille</p>
+  </div>
+</header>
+<main class="wrap">
+  <section aria-labelledby="t-debut">
+    <h2 id="t-debut">Pour commencer</h2>
+    <p>Les notes se sont envolées : retrouve-les à l’oreille, sur ton instrument ou avec ta voix. La page t’écoute au micro.</p>
+    <p>La première fois, elle te demande ton prénom (si tu veux), ton instrument (touche son dessin) et ta façon de jouer. Pour en changer, touche « Changer » en haut de l’accueil, ou le bouton de ton instrument en haut d’une comptine : tout se règle au même endroit.</p>
+    <p>Les noms de notes sont ceux de ta partition : la page joue dans le ton de ton instrument, avec son vrai son.</p>
+    <p>Sur l’accueil, les comptines vont de la plus facile à la plus difficile.</p>
+  </section>
+
+  <section aria-labelledby="t-modes">
+    <h2 id="t-modes">Trois façons de jouer</h2>
+    <ul class="cards">
+      <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 20.5c3.5 0 3-5 7-5s3.5 3.5 7.5 2.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="0.1 3.6"/><path d="M15 15V3.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M15.6 3.4l6 2.6-6 2.8z" fill="currentColor"/></svg></span><b>Aventure</b><span>Les comptines s’ouvrent une à une : termine-en une pour ouvrir la suivante.</span></li>
+      <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="10.5" width="14" height="10.5" rx="2.6" fill="currentColor"/><path d="M7.5 10.5V7a4.2 4.2 0 0 1 8.1-1.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span><b>Découverte</b><span>Toutes les comptines sont ouvertes : joue celles que tu veux.</span></li>
+      <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3.5h10v5a5 5 0 0 1-10 0z" fill="currentColor"/><path d="M7 5.5H4.2a3 3 0 0 0 3.3 4.3M17 5.5h2.8a3 3 0 0 1-3.3 4.3M12 13.5v4M8 21h8M9.2 17.5h5.6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><b>Défi</b><span>Les 20 comptines dans l’ordre, en rythme, d’un coup et sans erreur. Une erreur : retour au départ ! Si tu le veux, ton record paraît au tableau d’honneur de l’accueil.</span></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="t-niveaux">
+    <h2 id="t-niveaux">Deux niveaux</h2>
+    <ul class="cards duo">
+      <li><span class="ic" aria-hidden="true">1</span><b>Les notes</b><span>Retrouve-les à ton rythme.</span></li>
+      <li><span class="ic" aria-hidden="true">2</span><b>Notes et rythme</b><span>Joue en mesure, après le décompte.</span></li>
+    </ul>
+    <p>Au début, tu joues toute la comptine d’un coup ; ensuite, la page te ramène sur les phrases à corriger, une par une.</p>
+  </section>
+
+  <section aria-labelledby="t-jouer">
+    <h2 id="t-jouer">Jouer une comptine</h2>
+    <ol class="steps">
+      <li><p>De chaque côté du grand rond, choisis ce que tu joues : « Toute la comptine » ou « Phrase 1 » (la phrase affichée).</p></li>
+      <li><p>Touche le grand rond « À toi de jouer ! » : la page joue, compte « 1, 2, 3, 4 », puis c’est à toi. Sur ordinateur, la barre d’espace fait pareil.</p></li>
+      <li><p>La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Pendant que tu joues, le rond montre la note qu’il entend.</p></li>
+      <li><p>Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée se pose à sa hauteur, et le décor s’anime.</p></li>
+    </ol>
+    <p>Avec la voix, chante chaque note en disant son nom : do, ré, mi…</p>
+  </section>
+
+  <section aria-labelledby="t-aide">
+    <h2 id="t-aide">Pour t’aider</h2>
+    <ul>
+      <li>Au niveau 1, pendant une phrase, « Jusqu’à la note » la rejoue jusqu’à la note à trouver.</li>
+      <li>Pour que la page joue plus lentement, touche le bouton de ton instrument, en haut de la comptine, puis « Lente », à côté de « Vitesse ».</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="t-couleurs">
+    <h2 id="t-couleurs">Les couleurs des notes</h2>
+    <p>Chaque note a sa couleur, la même dans toutes les comptines.</p>
+    <div class="chips" role="list"><span class="chip" role="listitem" data-l="C">Do</span><span class="chip" role="listitem" data-l="D">Ré</span><span class="chip" role="listitem" data-l="E">Mi</span><span class="chip" role="listitem" data-l="F">Fa</span><span class="chip" role="listitem" data-l="G">Sol</span><span class="chip" role="listitem" data-l="A">La</span><span class="chip" role="listitem" data-l="B">Si</span></div>
+    <p>Toutes les comptines sont en do majeur : pas de dièse, pas de bémol. Les notes graves portent un point dessous, les aiguës un point dessus.</p>
+    <ul class="octs">
+      <li><span class="chip low" data-l="G" aria-hidden="true"><span>Sol</span></span>Sol grave</li>
+      <li><span class="chip" data-l="G" aria-hidden="true"><span>Sol</span></span>Sol</li>
+      <li><span class="chip high" data-l="G" aria-hidden="true"><span>Sol</span></span>Sol aigu</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="t-savoir">
+    <h2 id="t-savoir">Bon à savoir</h2>
+    <ul>
+      <li>Le micro s’allume tout seul quand tu ouvres une comptine (le navigateur demande d’abord l’autorisation). Le son reste sur l’appareil : il n’est jamais enregistré ni envoyé.</li>
+      <li>Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil.</li>
+      <li id="suivi" hidden>Pour que ton professeur suive tes progrès et pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré avec ton prénom si tu l’as écrit et l’adresse IP de la connexion, puis effacé au bout de 13 mois.</li>
+    </ul>
+  </section>
+
+  <footer class="end">
+    <p>Comptines traditionnelles du domaine public. Les sons des instruments, les voix qui aident à reconnaître les noms chantés, les polices et les décors en 3D sont libres de droits : leurs auteurs et leurs licences sont dans les mentions légales.</p>
+    <a class="legal" href="mentions-legales.html">Mentions légales et confidentialité</a>
+  </footer>
+</main>
+<script>
+/*__JS__*/
+</script>

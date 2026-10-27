@@ -16,7 +16,7 @@
 /* ------------------------------------------------------------------
    Accueil de la version laine : un théâtre de velours prune, une
    poursuite chaude sur la guirlande du titre, puis le fil rouge qui
-   relie les tambours à broder (une comptine par tambour), puis l'établi.
+   relie les tambours à broder (une comptine par tambour) ; en bas, deux liens.
    Un seul univers, sombre par choix (le plateau d'un studio d'animation).
 ------------------------------------------------------------------- */
 :root[data-view="home"] { --bg: #231A33; --text: #F7EBDD; --accent: #F2C14E; color-scheme: dark; }
@@ -119,42 +119,14 @@
 .hoop:focus-visible .hoop-ring { box-shadow: 0 0 0 4px var(--lh-gold), 0 16px 26px rgba(6, 2, 12, .55); }
 .hoop:hover .hoop-pic img { animation-duration: .4s; }
 
-/* --- l'établi --- */
-.lh-bench { max-width: 1240px; margin: 0 auto; padding-block: 28px 18px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; }
-.lh-bench .lh-how { grid-column: 1 / -1; order: 4; }
-.lh-bench .lh-how .lh-steps { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
-.lh-bench .lh-how .lh-steps li { grid-template-columns: minmax(0, 1fr); }
-@media (max-width: 959px) { .lh-bench { grid-template-columns: repeat(2, minmax(0, 1fr)); } .lh-bench .lh-how .lh-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 599px) { .lh-bench { grid-template-columns: minmax(0, 1fr); } .lh-bench .lh-how .lh-steps { grid-template-columns: minmax(0, 1fr); } .lh-bench .lh-how .lh-steps li { grid-template-columns: 30px minmax(0, 1fr); } }
-.lh-patch { position: relative; margin: 0; min-width: 0; padding: 24px 24px 26px; border: 0; border-radius: 24px; background: var(--lh-felt); box-shadow: 0 12px 26px rgba(6, 2, 12, .4); display: grid; gap: 12px; }
-.lh-patch::before { content: ""; position: absolute; inset: 8px; border-radius: 17px; border: 2px dashed rgba(247, 235, 221, .26); pointer-events: none; }
-.lh-patch:nth-child(odd) { rotate: -.5deg; }
-.lh-patch:nth-child(even) { rotate: .6deg; }
-.lh-patch h2, .lh-patch legend { margin: 0; padding: 0; font-family: var(--font-display); font-weight: 800; font-size: 23px; color: var(--lh-gold); }
-.lh-patch legend { float: left; width: 100%; margin-bottom: 12px; }
-.lh-patch p { margin: 0; color: var(--lh-soft); font-size: 15.5px; line-height: 1.5; }
-.lh-select { display: flex; align-items: center; gap: 10px; padding: 0 16px; height: 50px; border-radius: 999px; background: var(--lh-ink); color: #2A1E3A; font-weight: 700; box-shadow: 0 4px 0 rgba(0, 0, 0, .35); }
-.lh-select svg { width: 20px; height: 20px; flex: none; }
-.lh-select select { flex: 1; min-width: 0; appearance: none; border: 0; background: none; font-weight: 700; font-size: 16px; color: inherit; cursor: pointer; padding-block: 12px; }
-.lh-select select:focus-visible { outline: none; }
-.lh-select:focus-within { box-shadow: 0 0 0 3px var(--lh-gold), 0 4px 0 rgba(0, 0, 0, .35); }
-.lh-note { font-size: 14px !important; }
+/* dans claude.ai, sous le rappel : le micro n'y est pas disponible */
 .lh-online { color: var(--lh-ink) !important; }
 .lh-online a { color: var(--lh-gold); }
-.lh-opts { display: grid; gap: 10px; clear: both; }
-.lh-opt { position: relative; display: block; cursor: pointer; }
-.lh-opt input { position: absolute; opacity: 0; pointer-events: none; }
-.lh-optcard { display: grid; gap: 3px; padding: 12px 14px; border-radius: 14px; background: rgba(247, 235, 221, .06); border: 2px solid rgba(247, 235, 221, .12); transition: background .2s steps(2), border-color .2s steps(2); }
-.lh-optcard b { font-family: var(--font-display); font-size: 18px; color: var(--lh-ink); }
-.lh-optcard small { font-size: 14px; color: var(--lh-soft); line-height: 1.4; }
-.lh-opt input:checked + .lh-optcard { background: rgba(242, 193, 78, .12); border-color: var(--lh-gold); }
-.lh-opt input:focus-visible + .lh-optcard { box-shadow: 0 0 0 3px var(--lh-gold); }
-.lh-steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 10px; }
-.lh-steps li { counter-increment: s; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start; color: var(--lh-soft); font-size: 15px; line-height: 1.45; }
-.lh-steps li::before { content: counter(s); width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--lh-thread); color: #FFF7EA; font-family: var(--font-display); font-weight: 800; font-size: 15px; }
-.lh-foot { max-width: 1240px; margin: 0 auto; padding-block: 18px 44px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); font-size: 13px; line-height: 1.55; color: rgba(205, 187, 216, .78); }
-.lh-foot .legal-link { display: block; width: fit-content; margin-top: 10px; color: var(--lh-ink); font-weight: 700; text-decoration-color: var(--lh-gold); text-underline-offset: 3px; }
-.lh-foot .legal-link:hover { color: var(--lh-gold); }
+
+/* --- en bas : « Comment jouer » et les mentions légales, des pages à part --- */
+.lh-foot { max-width: 1240px; margin: 0 auto; padding-block: 14px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-wrap: wrap; gap: 6px 26px; font-size: 15px; }
+.lh-foot a { color: var(--lh-ink); font-weight: 700; text-decoration-color: var(--lh-gold); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.lh-foot a:hover { color: var(--lh-gold); }
 
 @media (min-width: 900px) and (min-aspect-ratio: 13/10) {
   .lh-hero-in { justify-content: center; padding-block: 40px; }

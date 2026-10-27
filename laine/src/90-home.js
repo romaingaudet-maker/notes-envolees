@@ -5,8 +5,8 @@
    s'envolent, des notes ailées qui chantent quand on les touche.
    Puis le fil rouge, qui passe de tambour à broder en tambour à broder :
    chaque tambour montre le décor de sa comptine (rendu par le même
-   moteur, quatre images qui frémissent). Enfin l'établi : instrument,
-   niveau, mode d'emploi.
+   moteur, quatre images qui frémissent). En bas, deux liens vers les
+   pages à part : « Comment jouer » et les mentions légales.
 ------------------------------------------------------------------- */
 const HOME_BG = '#231A33';
 
@@ -279,7 +279,7 @@ const HomeSkin = (() => {
   const MIDI = { C: 60, D: 62, E: 64, F: 65, G: 67, A: 69, B: 71 };
 
   function render(ctx) {
-    const { app, LIB, records, inst, star, ICON, esc, titleHtml, LEVEL, framed, ONLINE_URL, GO, eleveHtml, bindEleve, HOWTO } = ctx;
+    const { app, LIB, records, inst, star, ICON, esc, titleHtml, LEVEL, framed, ONLINE_URL, eleveHtml, bindEleve } = ctx;
     // le mode de jeu : comptines fermées et prochaine à jouer (Aventure), essais du Défi
     const songState = ctx.songState || (() => ({ open: true, next: false }));
     const NX = ctx.nextToPlay ? ctx.nextToPlay() : null;
@@ -298,7 +298,7 @@ const HomeSkin = (() => {
     };
     const dh = ctx.defiHomeHtml ? ctx.defiHomeHtml(colorOf, dhDisc) : '';
     const NBS = '\u00a0';
-    const LEGAL_URL = ctx.LEGAL_URL || 'mentions-legales.html';
+    const LEGAL_URL = ctx.LEGAL_URL || 'mentions-legales.html', HELP_URL = ctx.HELP_URL || 'comment-jouer.html';
     const gl = Engine.supported();
     lastLIB = LIB;
     const hoops = dh ? '' : LIB.map((s, i) => {
@@ -324,7 +324,6 @@ const HomeSkin = (() => {
         </a>
       </li>`;
     }).join('');
-    const chips = [['C', 'Do'], ['D', 'Ré'], ['E', 'Mi'], ['F', 'Fa'], ['G', 'Sol'], ['A', 'La'], ['B', 'Si']].map(([l, n]) => `<span class="chip" data-l="${l}">${n}</span>`).join('');
     const micNote = framed && ONLINE_URL ? `<p class="lh-online">Ici, dans claude.ai, le micro n’est pas disponible. Pour jouer avec ton instrument, ouvre la <a href="${esc(ONLINE_URL)}" target="_blank" rel="noopener">version en ligne</a>.</p>` : '';
     app.innerHTML = `
     <main class="lhome${gl ? ' has-gl' : ''}">
@@ -352,20 +351,7 @@ const HomeSkin = (() => {
         </div>
       </section>`}
       <section class="lh-defi" id="defi-board" aria-labelledby="db-t" hidden></section>
-      <section class="lh-bench" aria-label="Réglages et mode d’emploi">
-        <div class="lh-patch lh-how">
-          <h2>Comment jouer</h2>
-          <ol class="lh-steps">${HOWTO.map((t) => `<li>${t}</li>`).join('')}</ol>
-        </div>
-        <div class="lh-patch lh-colors">
-          <h2>Les couleurs des notes</h2>
-          <p>Toutes les comptines sont en do majeur : pas de dièse, pas de bémol. Les notes graves portent un point dessous, les aiguës un point dessus.</p>
-          <div class="chips">${chips}</div>
-        </div>
-      </section>
-      <p class="lh-foot">${typeof Suivi !== 'undefined' && Suivi.configured
-        ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour que ton professeur suive tes progrès et pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré avec ton prénom si tu l’as écrit et l’adresse IP de la connexion, puis effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
-        : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Le micro s’allume tout seul dans une comptine (le navigateur demande d’abord l’autorisation). Sur ordinateur, la barre d’espace lance « ${GO} ». Comptines traditionnelles du domaine public. Décors en 3D faits avec three.js (licence MIT) ; titre en police Gluten (SIL OFL). Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax et Black and Green Guitars (Karoryfer), Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0) et MS Basic de MuseScore, d’après Fluid R3 de Frank Wen (licence MIT). Reconnaissance des noms chantés : modèles tirés des voix de synthèse Kokoro (licence Apache 2.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
+      <nav class="lh-foot" aria-label="À propos du jeu"><a href="${esc(HELP_URL)}">Comment jouer</a><a href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></nav>
     </main>`;
     root = app.querySelector('.lhome');
     const toPath = () => {

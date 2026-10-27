@@ -20,6 +20,7 @@
   /* Adresse de la version en ligne, où le micro est autorisé (vide si aucune) */
   const ONLINE_URL = window.NE_ONLINE_URL || 'https://romaingaudet-maker.github.io/notes-envolees/';
   const LEGAL_URL = window.NE_LEGAL_URL || 'mentions-legales.html'; // mentions légales et confidentialité
+  const HELP_URL = window.NE_HELP_URL || 'comment-jouer.html'; // « Comment jouer » : le mode d'emploi, à part
   const RM = window.matchMedia('(prefers-reduced-motion: reduce)');
   const FINE = window.matchMedia('(hover: hover) and (pointer: fine)');
   const NARROW = window.matchMedia('(max-width: 899px)');
@@ -789,7 +790,7 @@
     D.leave();
     D = PAPER;
     setWorld(null);
-    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, decorFor, GO, eleveHtml, bindEleve, HOWTO, songState, nextToPlay, defiHomeHtml })) {
+    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, HELP_URL, decorFor, eleveHtml, bindEleve, songState, nextToPlay, defiHomeHtml })) {
       welcome(() => eleveRefresh(app.querySelector('.eleve-card')));
       homeExtras();
       return;
@@ -809,8 +810,6 @@
         <span class="medal-meta">${LEVEL(s.level)} · ${s.notes.length} notes${best2 ? `<span class="medal-r2" aria-label="Niveau 2 : ${best2} étoile${best2 > 1 ? 's' : ''}">${ICON.metro}${'★'.repeat(best2)}</span>` : ''}</span>${st.lockedBy ? `<span class="vh">, fermée${NB}: termine d’abord «${NB}${esc(nb(st.lockedBy.title))}${NB}»</span>` : ''}${st.next ? '<span class="vh">, la prochaine à jouer</span>' : ''}
       </a></li>`;
     }).join('');
-    const chips = [['C', 'Do'], ['D', 'Ré'], ['E', 'Mi'], ['F', 'Fa'], ['G', 'Sol'], ['A', 'La'], ['B', 'Si']]
-      .map(([l, n]) => `<span class="chip" data-l="${l}">${n}</span>`).join('');
     const micNote = framed && ONLINE_URL
       ? `<p class="inst-online">Ici, dans claude.ai, le micro n’est pas disponible. Pour jouer avec ton instrument, ouvre la <a href="${esc(ONLINE_URL)}" target="_blank" rel="noopener">version en ligne</a>.</p>`
       : '';
@@ -828,20 +827,7 @@
           <ol class="medals">${medals}</ol>
         </section>`}
         <section class="defi-board" id="defi-board" aria-labelledby="db-t" hidden></section>
-        <section class="howto">
-          <h2>Comment jouer</h2>
-          <ol class="steps">${HOWTO.map((t) => `<li><p>${t}</p></li>`).join('')}</ol>
-          <div class="side-cards">
-            <div class="legend">
-              <h3>Le code couleur des notes</h3>
-              <p>Toutes les comptines sont en do majeur : pas de dièse, pas de bémol. Les notes graves portent un point dessous, les aiguës un point dessus.</p>
-              <div class="chips">${chips}</div>
-            </div>
-          </div>
-        </section>
-        <p class="home-foot">${Suivi.configured
-          ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour que ton professeur suive tes progrès et pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré avec ton prénom si tu l’as écrit et l’adresse IP de la connexion, puis effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
-          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Le micro s’allume tout seul dans une comptine (le navigateur demande d’abord l’autorisation). Sur ordinateur, la barre d’espace lance «${NB}${GO}${NB}». Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax et Black and Green Guitars (Karoryfer), Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0) et MS Basic de MuseScore, d’après Fluid R3 de Frank Wen (licence MIT). Reconnaissance des noms chantés : modèles tirés des voix de synthèse Kokoro (licence Apache 2.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
+        <nav class="home-foot" aria-label="À propos du jeu"><a href="${esc(HELP_URL)}">Comment jouer</a><a href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></nav>
       </div>
     </main>`;
     const card = app.querySelector('.eleve-card');
@@ -982,16 +968,6 @@
     if (go) go.focus({ preventScroll: true });
     welcome(() => {});
   }
-
-  // « Comment jouer », sur l'accueil des deux versions
-  const HOWTO = [
-    'La première fois, la page te demande ton prénom, ton instrument (touche son dessin) et ta façon de jouer. Pour en changer, touche « Changer » en haut de l’accueil, ou le nom de ton instrument en haut d’une comptine : tout se change au même endroit, dans les réglages. Les noms de notes sont ceux de ta partition : la page joue dans le ton de ton instrument, avec son vrai son.',
-    'Choisis une comptine : les plus faciles sont au début du chemin. Trois façons de jouer. Aventure : les comptines s’ouvrent une à une, termine-en une pour ouvrir la suivante. Découverte : tout est ouvert. Défi : les 20 comptines dans l’ordre, en rythme, d’un coup et sans erreur ; une erreur, et c’est le retour au départ. Si tu le veux, ton record paraît au tableau d’honneur de l’accueil.',
-    'Choisis ton niveau. Niveau 1, les notes : retrouve-les à ton rythme. Niveau 2, notes et rythme : joue en mesure après le décompte. Au début, tu joues toute la comptine d’un coup ; ensuite, la page te ramène sur les phrases à corriger, une par une.',
-    'De chaque côté du grand rond, choisis ce que tu joues : « Toute la comptine » ou « Phrase 1 » (la phrase affichée). Touche ensuite le grand rond « À toi de jouer ! » : la page la joue, compte « 1, 2, 3, 4 », puis c’est à toi. Pendant que tu joues, le rond montre la note qu’il entend. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec la voix, chante chaque note en disant son nom.',
-    'Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée se pose à sa hauteur et le décor s’anime.',
-    'Au niveau 1, pendant que tu joues une phrase, « Jusqu’à la note » la rejoue jusqu’à la note à trouver. Pour que la page joue plus lentement, touche le nom de ton instrument, en haut : « Vitesse : lente ».',
-  ];
 
   let medalRO = null;
   function layoutMedals() {

@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------------
    Les Notes Envolées — page des mentions légales (mentions-legales.html)
-   - « Retour au jeu » ramène à la version d'où l'on vient (papier ou laine) ;
+   (« Retour au jeu », en haut : src/page-retour.js)
    - la case coupe ou rétablit le suivi sur cet appareil (Suivi.exclude) ;
    - le code de l'appareil est celui que montre la page de suivi du professeur ;
    - le réglage de la voix, s'il y en a un, peut être effacé.
@@ -9,15 +9,6 @@
 ------------------------------------------------------------------- */
 (() => {
   const $ = (id) => document.getElementById(id);
-
-  const back = $('back');
-  try {
-    const ref = document.referrer ? new URL(document.referrer) : null;
-    if (ref && ref.origin === location.origin && ref.pathname !== location.pathname) {
-      back.href = ref.origin + ref.pathname + ref.search;
-      back.addEventListener('click', (e) => { if (history.length > 1) { e.preventDefault(); history.back(); } });
-    }
-  } catch (e) { /* lien par défaut : la première version */ }
 
   const box = $('no-track'), state = $('track-state'), code = $('device-code');
   function paint(wanted) {
