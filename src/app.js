@@ -81,6 +81,7 @@
     defi: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10v5a5 5 0 0 1-10 0z" fill="currentColor"/><path d="M7 5.5H4.2a3 3 0 0 0 3.3 4.3M17 5.5h2.8a3 3 0 0 1-3.3 4.3M12 13.5v4M8 21h8M9.2 17.5h5.6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     lock: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10.5" rx="2.6" fill="currentColor"/><path d="M8.2 10.5V7.8a3.8 3.8 0 0 1 7.6 0v2.7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
     check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    flag: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21.5V3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M6.8 3.6h12l-3.2 4.4 3.2 4.4h-12z" fill="currentColor"/></svg>',
     // les petits ronds du repos : une phrase (une rangée de perles), toute la comptine (deux rangées)
     phrase: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><circle cx="3.6" cy="15" r="2.9"/><circle cx="9.2" cy="10" r="2.9"/><circle cx="14.8" cy="12.6" r="2.9"/><circle cx="20.4" cy="7.8" r="2.9"/></g></svg>',
     song: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><circle cx="3.6" cy="8" r="2.4"/><circle cx="9.2" cy="4.2" r="2.4"/><circle cx="14.8" cy="6.2" r="2.4"/><circle cx="20.4" cy="2.9" r="2.4"/><circle cx="3.6" cy="20.6" r="2.4"/><circle cx="9.2" cy="16.8" r="2.4"/><circle cx="14.8" cy="18.8" r="2.4"/><circle cx="20.4" cy="15.5" r="2.4"/></g></svg>',
@@ -108,7 +109,7 @@
   // réglages d'avant le prénom : un instrument déjà choisi (autre que « autre instrument en do ») compte comme choisi
   settings.choisi = !!settings.choisi || settings.inst !== 'none';
   /* jeu : le mode de jeu, choisi à la première visite (absent : pas encore choisi, la page le demande une fois) ;
-     affiche : en Défi, l'élève accepte que son score paraisse sur l'accueil, pour tout le monde (avec son prénom) */
+     affiche : en Défi, l'élève accepte que son record paraisse sur l'accueil, pour tout le monde (avec son prénom) */
   const JEUX = ['aventure', 'decouverte', 'defi'];
   if (settings.jeu != null && !JEUX.includes(settings.jeu)) settings.jeu = 'aventure';
   settings.affiche = !!settings.affiche;
@@ -117,42 +118,43 @@
 
   /* ---------------- les modes de jeu ----------------
      Aventure (par défaut) : les comptines s'ouvrent une à une, au fil du chemin ; une comptine terminée (une étoile au
-     moins, à l'un des niveaux) ouvre la suivante. Découverte : tout est ouvert. Défi : toutes les comptines sont
-     ouvertes ; chacune se joue au niveau 2, d'un coup, en rythme et sans erreur ; les essais sont comptés, et le score
-     (comptines réussies, puis le moins d'essais) peut paraître sur l'accueil, au tableau d'honneur, si l'élève le veut. */
+     moins, à l'un des niveaux) ouvre la suivante. Découverte : tout est ouvert. Défi : une course, les 20 comptines
+     dans l'ordre, chacune au niveau 2, d'un coup, en rythme et sans erreur ; une erreur (ou un abandon après avoir
+     joué) renvoie au départ, la comptine 1. Le record (comptines d'affilée depuis le départ) peut paraître sur
+     l'accueil, au tableau d'honneur, si l'élève le veut. */
   const JEU = {
     aventure: { name: 'Aventure', d: 'Les comptines s’ouvrent une à une : termine-en une pour ouvrir la suivante.' },
     decouverte: { name: 'Découverte', d: 'Toutes les comptines sont ouvertes : joue celles que tu veux.' },
-    defi: { name: 'Défi', d: 'Chaque comptine en rythme, d’un seul coup et sans erreur. Tes essais sont comptés ; ton score peut paraître sur l’accueil.' },
+    defi: { name: 'Défi', d: 'Les 20 comptines dans l’ordre, en rythme, d’un coup et sans erreur. Une erreur : retour au départ ! Ton record peut paraître sur l’accueil.' },
   };
   const bestOf = (id) => Math.max(+records[id] || 0, +records[id + '@2'] || 0);
-  function isOpen(song) {
-    if (jeu() !== 'aventure') return true;
+
+  /* Le Défi, sur cet appareil : pos, les comptines réussies d'affilée dans la course en cours (la comptine à jouer
+     est LIB[pos] ; 20 : Défi terminé) ; best, le record ; departs, les courses commencées ; bestDeparts, au départ
+     n° combien le record a été fait (à record égal, le moins de départs passe devant) ; last, la dernière nouvelle,
+     pour l'accueil. (La première version, une réussite par comptine dans n'importe quel ordre, est oubliée.) */
+  const DEFI_KEY = (window.NE_NS || '') + 'notes-envolees-defi';
+  const DEFI0 = { v: 2, pos: 0, best: 0, departs: 1, bestDeparts: 0, last: null };
+  const defi = (() => {
+    try { const v = JSON.parse(localStorage.getItem(DEFI_KEY) || 'null'); if (v && v.v === 2) return Object.assign({}, DEFI0, v); } catch (e) { /* rien de gardé */ }
+    return Object.assign({}, DEFI0);
+  })();
+  const defiSong = () => LIB[defi.pos] || null; // l'étape du moment (null : Défi terminé)
+
+  function isOpen(song, j = jeu()) {
+    if (j === 'defi') return song === defiSong(); // en Défi, seulement l'étape du moment
+    if (j !== 'aventure') return true;
     const i = LIB.indexOf(song);
     return i <= 0 || bestOf(song.id) > 0 || bestOf(LIB[i - 1].id) > 0;
   }
   // en Aventure, la prochaine comptine à jouer : la première ouverte et pas encore terminée
   const nextToPlay = () => (jeu() === 'aventure' ? LIB.find((s) => isOpen(s) && !bestOf(s.id)) || null : null);
-
-  // le Défi, sur cet appareil : pour chaque comptine, les essais (comptés jusqu'à la réussite) et la réussite
-  const DEFI_KEY = (window.NE_NS || '') + 'notes-envolees-defi';
-  const defi = load(DEFI_KEY, {});
-  function defiSum() {
-    let n = 0, e = 0;
-    LIB.forEach((s) => { const d = defi[s.id]; if (d && d.ok) { n++; e += +d.e || 0; } });
-    return { n, e };
-  }
   // le nom au tableau d'honneur : le prénom ; s'il y a un deuxième mot, seulement son initiale (« Léa M. »)
   const publicName = () => { const w = settings.prenom.split(' ').filter(Boolean); return w.length > 1 ? `${w[0]} ${w[1][0].toUpperCase()}.` : w[0] || ''; };
-  // l'état d'une comptine sur l'accueil (les deux versions) : ouverte ou fermée et la prochaine à jouer (Aventure), le Défi
+  // l'état d'une comptine sur le chemin de l'accueil (Aventure, Découverte) : ouverte ou fermée, la prochaine à jouer
   function songState(s, NX = nextToPlay()) {
     const open = isOpen(s), i = LIB.indexOf(s);
-    const d = jeu() === 'defi' ? defi[s.id] : null, e = d ? +d.e || 0 : 0;
-    return {
-      open, next: s === NX, lockedBy: open ? null : LIB[i - 1],
-      defi: d ? { ok: !!d.ok, e } : null,
-      defiTxt: !d || !e ? '' : d.ok ? `Défi réussi en ${e} essai${e > 1 ? 's' : ''}` : `Défi${NB}: ${e} essai${e > 1 ? 's' : ''}`,
-    };
+    return { open, next: s === NX, lockedBy: open ? null : LIB[i - 1] || null };
   }
   const inst = () => {
     const i = INSTS[settings.inst], f = FAMS[i.fam];
@@ -221,12 +223,12 @@
     return `<button class="ic-card" type="button" data-k="${k}" aria-pressed="${settings.choisi && settings.inst === k}"><span class="ic-pic">${instPic(k)}</span><b>${t}</b>${sub ? `<small>${sub}</small>` : ''}</button>`;
   }).join('');
   const helloHtml = () => (settings.prenom ? `Bonjour, <b>${esc(settings.prenom)}</b>${NB}!` : `Bonjour${NB}!`);
-  // le rappel, en haut de l'accueil des deux versions : prénom, instrument, mode de jeu (en Défi, le score)
+  // le rappel, en haut de l'accueil des deux versions : prénom, instrument, mode de jeu (en Défi, l'étape et le record)
   const jeuHtml = () => `<span class="ec-jeu">${ICON[jeu()]}${JEU[jeu()].name}</span>`;
   function defiLine() {
     if (jeu() !== 'defi') return '';
-    const { n, e } = defiSum();
-    return `${n}/${LIB.length} comptine${n > 1 ? 's' : ''} réussie${n > 1 ? 's' : ''}${n ? ` en ${e} essai${e > 1 ? 's' : ''}` : ''}${settings.affiche && canBoard() ? ` · au tableau d’honneur` : ''}`;
+    const where = defiSong() ? `étape ${defi.pos + 1} sur ${LIB.length}` : 'Défi terminé';
+    return `${where} · record${NB}: ${defi.best || 'pas encore'}${settings.affiche && canBoard() ? ' · au tableau d’honneur' : ''}`;
   }
   function eleveHtml() {
     const dl = defiLine();
@@ -277,7 +279,7 @@
     if (!can) box.checked = false;
     label.classList.toggle('is-off', !can);
     label.querySelector('.defi-ok-t').textContent = can
-      ? `Afficher mon score sur l’accueil, au tableau d’honneur, pour tout le monde (avec mon prénom${NB}: ${publicName()})`
+      ? `Afficher mon record sur l’accueil, au tableau d’honneur, pour tout le monde (avec mon prénom${NB}: ${publicName()})`
       : !sendsHere() ? `Ici, rien ne part de cet appareil${Suivi.configured ? ' (le suivi y est coupé)' : ''}${NB}: pas de tableau d’honneur.`
         : 'Pour paraître au tableau d’honneur de l’accueil, il faut écrire ton prénom.';
   }
@@ -287,7 +289,7 @@
     settings.jeu = JEUX.includes(k) ? k : 'aventure';
     settings.affiche = !!affiche && canBoard();
     save(SET_KEY, settings);
-    if (settings.affiche !== wasAff || (settings.jeu === 'defi' && was !== 'defi' && Object.keys(defi).length)) defiSend();
+    if (settings.affiche !== wasAff || (settings.jeu === 'defi' && was !== 'defi' && defiStarted())) defiSend();
     return was !== settings.jeu;
   }
   // steps : les écrans montrés (1 le prénom, 2 l'instrument, 3 le mode de jeu) ; nouveau : un élève déjà inscrit
@@ -448,7 +450,10 @@
     // le mode choisi : ce qui le distingue ; en Défi, l'accord pour le tableau d'honneur, ni niveau ni vitesse
     const jeuUI = () => {
       wrap.querySelectorAll('.rg-jeu [role="radio"]').forEach((x) => x.setAttribute('aria-checked', String(x.dataset.jeu === pick)));
-      jeuNote.textContent = `${JEU[pick].d}${pick === 'defi' ? ' Il se joue au niveau 2 (notes et rythme), à vitesse normale.' : ''}${pick !== jeu() ? ' La comptine recommence.' : ''}`;
+      // ce qui suivra : la comptine recommence, ou (pas encore ouverte dans ce mode) la page dit laquelle jouer
+      const nx = defiSong(), then = pick === jeu() ? '' : isOpen(G.song, pick) ? ' La comptine recommence.'
+        : pick === 'defi' ? (nx ? ` Ta prochaine étape${NB}: «${NB}${nb(nx.title)}${NB}».` : '') : ' Cette comptine n’est pas encore ouverte en Aventure.';
+      jeuNote.textContent = `${JEU[pick].d}${pick === 'defi' ? ' Il se joue au niveau 2 (notes et rythme), à vitesse normale.' : ''}${then}`;
       wrap.querySelectorAll('.rg-nodefi').forEach((x) => { x.hidden = pick === 'defi'; });
       defiOkUI(okLbl, pick === 'defi' || settings.affiche);
     };
@@ -597,21 +602,36 @@
   /* ---------------- suivi des parties, pour le professeur (src/suivi.js) ---------------- */
   // le prénom (s'il a été donné) part avec chaque envoi : la page de suivi montre le dernier connu de chaque appareil
   const track = (type, data) => Suivi.send(type, Object.assign({ inst: settings.inst, mode: settings.mode, jeu: jeu() }, settings.prenom ? { prenom: settings.prenom } : {}, data));
-  // le score du Défi part au suivi, et au tableau d'honneur de l'accueil si l'élève l'accepte (et a donné son prénom)
+  /* Le Défi part au suivi à chaque étape réussie ou ratée (le professeur voit la course), et au tableau d'honneur de
+     l'accueil si l'élève l'accepte : comptines = le record, essais = au départ n° combien il a été fait. */
+  const defiStarted = () => !!(defi.best || defi.pos || defi.departs > 1);
   function defiSend() {
-    const { n, e } = defiSum(), nom = publicName();
-    track('defi', { comptines: n, essais: e, publier: settings.affiche && nom ? 1 : 0, nom });
+    const nom = publicName();
+    track('defi', { comptines: defi.best, essais: defi.bestDeparts || defi.departs, etape: defi.pos, departs: defi.departs, publier: settings.affiche && nom ? 1 : 0, nom });
   }
-  // un essai de plus sur cette comptine, en Défi (ok : réussie) ; une comptine réussie ne compte plus ses essais
-  function defiTry(id, ok) {
-    const d = defi[id] || (defi[id] = { e: 0, ok: 0 });
-    if (d.ok) return d;
-    d.e++;
-    d.t = Date.now();
-    if (ok) d.ok = 1;
-    save(DEFI_KEY, defi);
-    if (ok) defiSend();
-    return d;
+  const defiSave = () => { save(DEFI_KEY, defi); defiSend(); };
+  // une étape réussie : la course avance, le record aussi s'il est battu ; la 20e réussie, le Défi est terminé
+  function defiWin() {
+    defi.pos++;
+    const rec = defi.pos > defi.best;
+    if (rec) { defi.best = defi.pos; defi.bestDeparts = defi.departs; }
+    defi.last = { type: defi.pos >= LIB.length ? 'fini' : 'ok', at: defi.pos - 1, rec, t: Date.now() };
+    defiSave();
+    return rec;
+  }
+  // une erreur, ou un abandon après avoir joué : retour au départ, une nouvelle course commence
+  function defiFail() {
+    defi.last = { type: 'fail', at: defi.pos, t: Date.now() };
+    defi.pos = 0;
+    defi.departs++;
+    defiSave();
+  }
+  // le Défi terminé : une nouvelle course, pour battre son nombre de départs ou pour le plaisir
+  function defiRestart() {
+    defi.pos = 0;
+    defi.departs++;
+    defi.last = null;
+    defiSave();
   }
   const secsSince = (t0) => Math.round((Suivi.clock() - t0) / 1000);
   // comptine quittée avant la fin : on dit où l'élève en était (s'il a commencé à jouer)
@@ -684,13 +704,13 @@
     D.leave();
     D = PAPER;
     setWorld(null);
-    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, decorFor, GO, eleveHtml, bindEleve, HOWTO, songState, nextToPlay })) {
+    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, decorFor, GO, eleveHtml, bindEleve, HOWTO, songState, nextToPlay, defiHomeHtml })) {
       welcome(() => eleveRefresh(app.querySelector('.eleve-card')));
       homeExtras();
       return;
     }
     const NX = nextToPlay();
-    const medals = LIB.map((s, i) => {
+    const medals = jeu() === 'defi' ? '' : LIB.map((s, i) => {
       const best = +records[s.id] || 0, best2 = +records[s.id + '@2'] || 0;
       const st = songState(s, NX);
       const badge = best ? `<span class="medal-badge" aria-label="Record : ${best} étoile${best > 1 ? 's' : ''}">${[1, 2, 3].map((k) => star(k <= best, 15)).join('')}</span>` : '';
@@ -701,8 +721,7 @@
           <span class="medal-num" aria-hidden="true">${s.level}</span>${badge}${st.open ? '' : `<span class="medal-lock" aria-hidden="true">${ICON.lock}</span>`}${st.next ? `<span class="medal-next" aria-hidden="true">À toi${NB}!</span>` : ''}
         </span>
         <span class="medal-title">${titleHtml(s.title)}</span>
-        <span class="medal-meta">${LEVEL(s.level)} · ${s.notes.length} notes${best2 ? `<span class="medal-r2" aria-label="Niveau 2 : ${best2} étoile${best2 > 1 ? 's' : ''}">${ICON.metro}${'★'.repeat(best2)}</span>` : ''}</span>${st.defiTxt ? `
-        <span class="medal-defi${st.defi.ok ? ' ok' : ''}">${st.defi.ok ? ICON.check : ''}${esc(st.defiTxt)}</span>` : ''}${st.open ? '' : `<span class="vh">, fermée${NB}: termine d’abord «${NB}${esc(nb(st.lockedBy.title))}${NB}»</span>`}${st.next ? '<span class="vh">, la prochaine à jouer</span>' : ''}
+        <span class="medal-meta">${LEVEL(s.level)} · ${s.notes.length} notes${best2 ? `<span class="medal-r2" aria-label="Niveau 2 : ${best2} étoile${best2 > 1 ? 's' : ''}">${ICON.metro}${'★'.repeat(best2)}</span>` : ''}</span>${st.lockedBy ? `<span class="vh">, fermée${NB}: termine d’abord «${NB}${esc(nb(st.lockedBy.title))}${NB}»</span>` : ''}${st.next ? '<span class="vh">, la prochaine à jouer</span>' : ''}
       </a></li>`;
     }).join('');
     const chips = [['C', 'Do'], ['D', 'Ré'], ['E', 'Mi'], ['F', 'Fa'], ['G', 'Sol'], ['A', 'La'], ['B', 'Si']]
@@ -719,10 +738,10 @@
           <p class="home-lede"><strong>Les notes se sont envolées.</strong> Retrouve-les à l’oreille : la page t’écoute au micro.</p>
           <div class="home-eleve">${eleveHtml()}${micNote}</div>
         </header>
-        <section class="score" id="score" aria-label="Les comptines, de la plus facile à la plus difficile">
+        ${jeu() === 'defi' ? `<section class="dh" id="defi-home" aria-labelledby="dh-t">${defiHomeHtml(PAPER.color)}</section>` : `<section class="score" id="score" aria-label="Les comptines, de la plus facile à la plus difficile">
           <svg class="staff" aria-hidden="true"></svg>
           <ol class="medals">${medals}</ol>
-        </section>
+        </section>`}
         <section class="defi-board" id="defi-board" aria-labelledby="db-t" hidden></section>
         <section class="howto">
           <h2>Comment jouer</h2>
@@ -748,15 +767,18 @@
   }
 
   /* ---------------- le tableau d'honneur du Défi, sur l'accueil (pour tout le monde) ----------------
-     Les meilleurs scores du Défi, lus chez le Worker du suivi (GET /defi, sans clé) : seulement ceux des élèves
+     Les meilleurs records du Défi, lus chez le Worker du suivi (GET /defi, sans clé) : seulement ceux des élèves
      qui l'ont accepté, avec le nom qu'ils ont donné (« Léa », ou « Léa M. »). Classement : le plus de comptines
-     réussies, puis le moins d'essais. Rien ne s'affiche si le Worker ne répond pas (pas encore mis à jour, hors ligne).
-     En qualification, le tableau de la production (la qualification n'envoie rien). */
+     réussies d'affilée, puis le moins de départs (le Worker les appelle « comptines » et « essais »). Rien ne
+     s'affiche si le Worker ne répond pas (pas encore mis à jour, hors ligne). En qualification, le tableau de la
+     production (la qualification n'envoie rien). */
   const BOARD_URL = window.NE_SUIVI_LECTURE || Suivi.url;
   let defiSynced = false;
   function homeExtras() {
-    // une fois par visite : le score du Défi repart au suivi (au cas où un envoi se serait perdu)
-    if (!defiSynced && (Object.keys(defi).length || settings.affiche)) { defiSynced = true; defiSend(); }
+    // une fois par visite : la course du Défi repart au suivi (au cas où un envoi se serait perdu)
+    if (!defiSynced && (defiStarted() || settings.affiche)) { defiSynced = true; defiSend(); }
+    const again = app.querySelector('.dh-restart');
+    if (again) again.addEventListener('click', () => { defiRestart(); route(false); });
     const box = app.querySelector('#defi-board');
     if (!box || !BOARD_URL) return;
     fetch(BOARD_URL + '/defi', { cache: 'no-store' })
@@ -771,12 +793,71 @@
   function boardHtml(list) {
     const me = settings.affiche ? publicName() : '';
     const rows = list.slice(0, 10).map((x, i) => {
-      const n = Math.max(0, +x.comptines || 0), e = Math.max(0, +x.essais || 0);
-      return `<li class="db-row${me && x.nom === me ? ' is-me' : ''}"><span class="db-rank">${i + 1}</span><span class="db-who"><b class="db-name">${esc(String(x.nom || '').slice(0, 30))}</b><span class="db-inst">${esc(instShort(x.inst))}</span></span><span class="db-score"><span><b>${n}</b>/${LIB.length}</span><small>${e} essai${e > 1 ? 's' : ''}</small></span></li>`;
+      const n = Math.max(0, +x.comptines || 0), e = Math.max(1, +x.essais || 1);
+      return `<li class="db-row${me && x.nom === me ? ' is-me' : ''}"><span class="db-rank">${i + 1}</span><span class="db-who"><b class="db-name">${esc(String(x.nom || '').slice(0, 30))}</b><span class="db-inst">${esc(instShort(x.inst))}</span></span><span class="db-score"><span><b>${n}</b>/${LIB.length}</span><small>${e === 1 ? 'du premier coup' : `au ${e}e départ`}</small></span></li>`;
     }).join('');
     return `<h2 class="db-t" id="db-t">${ICON.defi}<span>Défi${NB}: le tableau d’honneur</span></h2>
-      <p class="db-sub">Les comptines réussies en rythme, d’un coup et sans erreur, avec le moins d’essais.</p>
+      <p class="db-sub">Le plus de comptines d’affilée, dans l’ordre, en rythme et sans erreur (à égalité, le moins de départs).</p>
       ${rows ? `<ol class="db-list">${rows}</ol>` : `<p class="db-empty">Personne pour l’instant. Choisis le mode Défi (bouton «${NB}Changer${NB}», en haut) et relève-le${NB}!</p>`}`;
+  }
+
+  /* ---------------- la présentation du Défi, sur l'accueil (les deux versions) ----------------
+     À la place du chemin : la règle ; l'étape du moment (son décor, son titre, « Commencer », « Continuer » ou
+     « Repartir » après un retour au départ) ; la course des 20 comptines (celles réussies dans cette course, celle
+     du moment avec l'instrument de l'élève comme pion, le drapeau du record) ; le numéro du départ et le record.
+     Après une erreur, la page le rappelle ; le Défi terminé, on peut le recommencer. colorOf : la couleur d'un décor
+     (papier ou laine). */
+  function defiHomeHtml(colorOf) {
+    if (jeu() !== 'defi') return '';
+    const N = LIB.length, i = defi.pos, cur = defiSong(), last = defi.last;
+    const msg = !last ? ''
+      : last.type === 'fail' ? `<p class="dh-msg is-fail">Retour au départ${NB}: tu étais à l’étape ${last.at + 1}. Ça repart${NB}!</p>`
+        : last.type === 'ok' && last.rec && i === last.at + 1 ? `<p class="dh-msg is-ok">Nouveau record${NB}: ${defi.best} comptine${defi.best > 1 ? 's' : ''} d’affilée${NB}!</p>` : '';
+    const now = cur
+      ? `<div class="dh-now">
+          <span class="dh-disc" style="--c:${colorOf(cur.theme)}" aria-hidden="true">${Scenes.emblem(cur.theme)}</span>
+          <div class="dh-now-t">
+            <p class="dh-k">Étape ${i + 1} sur ${N}</p>
+            <h3 class="dh-title">${titleHtml(cur.title)}</h3>
+            <p class="dh-meta">${LEVEL(cur.level)} · ${cur.notes.length} notes</p>
+          </div>
+          <a class="btn-big dh-go" href="#${cur.id}"><span class="ic">${ICON.play}</span><span>${i ? 'Continuer' : defi.departs > 1 ? 'Repartir' : 'Commencer'}</span></a>
+        </div>`
+      : `<div class="dh-now is-fini">
+          <span class="dh-disc dh-cup" aria-hidden="true">${ICON.defi}</span>
+          <div class="dh-now-t">
+            <p class="dh-k">Défi terminé</p>
+            <h3 class="dh-title">Les ${N} comptines d’affilée${NB}!</h3>
+            <p class="dh-meta">${defi.bestDeparts > 1 ? `Au ${defi.bestDeparts}e départ.` : 'Du premier coup.'} Bravo${NB}!</p>
+          </div>
+          <button class="btn-big dh-go dh-restart" type="button"><span class="ic">${ICON.reset}</span><span>Recommencer le Défi</span></button>
+        </div>`;
+    const track = LIB.map((s, k) => {
+      const c = colorOf(s.theme), st = k < i ? ` is-done${darkBg(c) ? ' is-dark' : ''}` : k === i ? ' is-now' : '';
+      const what = k < i ? 'réussie dans cette course' : k === i ? 'à jouer maintenant' : 'pas encore';
+      const rec = defi.best && k === defi.best - 1 ? `<span class="dh-rec" aria-hidden="true">${ICON.flag}</span>` : '';
+      return `<li class="dh-case${st}" style="--c:${c}"><span class="vh">Étape ${k + 1}${NB}: ${esc(nb(s.title))}, ${what}${rec ? ' (ton record)' : ''}</span><span class="dh-n" aria-hidden="true">${k < i ? ICON.check : k + 1}</span>${rec}${k === i ? `<span class="dh-pawn" aria-hidden="true">${instPic()}</span>` : ''}</li>`;
+    }).join('');
+    const stats = [`Départ n°${NB}${defi.departs}`, `Record${NB}: ${defi.best ? `${defi.best} comptine${defi.best > 1 ? 's' : ''} d’affilée` : 'pas encore'}`, settings.affiche && canBoard() ? 'Au tableau d’honneur' : ''].filter(Boolean);
+    return `<header class="dh-head">
+        <h2 class="dh-t" id="dh-t">${ICON.defi}<span>Le Défi</span></h2>
+        <p class="dh-rule">Les ${N} comptines dans l’ordre, au niveau 2${NB}: chacune d’un coup, en rythme et sans erreur. Une erreur (ou un abandon), et c’est le retour au départ${NB}!</p>
+      </header>
+      ${msg}${now}
+      <div class="dh-board">
+        <p class="dh-end dh-start" aria-hidden="true">${ICON.flag}<span>Départ</span></p>
+        <ol class="dh-track" aria-label="La course${NB}: ${N} étapes">${track}</ol>
+        <p class="dh-end dh-finish" aria-hidden="true"><span>Arrivée</span>${ICON.defi}</p>
+      </div>
+      <p class="dh-stats">${stats.map((x) => `<span>${x}</span>`).join('')}</p>`;
+  }
+
+  // une couleur de décor sombre (#rrggbb) : la coche d'une case réussie s'y écrit en clair
+  function darkBg(hex) {
+    const m = /^#([0-9a-f]{6})$/i.exec(String(hex).trim());
+    if (!m) return false;
+    const lin = (k) => { const v = parseInt(m[1].slice(k, k + 2), 16) / 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+    return 0.2126 * lin(0) + 0.7152 * lin(2) + 0.0722 * lin(4) < 0.21;
   }
 
   /* Aventure : une comptine pas encore ouverte (touchée sur le chemin, ou ouverte par un lien) dit laquelle terminer
@@ -791,17 +872,21 @@
     D = PAPER;
     setWorld(song.theme); // les couleurs de la comptine…
     document.documentElement.dataset.view = 'locked'; // …mais une page qui défile, pas l'écran de jeu
-    const prev = LIB[LIB.indexOf(song) - 1], nx = nextToPlay();
+    const DF = jeu() === 'defi', prev = LIB[LIB.indexOf(song) - 1], nx = DF ? defiSong() : nextToPlay();
+    // en Défi : les comptines se jouent dans l'ordre (l'étape du moment) ; en Aventure : celle d'avant d'abord
+    const why = !DF ? `Elle s’ouvrira quand tu auras terminé «${NB}${esc(nb(prev.title))}${NB}». En Aventure, les comptines s’ouvrent une à une.`
+      : nx ? `En Défi, les comptines se jouent dans l’ordre. Ta prochaine étape${NB}: la ${defi.pos + 1}${defi.pos ? 'e' : 're'}, «${NB}${esc(nb(nx.title))}${NB}».`
+        : `Tu as terminé le Défi${NB}! Recommence-le depuis l’accueil, ou passe en Découverte pour jouer celle-ci.`;
     app.innerHTML = `
     <main class="locked">
       <section class="lk-card" aria-labelledby="lk-t">
-        <span class="lk-ic" aria-hidden="true">${ICON.lock}</span>
-        <p class="lk-k">Comptine ${song.level} · mode Aventure</p>
+        <span class="lk-ic" aria-hidden="true">${DF ? ICON.defi : ICON.lock}</span>
+        <p class="lk-k">Comptine ${song.level} · mode ${DF ? 'Défi' : 'Aventure'}</p>
         <h1 class="lk-t" id="lk-t">${titleHtml(song.title)}</h1>
-        <p class="lk-p">Elle s’ouvrira quand tu auras terminé «${NB}${esc(nb(prev.title))}${NB}». En Aventure, les comptines s’ouvrent une à une.</p>
+        <p class="lk-p">${why}</p>
         <div class="lk-act">
           ${nx ? `<a class="btn-big lk-go" href="#${nx.id}"><span class="ic">${ICON.play}</span><span>Jouer «${NB}${esc(nb(nx.title))}${NB}»</span></a>` : ''}
-          <a class="lk-back" href="#">${ICON.back}<span>Les comptines</span></a>
+          <a class="lk-back" href="#">${ICON.back}<span>${DF ? 'Le Défi' : 'Les comptines'}</span></a>
         </div>
         <p class="lk-free">Tout ouvrir${NB}? <button class="lk-disc" type="button">${ICON.decouverte}<span>Passer en mode Découverte</span></button></p>
       </section>
@@ -815,7 +900,7 @@
   // « Comment jouer », sur l'accueil des deux versions
   const HOWTO = [
     'La première fois, la page te demande ton prénom, ton instrument (touche son dessin) et ta façon de jouer. Pour en changer, touche « Changer » en haut de l’accueil, ou le nom de ton instrument en haut d’une comptine. Les noms de notes sont ceux de ta partition : la page joue dans le ton de ton instrument, avec son vrai son.',
-    'Choisis une comptine : les plus faciles sont au début du chemin. Trois façons de jouer. Aventure : les comptines s’ouvrent une à une, termine-en une pour ouvrir la suivante. Découverte : tout est ouvert. Défi : chaque comptine en rythme, d’un coup et sans erreur ; tes essais sont comptés et, si tu le veux, ton score paraît au tableau d’honneur de l’accueil.',
+    'Choisis une comptine : les plus faciles sont au début du chemin. Trois façons de jouer. Aventure : les comptines s’ouvrent une à une, termine-en une pour ouvrir la suivante. Découverte : tout est ouvert. Défi : les 20 comptines dans l’ordre, en rythme, d’un coup et sans erreur ; une erreur, et c’est le retour au départ. Si tu le veux, ton record paraît au tableau d’honneur de l’accueil.',
     'Choisis ton niveau. Niveau 1, les notes : retrouve-les à ton rythme. Niveau 2, notes et rythme : joue en mesure après le décompte. Au début, tu joues toute la comptine d’un coup ; ensuite, la page te ramène sur les phrases à corriger, une par une.',
     'De chaque côté du grand rond, choisis ce que tu joues : « Toute la comptine » ou « Phrase 1 » (la phrase affichée). Touche ensuite le grand rond « À toi de jouer ! » : la page la joue, compte « 1, 2, 3, 4 », puis c’est à toi. Pendant que tu joues, le rond montre la note qu’il entend. La première note de chaque phrase est écrite : joue-la, puis cherche les suivantes. Avec la voix, chante chaque note en disant son nom.',
     'Si ce n’est pas la bonne, une flèche t’aide : plus aigu ou plus grave. Chaque note retrouvée se pose à sa hauteur et le décor s’anime.',
@@ -1027,13 +1112,13 @@
     welcome(() => { if (G && view === 'song') { idleHint(); if (el.bGo) el.bGo.focus({ preventScroll: true }); } });
   }
 
-  // en Défi, la ligne du haut du pupitre (à la place du niveau) : où en est le Défi de cette comptine
+  // en Défi, la ligne du haut du pupitre (à la place du niveau) : l'étape, le record ; puis réussie, ou retour au départ
   function defiTop() {
     if (!G || !G.defi || !el.seg) return;
-    const d = defi[G.song.id], e = d ? +d.e || 0 : 0;
-    el.seg.innerHTML = d && d.ok
-      ? `${ICON.check}<span>Défi réussi en ${e} essai${e > 1 ? 's' : ''}</span>`
-      : `${ICON.defi}<span>Défi${NB}: essai ${e + 1} · d’un coup, en rythme, sans erreur</span>`;
+    const k = LIB.indexOf(G.song) + 1, rec = defi.best ? `record ${defi.best}` : 'pas encore de record';
+    el.seg.innerHTML = G.defiWon ? `${ICON.check}<span>Étape ${k} réussie · record ${defi.best}</span>`
+      : G.defiFail ? `${ICON.defi}<span>Retour au départ · ${rec}</span>`
+        : `${ICON.defi}<span>Défi · étape ${k} sur ${LIB.length} · ${rec}</span>`;
   }
   // Aventure : la flèche vers la comptine suivante porte un cadenas tant que celle-ci est fermée
   function nextLinkUI() {
@@ -1065,12 +1150,14 @@
   }
   const SIDES = { repos: ['bPhrase', 'bAll'], jeu: ['bStop', 'bRestart'], apres: ['bPhrase', 'bAll'], cal: ['bStop', 'bHear'], fin: ['bLevel', 'aNext'] };
   // en Défi, toujours toute la comptine : ni « Phrase n » ni « Toute la comptine », ni l'autre niveau à la fin
-  const SIDES_DEFI = { repos: [], jeu: ['bStop', 'bRestart'], apres: [], cal: ['bStop', 'bHear'], fin: ['aNext'] };
+  const SIDES_DEFI = { repos: [], jeu: ['bStop'], apres: [], cal: ['bStop', 'bHear'], fin: [] };
   const SIDE_KEYS = ['bPhrase', 'bStop', 'bLevel', 'bAll', 'bRestart', 'bTo', 'bHear', 'aNext'];
   function bandUI() {
     if (!G || !el.pu || !document.contains(el.pu)) return;
     const st = bandState();
     const shown = (G.defi ? SIDES_DEFI : SIDES)[st].slice();
+    // en Défi, arrêter une prise après avoir joué, c'est abandonner : retour au départ
+    if (el.bStop) el.bStop.querySelector('.pu-lbl').textContent = G.defi && st === 'jeu' ? 'Abandonner' : 'Arrêter';
     if (st === 'jeu' && el.bTo && G.live && !G.live.full) shown[1] = 'bTo';
     const had = el.pu.contains(document.activeElement) ? document.activeElement : null;
     el.pu.dataset.band = st;
@@ -1097,7 +1184,11 @@
   function goLabel(st = bandState()) {
     if (!G || !el.goT) return;
     let t = 'À toi', s = `de jouer${NB}!`;
-    if (st === 'fin' || (G.whole && G.fullRes)) { t = 'Rejouer'; s = 'la comptine'; } else if (!G.whole) {
+    // en Défi : après une étape réussie, la suivante ; après une erreur, le départ (la comptine 1)
+    if (G.defi && (st === 'fin' || G.defiFail)) {
+      if (G.defiFail) [t, s] = G.song === LIB[0] ? ['Rejouer', 'la comptine'] : ['Repartir', 'du départ'];
+      else [t, s] = defiSong() ? ['Continuer', `étape ${defi.pos + 1}`] : ['Bravo', `Défi terminé${NB}!`];
+    } else if (st === 'fin' || (G.whole && G.fullRes)) { t = 'Rejouer'; s = 'la comptine'; } else if (!G.whole) {
       const q = goPhrase();
       t = G.queue.includes(q) && !isDone(q) ? 'Corriger' : isDone(q) || G.tries[q] ? 'Rejouer' : 'Jouer';
       s = `la phrase${NB}${q + 1}`;
@@ -1271,7 +1362,7 @@
     if (!G || !el.hint || G.done || busy()) return;
     const q = G.view;
     // au repos, la ligne du haut montre le niveau : ce message ne se lit qu'une fois un essai allé au bout
-    let html = G.defi ? `Défi${NB}: toute la comptine, en rythme, sans erreur` : G.level === 2 ? 'Toute la comptine, en rythme' : 'Toute la comptine, sans aide', cls = '', ready = false;
+    let html = G.defi ? (G.defiFail ? `Retour au départ${NB}! Ton record${NB}: ${defi.best || 'pas encore'}` : `Défi${NB}: toute la comptine, en rythme, sans erreur`) : G.level === 2 ? 'Toute la comptine, en rythme' : 'Toute la comptine, sans aide', cls = '', ready = false;
     if (!G.whole) {
       if (G.queue.includes(q) && !isDone(q)) { html = `À corriger${NB}: phrase ${q + 1}`; cls = 'up'; ready = true; }
       else if (isDone(q)) { html = `Phrase ${q + 1} ${G.level === 2 ? 'réussie' : 'retrouvée'}${NB}!`; cls = 'ok'; }
@@ -1843,8 +1934,8 @@
     cancelAnimationFrame(tk.raf);
     tk.srcs.forEach((x) => { try { if (x) x.stop(); } catch (e) { /* déjà joué */ } });
     G.take = null;
-    // le Défi : une comptine commencée puis arrêtée compte comme un essai, si l'élève a joué
-    if (G.defi && tk.full && tk.phase === 'play' && tk.got.length) { defiTry(G.song.id, false); defiTop(); }
+    // le Défi : une comptine commencée puis arrêtée (un abandon, si l'élève a joué) renvoie au départ
+    if (G.defi && tk.full && tk.phase === 'play' && tk.got.length && !G.defiFail) { defiFail(); G.defiFail = true; G.begun = true; defiTop(); }
     if (el.main) el.main.classList.remove('is-taking');
     setGoUI(false);
     if (tk.mic) Ear.expect(null);
@@ -1955,21 +2046,25 @@
     const st = info();
     D.update(el.stage, st);
     D.react(el.stage, bad.length ? 'phrase' : 'complete', st);
-    // le Défi : un essai de plus ; sans erreur, la comptine est gagnée ; sinon, elle se rejoue en entier (pas de phrases à corriger)
+    // le Défi : sans erreur, l'étape est réussie (la course avance) ; sinon, retour au départ (pas de phrases à corriger)
     if (G.defi) {
-      const already = !!(defi[song.id] && defi[song.id].ok);
-      const d = defiTry(song.id, !bad.length);
-      defiTop();
       if (!bad.length) {
-        setHint(already ? `Encore sans erreur${NB}!` : d.e > 1 ? `Défi réussi en ${d.e} essais${NB}!` : `Défi réussi du premier coup${NB}!`, 'ok');
+        const rec = defiWin();
+        G.defiWon = true;
+        defiTop();
+        setHint(!defiSong() ? `Défi terminé${NB}!` : rec && defi.best > 1 ? `Nouveau record${NB}: ${defi.best}${NB}!` : `Étape réussie${NB}!`, 'ok');
         flashTop(2300);
         later(() => { if (G && !busy() && !G.done) finish(); }, 1800);
         return;
       }
+      defiFail();
+      G.defiFail = true;
       G.queue = bad; // les phrases fautives restent entourées
       G.begun = true;
       song.phrases.forEach((_, q) => paintPill(q));
-      setHint(`Pas encore${NB}: ${whichPh(bad)} ${bad.length > 1 ? 'ont' : 'a'} des erreurs. Rejoue toute la comptine${NB}!`, 'up');
+      defiTop();
+      const ph = whichPh(bad);
+      setHint(`${ph[0].toUpperCase() + ph.slice(1)} ${bad.length > 1 ? 'ont' : 'a'} des erreurs${NB}: retour au départ${NB}!`, 'up');
       bandUI();
       return;
     }
@@ -2061,12 +2156,14 @@
     const full = fr
       ? `<div class="full-res${fr.pass ? ' is-ok' : ''}"><p>${esc(fr.sum || fr.text)}</p><ol class="full-ph" aria-label="Phrase par phrase">${fr.status.map((st, q) => `<li class="${st}" title="Phrase ${q + 1}">${q + 1}</li>`).join('')}</ol></div>`
       : `<p class="full-ask">Et maintenant, toute la comptine d’un coup${lv2 ? ', en rythme' : ', sans aide'} ?</p>`;
-    // le Défi : en combien d'essais, et où en est le Défi ; pour paraître au tableau d'honneur, ce qu'il faut faire
+    // le Défi : l'étape réussie, le record battu, la prochaine étape ; et ce qu'il faut pour paraître au tableau d'honneur
     let title = lv2 ? 'Juste et en rythme&#160;!' : 'Toutes les notes sont revenues&#160;!', text = msg;
     if (G.defi) {
-      const d = defi[G.song.id] || { e: 1 }, { n } = defiSum();
-      title = 'Défi réussi&#160;!';
-      text = `${d.e > 1 ? `En ${d.e} essais.` : 'Du premier coup.'} Ton Défi${NB}: ${n} comptine${n > 1 ? 's' : ''} sur ${LIB.length}.${(settings.affiche && canBoard()) || !sendsHere() ? '' : publicName() ? ' Pour paraître au tableau d’honneur de l’accueil, coche la case dans les réglages.' : ' Pour paraître au tableau d’honneur de l’accueil, écris ton prénom (bouton «' + NB + 'Changer' + NB + '» de l’accueil).'}`;
+      const k = LIB.indexOf(G.song) + 1, nx = defiSong(), L = defi.last || {};
+      title = nx ? `Étape ${k} réussie&#160;!` : 'Défi terminé&#160;!';
+      text = !nx ? `Les ${LIB.length} comptines d’affilée, dans l’ordre et sans erreur. Quelle course${NB}!`
+        : `${L.rec && defi.best > 1 ? `Nouveau record${NB}: ${defi.best} comptines d’affilée. ` : ''}Prochaine étape${NB}: «${NB}${esc(nb(nx.title))}${NB}».`;
+      text += (settings.affiche && canBoard()) || !sendsHere() ? '' : publicName() ? ' Pour paraître au tableau d’honneur de l’accueil, coche la case dans les réglages.' : ` Pour paraître au tableau d’honneur de l’accueil, écris ton prénom (bouton «${NB}Changer${NB}» de l’accueil).`;
     }
     const unlocked = G.unlocked ? `<p class="done-unlock">${ICON.decouverte}<span>Nouvelle comptine ouverte${NB}: «${NB}${esc(nb(G.unlocked.title))}${NB}»</span></p>` : '';
     el.done.innerHTML = `
@@ -2243,6 +2340,7 @@
   function goButton() {
     if (!G) return;
     G.acts++;
+    if (G.defi && (G.done || G.defiFail)) { defiNext(); return; }
     if (G.done) { newRound(true); return; }
     if (busy()) cancelAttempt(); else goAttempt();
   }
@@ -2255,6 +2353,14 @@
     G.whole = whole;
     if (G.moveTo != null) moveOn(); else idleHint();
     bandUI();
+  }
+
+  // en Défi, après une étape : la suivante ; après une erreur : le départ ; le Défi terminé : l'accueil
+  function defiNext() {
+    const to = defiSong();
+    if (!to) { location.hash = ''; return; }
+    if (to === G.song) { newRound(true); return; }
+    location.hash = '#' + to.id;
   }
 
   function bindSong() {

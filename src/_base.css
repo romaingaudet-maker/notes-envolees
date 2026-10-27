@@ -509,10 +509,6 @@ html.onb-open, html.onb-open body { overflow: hidden; }
   50% { box-shadow: 0 7px 0 rgba(29, 35, 80, .2), 0 16px 28px rgba(29, 35, 80, .2), 0 0 0 16px rgba(229, 72, 77, 0); }
 }
 .medal-next { position: absolute; top: -12px; right: -18px; padding: 3px 11px 2px; border-radius: 999px; background: var(--red); color: #FFFFFF; font: 800 15px/1.3 var(--font-display); box-shadow: 0 3px 0 rgba(29, 35, 80, .25); white-space: nowrap; }
-/* le Défi, sous le titre : « Défi réussi en 2 essais », « Défi : 3 essais » */
-.medal-defi { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 2px 10px; border-radius: 999px; background: var(--paper); font-size: 13px; font-weight: 700; color: var(--ink-soft); }
-.medal-defi.ok { color: #1D7A35; }
-.medal-defi svg { width: 15px; height: 15px; }
 @media (prefers-reduced-motion: reduce) { .medal.is-next .medal-disc { animation: none; box-shadow: 0 7px 0 rgba(29, 35, 80, .2), 0 0 0 6px rgba(229, 72, 77, .55); } }
 
 /* le rappel de l'accueil : le mode de jeu à côté de l'instrument ; en Défi, le score */
@@ -591,3 +587,64 @@ html.onb-open, html.onb-open body { overflow: hidden; }
 .db-score b { font-family: var(--font-display); font-size: 22px; color: var(--ink); }
 .db-score small { font-size: 12.5px; }
 .db-empty { margin: 0; font-size: 15.5px; color: var(--ink-soft); }
+
+/* ============ le Défi, sur l'accueil : la course des 20 comptines, dans l'ordre ============
+   Une carte de nuit aux reflets dorés, à la place du chemin : la règle, l'étape du moment (son décor, « Commencer »
+   ou « Continuer »), la course (cases réussies aux couleurs des décors, la case du moment en or avec l'instrument
+   de l'élève pour pion, le drapeau du record), le numéro du départ et le record. */
+.dh {
+  --dh-ink: #FFF7E6; --dh-soft: rgba(255, 247, 230, .78); --dh-gold: #F6C744; --dh-bg: #1D2350; --dh-cell: rgba(255, 247, 230, .08); --dh-line: rgba(255, 247, 230, .16);
+  position: relative; margin-top: 40px; max-width: 980px; padding: 24px 24px 22px; border-radius: 28px;
+  background: var(--dh-bg); color: var(--dh-ink); box-shadow: 0 8px 0 rgba(29, 35, 80, .28), 0 22px 40px rgba(29, 35, 80, .22);
+}
+.dh-head { display: grid; gap: 8px; }
+.dh-t { margin: 0; display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-weight: 800; font-size: clamp(32px, 4.4vw, 48px); line-height: 1; color: var(--dh-gold); }
+.dh-t svg { flex: none; width: .95em; height: .95em; }
+.dh-rule { margin: 0; max-width: 44em; font-size: 16px; line-height: 1.45; color: var(--dh-soft); }
+.dh-msg { margin: 16px 0 0; padding: 9px 14px; border-radius: 14px; font-weight: 700; font-size: 15.5px; }
+.dh-msg.is-fail { background: rgba(229, 72, 77, .22); color: #FFC9CB; }
+.dh-msg.is-ok { background: rgba(76, 175, 90, .22); color: #BDEFC6; }
+.dh-now { margin-top: 18px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px 18px; padding: 16px 18px; border-radius: 22px; background: #FFFBF0; color: #1D2350; }
+.dh-now.is-fini { background: #FFF3C9; }
+.dh-disc { width: 86px; height: 86px; border-radius: 50%; background: var(--c, var(--dh-gold)); display: grid; place-items: center; box-shadow: 0 5px 0 rgba(29, 35, 80, .2); }
+.dh-disc > svg { width: 64%; height: 64%; }
+.dh-cup { color: #1D2350; }
+.dh-cup > svg { width: 54%; height: 54%; }
+.dh-k { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #A87410; }
+.dh-title { margin: 3px 0 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(23px, 3vw, 32px); line-height: 1.06; text-wrap: balance; }
+.dh-meta { margin: 3px 0 0; font-size: 14.5px; color: #464C7C; }
+.dh-go { justify-self: end; }
+.dh-board { margin-top: 20px; }
+.dh-end { margin: 0; display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; letter-spacing: .07em; text-transform: uppercase; color: var(--dh-gold); }
+.dh-end svg { width: 17px; height: 17px; }
+.dh-start { margin-bottom: 8px; }
+.dh-finish { justify-content: flex-end; margin-top: 8px; }
+.dh-track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 8px; }
+.dh-case {
+  position: relative; aspect-ratio: 1; border-radius: 14px; display: grid; place-items: center;
+  background: var(--dh-cell); box-shadow: inset 0 0 0 2px var(--dh-line); color: rgba(255, 247, 230, .55);
+  font: 800 clamp(15px, 1.8vw, 20px)/1 var(--font-display);
+}
+.dh-case.is-done { background: var(--c); color: #1D2350; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .16); }
+.dh-case.is-done.is-dark { color: #FFF7E6; }
+.dh-case.is-done .dh-n { display: grid; }
+.dh-case.is-done .dh-n svg { width: 22px; height: 22px; }
+/* la case du moment : en or, l'instrument de l'élève pour pion, son numéro dans le coin */
+.dh-case.is-now { background: var(--dh-gold); color: #1D2350; box-shadow: 0 0 0 4px rgba(246, 199, 68, .32); animation: dh-now 1.8s ease-in-out infinite; }
+.dh-case.is-now .dh-n { position: absolute; top: 4px; left: 6px; font-size: 12px; }
+@keyframes dh-now { 50% { box-shadow: 0 0 0 10px rgba(246, 199, 68, 0); } }
+.dh-pawn { width: 68%; height: 68%; display: grid; place-items: center; filter: drop-shadow(0 2px 1px rgba(0, 0, 0, .3)); }
+.dh-pawn svg { width: 100%; height: 100%; }
+.dh-rec { position: absolute; top: -9px; right: -7px; width: 22px; height: 22px; color: #E5484D; filter: drop-shadow(0 2px 1px rgba(0, 0, 0, .35)); }
+.dh-rec svg { width: 100%; height: 100%; }
+.dh-stats { margin: 18px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.dh-stats span { padding: 5px 13px; border-radius: 999px; background: rgba(255, 247, 230, .1); font-weight: 700; font-size: 14.5px; }
+@media (max-width: 599px) {
+  .dh { margin-top: 30px; padding: 18px 14px 16px; border-radius: 24px; }
+  .dh-rule { font-size: 15px; }
+  .dh-now { grid-template-columns: auto minmax(0, 1fr); padding: 14px; gap: 12px 14px; }
+  .dh-disc { width: 64px; height: 64px; }
+  .dh-go { grid-column: 1 / -1; justify-self: stretch; justify-content: center; }
+  .dh-track { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; }
+}
+@media (prefers-reduced-motion: reduce) { .dh-case.is-now { animation: none; } }

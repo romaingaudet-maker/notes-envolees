@@ -40,6 +40,7 @@
   const INST_ORDER = Object.keys(INST);
   const instName = (k) => INST[k] || nb(k || '?');
   const JEU_NAME = { aventure: 'Aventure', decouverte: 'Découverte', defi: 'Défi' };
+  const NBSP = '\u00a0';
   const MIC_CODE = { denied: 'refusé', nomic: 'aucun micro', busy: 'déjà utilisé', unsupported: 'navigateur incompatible', noaudio: 'son indisponible', other: 'erreur' };
   const songTitle = (id) => (BY_ID[id] ? nb(BY_ID[id].title) : nb(id));
   const KEY_STORE = (window.NE_NS || '') + 'notes-envolees-prof-cle';
@@ -214,7 +215,8 @@
       }
       if (e.type === 'visite') { if (d.etoiles && typeof d.etoiles === 'object') s.snap = d.etoiles; continue; }
       if (e.type === 'micro') { s.micErr = MIC_CODE[d.code] || 'erreur'; s.micErrT = e.t; continue; }
-      if (e.type === 'defi') { s.defi = { n: num(d.comptines), e: num(d.essais), pub: !!d.publier }; continue; }
+      // le Défi : le record (comptines d'affilée depuis le départ), au départ n° combien, l'étape en cours, les départs
+      if (e.type === 'defi') { s.defi = { n: num(d.comptines), e: num(d.essais), pos: d.etape == null ? null : num(d.etape), dep: num(d.departs), pub: !!d.publier }; continue; }
       if (e.type === 'debut') {
         s.insts.set(d.inst || 'none', (s.insts.get(d.inst || 'none') || 0) + 1);
         if (d.mode === 'mic') { s.mic++; s.micOkT = e.t; } else s.xylo++;
@@ -418,12 +420,14 @@
     }).join('');
   }
 
-  // le Défi d'un élève : comptines réussies, essais, et sa place au tableau d'honneur de l'accueil
+  // le Défi d'un élève : son record (comptines d'affilée), où il en est, ses départs, sa place au tableau d'honneur
   function defiLine(s) {
-    const row = DEFI.get(s.id), d = s.defi || (row ? { n: row.comptines, e: row.essais, pub: !!row.publier } : null);
+    const row = DEFI.get(s.id), d = s.defi || (row ? { n: row.comptines, e: row.essais, pos: null, dep: 0, pub: !!row.publier } : null);
     if (!d) return '';
     const state = row && row.masque ? '<span class="chip warn">retiré du tableau d’honneur</span>' : d.pub ? '<span class="chip">au tableau d’honneur</span>' : '';
-    return `<p class="e-defi"><span class="e-defi-l">Défi</span><span><b>${NF0.format(d.n)}</b>/${LIB.length} comptines réussies · ${plural(d.e, 'essai', 'essais')}</span>${state}</p>`;
+    const now = d.pos == null ? '' : d.pos >= LIB.length ? ' · Défi terminé' : ` · en cours${NBSP}: étape ${d.pos + 1}`;
+    const deps = d.dep ? ` · ${plural(d.dep, 'départ', 'départs')}` : '';
+    return `<p class="e-defi"><span class="e-defi-l">Défi</span><span>record <b>${NF0.format(d.n)}</b>/${LIB.length}${d.n ? ` (au ${d.e > 1 ? `${NF0.format(d.e)}e` : '1er'} départ)` : ''}${now}${deps}</span>${state}</p>`;
   }
   function defiBtn(s) {
     const row = DEFI.get(s.id);

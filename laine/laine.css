@@ -201,11 +201,8 @@
 .hoop-lock svg { width: 30%; height: 30%; }
 .hoop-next { position: absolute; right: -10px; top: 2%; padding: 3px 11px 2px; border-radius: 999px; background: #E0473F; color: #FFF7EA; font: 800 15px/1.3 var(--font-display); box-shadow: 0 4px 8px rgba(0, 0, 0, .45); white-space: nowrap; }
 .hoop-li.is-next .hoop-ring { box-shadow: 0 16px 26px rgba(6, 2, 12, .55), 0 0 0 4px rgba(242, 193, 78, .85), inset 0 0 0 2px rgba(255, 240, 210, .28), inset 0 0 0 5px rgba(90, 50, 20, .28); }
-.hoop-defi { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 700; color: var(--lh-soft); }
-.hoop-defi.ok { color: #9BD79B; }
-.hoop-defi svg { width: 14px; height: 14px; }
 .lhome .ec-jeu svg { color: var(--lh-gold); }
-.lh-defi { position: relative; width: min(1240px, calc(100% - 32px)); margin: 18px auto 6px; padding: 24px 24px 26px; border-radius: 24px; background: var(--lh-felt); color: var(--lh-ink); box-shadow: 0 12px 26px rgba(6, 2, 12, .4); }
+.lh-defi { position: relative; width: min(1208px, calc(100% - 32px)); margin: 18px auto 6px; padding: 24px 24px 26px; border-radius: 24px; background: var(--lh-felt); color: var(--lh-ink); box-shadow: 0 12px 26px rgba(6, 2, 12, .4); }
 .lh-defi::before { content: ""; position: absolute; inset: 8px; border-radius: 17px; border: 2px dashed rgba(247, 235, 221, .26); pointer-events: none; }
 .lh-defi .db-t { color: var(--lh-gold); }
 .lh-defi .db-t svg { color: var(--lh-gold); }
@@ -217,3 +214,13 @@
 .lh-defi .db-rank { background: rgba(247, 235, 221, .9); color: #231A33; }
 .onb .jeu-card[aria-checked="true"] { box-shadow: 0 0 0 4px #F2C14E, 0 4px 0 rgba(0, 0, 0, .3); }
 .onb .onb-defi input { accent-color: #E0473F; }
+/* le Défi, version laine : la course sur un carré de feutre, à la place du fil des comptines */
+.lh-dh .dh { --dh-bg: var(--lh-felt); --dh-ink: var(--lh-ink); --dh-soft: var(--lh-soft); --dh-gold: var(--lh-gold); --dh-cell: rgba(247, 235, 221, .07); --dh-line: rgba(247, 235, 221, .16);
+  max-width: none; margin: 0; box-shadow: 0 12px 26px rgba(6, 2, 12, .4); }
+.lh-dh .dh::before { content: ""; position: absolute; inset: 8px; border-radius: 21px; border: 2px dashed rgba(247, 235, 221, .26); pointer-events: none; }
+.lh-dh .dh-now { background: #F7EBDD; color: #231A33; }
+.lh-dh .dh-now.is-fini { background: #F2E2B8; }
+.lh-dh .dh-k { color: #8A5A1A; }
+.lh-dh .dh-meta { color: #5A4A6E; }
+.lh-dh .dh-case.is-done, .lh-dh .dh-case.is-now { color: #231A33; }
+.lh-dh .dh-case.is-done.is-dark { color: #F7EBDD; }

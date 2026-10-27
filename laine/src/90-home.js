@@ -281,13 +281,15 @@ const HomeSkin = (() => {
   function render(ctx) {
     const { app, LIB, records, inst, star, ICON, esc, titleHtml, LEVEL, framed, ONLINE_URL, GO, eleveHtml, bindEleve, HOWTO } = ctx;
     // le mode de jeu : comptines fermées et prochaine à jouer (Aventure), essais du Défi
-    const songState = ctx.songState || (() => ({ open: true, next: false, defi: null, defiTxt: '' }));
+    const songState = ctx.songState || (() => ({ open: true, next: false }));
     const NX = ctx.nextToPlay ? ctx.nextToPlay() : null;
+    // en Défi, la course des 20 comptines prend la place du fil des comptines (couleurs des décors en laine)
+    const dh = ctx.defiHomeHtml ? ctx.defiHomeHtml((t) => (SCENES[t] && SCENES[t].color) || '#3A2A52') : '';
     const NBS = '\u00a0';
     const LEGAL_URL = ctx.LEGAL_URL || 'mentions-legales.html';
     const gl = Engine.supported();
     lastLIB = LIB;
-    const hoops = LIB.map((s, i) => {
+    const hoops = dh ? '' : LIB.map((s, i) => {
       const best = +records[s.id] || 0, best2 = +records[s.id + '@2'] || 0;
       const st = songState(s, NX);
       const c = (SCENES[s.theme] && SCENES[s.theme].color) || '#3A2A52';
@@ -306,7 +308,7 @@ const HomeSkin = (() => {
           </span>
           <span class="hoop-title">${titleHtml(s.title)}</span>
           <span class="hoop-meta">${LEVEL(s.level)} · ${s.notes.length} notes${r2}</span>
-          ${stars}${st.defiTxt ? `<span class="hoop-defi${st.defi.ok ? ' ok' : ''}">${st.defi.ok ? ICON.check : ''}${esc(st.defiTxt)}</span>` : ''}${st.open ? '' : `<span class="lh-sr">, fermée${NBS}: termine d’abord «${NBS}${esc(st.lockedBy.title.replace(/_/g, ' '))}${NBS}»</span>`}${st.next ? '<span class="lh-sr">, la prochaine à jouer</span>' : ''}
+          ${stars}${st.lockedBy ? `<span class="lh-sr">, fermée${NBS}: termine d’abord «${NBS}${esc(st.lockedBy.title.replace(/_/g, ' '))}${NBS}»</span>` : ''}${st.next ? '<span class="lh-sr">, la prochaine à jouer</span>' : ''}
         </a>
       </li>`;
     }).join('');
@@ -322,14 +324,14 @@ const HomeSkin = (() => {
             <p class="lh-eyebrow">Jeu d’oreille · décors en laine</p>
             <p class="lh-lede"><strong>Les notes se sont envolées.</strong> Retrouve-les à l’oreille : la page t’écoute au micro.</p>
             <div class="lh-actions">
-              <button class="lh-cta" type="button" id="lh-go">Choisir une comptine</button>
+              <button class="lh-cta" type="button" id="lh-go">${dh ? 'Voir le Défi' : 'Choisir une comptine'}</button>
               <p class="lh-hint" id="lh-hint">${gl ? 'Touche les notes qui volent : elles chantent.' : ''}</p>
             </div>
           </div>
         </div>
       </section>
       <section class="lh-eleve" id="lh-eleve" aria-label="Toi et ton instrument">${eleveHtml()}${micNote}</section>
-      <section class="lh-path" id="lh-path" aria-label="Les comptines, de la plus facile à la plus difficile">
+      ${dh ? `<section class="lh-path lh-dh" id="lh-path" aria-labelledby="dh-t"><div class="dh">${dh}</div></section>` : `<section class="lh-path" id="lh-path" aria-label="Les comptines, de la plus facile à la plus difficile">
         <header class="lh-path-head">
           <h2>Le fil des comptines</h2>
           <p>De la plus facile à la plus difficile. Chaque tambour est le décor de sa comptine.</p>
@@ -338,7 +340,7 @@ const HomeSkin = (() => {
           <svg class="lh-thread" aria-hidden="true"></svg>
           <ol class="lh-hoops">${hoops}</ol>
         </div>
-      </section>
+      </section>`}
       <section class="lh-defi" id="defi-board" aria-labelledby="db-t" hidden></section>
       <section class="lh-bench" aria-label="Réglages et mode d’emploi">
         <div class="lh-patch lh-how">
@@ -362,7 +364,7 @@ const HomeSkin = (() => {
     };
     bindEleve(app.querySelector('.eleve-card'));
     app.querySelector('#lh-go').addEventListener('click', toPath);
-    layoutHoops();
+    if (!dh) layoutHoops();
     // les portraits : le fichier, ou (s'il manque) fabriqué ici
     queue = [];
     app.querySelectorAll('.hoop-pic img').forEach((img) => {

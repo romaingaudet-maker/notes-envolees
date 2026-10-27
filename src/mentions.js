@@ -38,12 +38,13 @@
     try {
       const st = JSON.parse(localStorage.getItem(SK) || 'null');
       if (!st || !st.affiche) return;
-      const defi = JSON.parse(localStorage.getItem(DK) || '{}');
-      let n = 0, e = 0;
-      Object.values(defi).forEach((d) => { if (d && d.ok) { n++; e += +d.e || 0; } });
+      // la course du Défi (src/app.js) : record, départ du record, étape en cours, nombre de départs
+      const d = JSON.parse(localStorage.getItem(DK) || 'null') || {};
+      const v2 = d.v === 2, num = (x, m) => Math.max(m, Math.floor(+x) || 0);
+      const best = v2 ? num(d.best, 0) : 0, departs = v2 ? num(d.departs, 1) : 1;
       const w = String(st.prenom || '').split(' ').filter(Boolean);
       const nom = w.length > 1 ? `${w[0]} ${w[1][0].toUpperCase()}.` : w[0] || '';
-      Suivi.send('defi', { inst: st.inst, jeu: st.jeu || '', comptines: n, essais: e, publier: 0, nom });
+      Suivi.send('defi', { inst: st.inst, jeu: st.jeu || '', comptines: best, essais: v2 ? num(d.bestDeparts, 0) || departs : 1, etape: v2 ? num(d.pos, 0) : 0, departs, publier: 0, nom });
       st.affiche = false;
       localStorage.setItem(SK, JSON.stringify(st));
     } catch (err) { /* rien à retirer */ }
