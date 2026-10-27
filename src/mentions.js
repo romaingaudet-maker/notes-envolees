@@ -4,7 +4,8 @@
    - la case coupe ou rétablit le suivi sur cet appareil (Suivi.exclude) ;
    - le code de l'appareil est celui que montre la page de suivi du professeur ;
    - le réglage de la voix, s'il y en a un, peut être effacé.
-   Cette page n'envoie rien.
+   Cette page n'envoie rien, sauf une chose : couper le suivi quand l'élève paraît au tableau d'honneur
+   du Défi l'en retire d'abord (un dernier envoi, « publier : 0 »).
 ------------------------------------------------------------------- */
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -31,7 +32,23 @@
     if (id) code.append(Object.assign(document.createElement('span'), { className: 'code', textContent: '#' + id.slice(0, 4) }));
     code.hidden = false;
   }
-  box.addEventListener('change', () => { Suivi.exclude(box.checked); paint(box.checked); });
+  // couper le suivi retire aussi l'élève du tableau d'honneur du Défi : un dernier envoi, puis plus rien
+  const NS = window.NE_NS || '', SK = NS + 'notes-envolees-reglages', DK = NS + 'notes-envolees-defi';
+  function leaveBoard() {
+    try {
+      const st = JSON.parse(localStorage.getItem(SK) || 'null');
+      if (!st || !st.affiche) return;
+      const defi = JSON.parse(localStorage.getItem(DK) || '{}');
+      let n = 0, e = 0;
+      Object.values(defi).forEach((d) => { if (d && d.ok) { n++; e += +d.e || 0; } });
+      const w = String(st.prenom || '').split(' ').filter(Boolean);
+      const nom = w.length > 1 ? `${w[0]} ${w[1][0].toUpperCase()}.` : w[0] || '';
+      Suivi.send('defi', { inst: st.inst, jeu: st.jeu || '', comptines: n, essais: e, publier: 0, nom });
+      st.affiche = false;
+      localStorage.setItem(SK, JSON.stringify(st));
+    } catch (err) { /* rien à retirer */ }
+  }
+  box.addEventListener('change', () => { if (box.checked) leaveBoard(); Suivi.exclude(box.checked); paint(box.checked); });
   paint();
 
   // le réglage de la voix (« Régler ma voix »), gardé dans ce navigateur : on peut l'effacer

@@ -148,6 +148,11 @@ h3.sub { font-size: 15px; font-weight: 650; padding: 18px 16px 6px; border-top: 
 .c.s2 { background: var(--s2); }
 .c.s3 { background: var(--s3); }
 .strip .c:hover { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--ink-2); }
+/* le Défi d'un élève : comptines réussies, essais, place au tableau d'honneur de l'accueil */
+.e-defi { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin-top: 8px; font-size: 13.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.e-defi b { color: var(--ink); font-weight: 650; }
+.e-defi-l { font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--star); }
+.chip.warn { color: var(--warn); border-color: currentColor; }
 .e-warn { display: inline-block; margin-top: 8px; margin-right: 6px; font-size: 13.5px; color: var(--warn); background: var(--warn-bg); border-radius: 8px; padding: 3px 9px; }
 .e-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
 .e-id { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; font-size: 13px; color: var(--muted); min-width: 0; }
@@ -744,6 +749,7 @@ const Suivi = (() => {
   const INST_SHORT = { none: 'Sans', clarinette: 'Clar.', saxalto: 'Sax.', trompette: 'Tromp.', trombone: 'Tromb.', violoncelle: 'Vlc.', xylophone: 'Xylo.' };
   const INST_ORDER = Object.keys(INST);
   const instName = (k) => INST[k] || nb(k || '?');
+  const JEU_NAME = { aventure: 'Aventure', decouverte: 'Découverte', defi: 'Défi' };
   const MIC_CODE = { denied: 'refusé', nomic: 'aucun micro', busy: 'déjà utilisé', unsupported: 'navigateur incompatible', noaudio: 'son indisponible', other: 'erreur' };
   const songTitle = (id) => (BY_ID[id] ? nb(BY_ID[id].title) : nb(id));
   const KEY_STORE = (window.NE_NS || '') + 'notes-envolees-prof-cle';
@@ -814,6 +820,7 @@ const Suivi = (() => {
   let loadedAt = 0;
   let LEVEL = 1; // niveau montré pour les instruments et les comptines
   let WHO = new Map(); // élèves montrés : identifiant → fiche (pour les nommer dans les statistiques)
+  let DEFI = new Map(); // scores du Défi rangés par le Worker : identifiant → { publier, masque… } (vide : Worker d'avant le Défi)
   const open = new Set();
 
   function readKey() {
@@ -851,7 +858,22 @@ const Suivi = (() => {
       depuis = j.evenements[j.evenements.length - 1][0];
     }
     loadedAt = Date.now();
+    await fetchDefi();
     prepare();
+  }
+  // les scores du Défi (et qui est retiré du tableau d'honneur) : le Worker d'avant le Défi n'en a pas
+  async function fetchDefi() {
+    try {
+      const r = await fetch(`${API}/defi`, { headers: { Authorization: 'Bearer ' + KEY }, cache: 'no-store' });
+      const j = r.ok ? await r.json() : null;
+      DEFI = new Map(j && Array.isArray(j.eleves) ? j.eleves.map((x) => [x.eleve, x]) : []);
+    } catch (e) { DEFI = new Map(); }
+  }
+  // retirer un élève du tableau d'honneur de l'accueil, ou l'y remettre
+  async function defiMask(id, on) {
+    const r = await fetch(`${API}/defi/masque`, { method: 'POST', headers: { Authorization: 'Bearer ' + KEY }, body: JSON.stringify({ id, masque: on ? 1 : 0 }) });
+    if (!r.ok) throw new Error('masque');
+    await fetchDefi();
   }
 
   const isMark = (e) => e.type === 'visite' && e.d.prof != null;
@@ -885,7 +907,7 @@ const Suivi = (() => {
     for (const e of evs) {
       let s = map.get(e.eleve);
       if (!s) {
-        s = { id: e.eleve, ip: '', first: e.t, last: e.t, insts: new Map(), lastInst: '', prenom: '', prenomT: -Infinity, prenoms: new Map(), mic: 0, xylo: 0, snap: null, ep: new Map(), temps: 0, micErr: '', micErrT: 0, micOkT: 0 };
+        s = { id: e.eleve, ip: '', first: e.t, last: e.t, insts: new Map(), lastInst: '', prenom: '', prenomT: -Infinity, prenoms: new Map(), mic: 0, xylo: 0, snap: null, ep: new Map(), temps: 0, micErr: '', micErrT: 0, micOkT: 0, jeu: '', defi: null };
         map.set(e.eleve, s);
       }
       s.first = Math.min(s.first, e.t);
@@ -893,6 +915,7 @@ const Suivi = (() => {
       if (!s.ip && e.ip) s.ip = e.ip;
       const d = e.d;
       if (d.inst) s.lastInst = d.inst;
+      if (JEU_NAME[d.jeu]) s.jeu = d.jeu; // le mode de jeu le plus récent
       // prénom donné par l'élève sur l'accueil (facultatif) : le plus récent compte, les autres restent dans le détail
       const pn = typeof d.prenom === 'string' ? d.prenom.replace(/\s+/g, ' ').trim().slice(0, 30) : '';
       if (pn) {
@@ -901,6 +924,7 @@ const Suivi = (() => {
       }
       if (e.type === 'visite') { if (d.etoiles && typeof d.etoiles === 'object') s.snap = d.etoiles; continue; }
       if (e.type === 'micro') { s.micErr = MIC_CODE[d.code] || 'erreur'; s.micErrT = e.t; continue; }
+      if (e.type === 'defi') { s.defi = { n: num(d.comptines), e: num(d.essais), pub: !!d.publier }; continue; }
       if (e.type === 'debut') {
         s.insts.set(d.inst || 'none', (s.insts.get(d.inst || 'none') || 0) + 1);
         if (d.mode === 'mic') { s.mic++; s.micOkT = e.t; } else s.xylo++;
@@ -1104,6 +1128,21 @@ const Suivi = (() => {
     }).join('');
   }
 
+  // le Défi d'un élève : comptines réussies, essais, et sa place au tableau d'honneur de l'accueil
+  function defiLine(s) {
+    const row = DEFI.get(s.id), d = s.defi || (row ? { n: row.comptines, e: row.essais, pub: !!row.publier } : null);
+    if (!d) return '';
+    const state = row && row.masque ? '<span class="chip warn">retiré du tableau d’honneur</span>' : d.pub ? '<span class="chip">au tableau d’honneur</span>' : '';
+    return `<p class="e-defi"><span class="e-defi-l">Défi</span><span><b>${NF0.format(d.n)}</b>/${LIB.length} comptines réussies · ${plural(d.e, 'essai', 'essais')}</span>${state}</p>`;
+  }
+  function defiBtn(s) {
+    const row = DEFI.get(s.id);
+    if (!row || (!row.publier && !row.masque)) return '';
+    return row.masque
+      ? `<button type="button" class="btn ghost" data-act="defi-masque" data-v="0" data-id="${esc(s.id)}">Remettre au tableau d’honneur</button>`
+      : `<button type="button" class="btn ghost" data-act="defi-masque" data-v="1" data-id="${esc(s.id)}">Retirer du tableau d’honneur</button>`;
+  }
+
   function card(s) {
     const main = mainInst(s);
     const plays = s.mic + s.xylo;
@@ -1116,10 +1155,11 @@ const Suivi = (() => {
     const idle = s.last < NOW - 14 * DAY;
     return `<article class="eleve${isOpen ? ' is-open' : ''}" data-id="${esc(s.id)}">
       <div class="e-top">
-        <p class="e-inst">${s.prenom ? `<b class="e-name">${esc(s.prenom)}</b><span class="e-dot" aria-hidden="true">·</span>` : ''}<b>${esc(instName(main))}</b>${how ? `<span class="e-how">${esc(how)}</span>` : ''}</p>
+        <p class="e-inst">${s.prenom ? `<b class="e-name">${esc(s.prenom)}</b><span class="e-dot" aria-hidden="true">·</span>` : ''}<b>${esc(instName(main))}</b>${how || s.jeu ? `<span class="e-how">${esc([how, JEU_NAME[s.jeu]].filter(Boolean).join(' · '))}</span>` : ''}</p>
         <p class="e-when${idle ? ' idle' : ''}">${esc(ago(s.last))}</p>
       </div>
       ${path(1)}${lv2 ? path(2) : ''}
+      ${defiLine(s)}
       ${warn.map((w) => `<p class="e-warn">${esc(w)}</p>`).join('')}
       <div class="e-foot">
         <p class="e-id"><span class="ip" title="${esc(s.ip)}">${esc(ipShort(s.ip))}</span><span class="code">#${esc(s.id.slice(0, 4))}</span>${meNet ? '<span class="chip">même connexion que toi</span>' : ''}</p>
@@ -1164,6 +1204,7 @@ const Suivi = (() => {
       ${rows ? `<table class="tbl ep"><thead><tr><th scope="col">Comptine</th><th scope="col">Niveau 1 · les notes</th>${lv2 ? '<th scope="col">Niveau 2 · notes et rythme</th>' : ''}</tr></thead><tbody>${rows}</tbody></table>` : '<p class="mute">Aucune comptine commencée.</p>'}
       <p class="d-act">
         ${me ? '' : `<button type="button" class="btn ghost" data-act="mine" data-id="${esc(s.id)}">C’est moi : ne plus afficher</button>`}
+        ${defiBtn(s)}
         <button type="button" class="btn danger" data-act="delete" data-id="${esc(s.id)}">Effacer ses données</button>
       </p>
     </div>`;
@@ -1296,6 +1337,10 @@ const Suivi = (() => {
     const act = b.dataset.act, id = b.dataset.id;
     if (act === 'reload') load(false);
     else if (act === 'level') { LEVEL = +b.dataset.v === 2 ? 2 : 1; render(); }
+    else if (act === 'defi-masque') {
+      b.disabled = true;
+      try { await defiMask(id, b.dataset.v === '1'); render(); } catch (e) { b.disabled = false; alert('Ça n’a pas marché. Vérifie ta connexion et réessaie.'); }
+    }
     else if (act === 'toggle') {
       const el = b.closest('.eleve');
       const cid = el.dataset.id;

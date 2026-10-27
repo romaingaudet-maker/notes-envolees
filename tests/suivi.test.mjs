@@ -85,6 +85,64 @@ await check('prénom de l’élève (accents, apostrophe, trait d’union) rang�
   await call('/eleve?id=prenom234567', { method: 'DELETE', headers: { Authorization: 'Bearer ' + KEY } });
   return ok && r && r[5].prenom === 'Léa-Marie D’Arc' && r[5].inst === 'flute';
 });
+console.log('— Défi : le tableau d’honneur —');
+const defiPost = (e, d) => post(Object.assign({ e, y: 'defi', v: 1, inst: 'flute', mode: 'mic', jeu: 'defi' }, d));
+const board = async () => (await (await call('/defi', { headers: { Origin: SITE } })).json()).classement;
+await check('un score du Défi est rangé (204), et reste dans le suivi', async () => {
+  const ok = (await defiPost('defiaa234567', { prenom: 'Léa Martin', nom: 'Léa M.', comptines: 3, essais: 7, publier: 1 })).status === 204;
+  const j = await (await read()).json();
+  return ok && j.evenements.some((r) => r[2] === 'defiaa234567' && r[4] === 'defi' && r[5].comptines === 3);
+});
+await check('tableau d’honneur sans clé : nom, instrument, score ; ni identifiant ni prénom entier', async () => {
+  const r = await call('/defi', { headers: { Origin: SITE } });
+  const list = (await r.json()).classement;
+  return r.status === 200 && r.headers.get('Access-Control-Allow-Origin') === SITE && list.length === 1
+    && JSON.stringify(list[0]) === JSON.stringify({ nom: 'Léa M.', inst: 'flute', comptines: 3, essais: 7 });
+});
+await check('seulement les élèves qui l’acceptent, et qui ont un nom', async () => {
+  await defiPost('defibb234567', { nom: 'Tom', comptines: 9, essais: 12, publier: 0 });
+  await defiPost('deficc234567', { nom: '', comptines: 9, essais: 9, publier: 1 });
+  return (await board()).map((x) => x.nom).join() === 'Léa M.';
+});
+await check('classement : le plus de comptines, puis le moins d’essais', async () => {
+  await defiPost('defidd234567', { nom: 'Inès', comptines: 3, essais: 5, publier: 1 });
+  await defiPost('defiee234567', { nom: 'Paul', comptines: 4, essais: 30, publier: 1 });
+  return (await board()).map((x) => x.nom).join() === 'Paul,Inès,Léa M.';
+});
+await check('le dernier score remplace le précédent ; décocher retire du tableau', async () => {
+  await defiPost('defidd234567', { nom: 'Inès', comptines: 5, essais: 6, publier: 1 });
+  const a = (await board()).map((x) => x.nom).join();
+  await defiPost('defidd234567', { nom: 'Inès', comptines: 5, essais: 6, publier: 0 });
+  return a === 'Inès,Paul,Léa M.' && (await board()).map((x) => x.nom).join() === 'Paul,Léa M.';
+});
+await check('nom nettoyé (balises, longueur), instrument inconnu ignoré', async () => {
+  await defiPost('defiff234567', { nom: '<b>Zoé</b> "la" ' + 'x'.repeat(40), inst: 'Flute!', comptines: 1, essais: 1, publier: 1 });
+  const z = (await board()).find((x) => x.nom.startsWith('bZoé'));
+  return z && z.nom.length === 30 && !/[<>"]/.test(z.nom) && z.inst === '';
+});
+await check('tous les scores avec la clé (page de suivi) ; sans la bonne clé : 401', async () => {
+  const r = await call('/defi', { headers: { Origin: SITE, Authorization: 'Bearer ' + KEY } });
+  const j = await r.json();
+  const bad = (await call('/defi', { headers: { Origin: SITE, Authorization: 'Bearer mauvaise-cle-123' } })).status;
+  return r.status === 200 && j.eleves.length === 6 && j.eleves.some((x) => x.eleve === 'defibb234567' && x.publier === 0 && x.masque === 0) && bad === 401;
+});
+await check('le professeur retire un élève du tableau, puis l’y remet', async () => {
+  const masque = (m) => call('/defi/masque', { method: 'POST', body: JSON.stringify({ id: 'defiee234567', masque: m }), headers: { Origin: SITE, Authorization: 'Bearer ' + KEY } });
+  const sans = (await call('/defi/masque', { method: 'POST', body: JSON.stringify({ id: 'defiee234567', masque: 1 }), headers: { Origin: SITE } })).status;
+  const r1 = await (await masque(1)).json();
+  const a = (await board()).map((x) => x.nom).join();
+  // un nouveau score ne remet pas l'élève au tableau : le retrait reste
+  await defiPost('defiee234567', { nom: 'Paul', comptines: 6, essais: 31, publier: 1 });
+  const b = (await board()).map((x) => x.nom).join();
+  await masque(0);
+  const c = (await board()).map((x) => x.nom).join();
+  return sans === 401 && r1.change === 1 && !a.includes('Paul') && !b.includes('Paul') && c.startsWith('Paul');
+});
+await check('effacer un élève efface aussi son score du Défi', async () => {
+  await call('/eleve?id=defiee234567', { method: 'DELETE', headers: { Authorization: 'Bearer ' + KEY } });
+  return !(await board()).some((x) => x.nom === 'Paul');
+});
+for (const id of ['defiaa234567', 'defibb234567', 'deficc234567', 'defidd234567', 'defiff234567']) await call('/eleve?id=' + id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + KEY } });
 await check('clé trop courte dans le Worker : 503', async () => (await call('/donnees', { headers: { Authorization: 'Bearer court' } }, { DB: env.DB, CLE_PROF: 'court' })).status === 503);
 await check('base absente : 503', async () => (await call('/e', { method: 'POST', body: '{}', headers: { Origin: SITE } }, { CLE_PROF: KEY })).status === 503);
 

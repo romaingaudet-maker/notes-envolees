@@ -491,3 +491,103 @@ html.onb-open, html.onb-open body { overflow: hidden; }
   .onb { background: rgba(12, 10, 30, .55); padding: 24px; }
   .onb-in { margin: auto; width: min(820px, 100%); border-radius: 28px; background: var(--onb-bg); padding: 22px 30px 30px; box-shadow: 0 30px 70px rgba(0, 0, 0, .35); }
 }
+
+/* texte lu seulement par les lecteurs d'écran */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ============ les modes de jeu ============ */
+/* Aventure, sur le chemin : une comptine fermée (grisée, un cadenas), la prochaine à jouer (« À toi ! ») */
+.medal.is-locked .medal-disc { background: #DCD6C6; box-shadow: 0 7px 0 rgba(29, 35, 80, .12), 0 16px 28px rgba(29, 35, 80, .1); }
+.medal.is-locked .medal-disc > svg:not(.medal-ring) { opacity: .26; filter: grayscale(1); }
+.medal.is-locked .medal-ring .trk { stroke: rgba(255, 251, 240, .55); stroke-dasharray: 3 9; }
+.medal.is-locked .medal-title, .medal.is-locked .medal-meta { opacity: .6; }
+.medal-lock { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink); pointer-events: none; }
+.medal-lock svg { width: 34%; height: 34%; }
+.medal.is-next .medal-disc { animation: medal-next 1.8s ease-in-out infinite; }
+@keyframes medal-next {
+  0%, 100% { box-shadow: 0 7px 0 rgba(29, 35, 80, .2), 0 16px 28px rgba(29, 35, 80, .2), 0 0 0 0 rgba(229, 72, 77, .5); }
+  50% { box-shadow: 0 7px 0 rgba(29, 35, 80, .2), 0 16px 28px rgba(29, 35, 80, .2), 0 0 0 16px rgba(229, 72, 77, 0); }
+}
+.medal-next { position: absolute; top: -12px; right: -18px; padding: 3px 11px 2px; border-radius: 999px; background: var(--red); color: #FFFFFF; font: 800 15px/1.3 var(--font-display); box-shadow: 0 3px 0 rgba(29, 35, 80, .25); white-space: nowrap; }
+/* le Défi, sous le titre : « Défi réussi en 2 essais », « Défi : 3 essais » */
+.medal-defi { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 2px 10px; border-radius: 999px; background: var(--paper); font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+.medal-defi.ok { color: #1D7A35; }
+.medal-defi svg { width: 15px; height: 15px; }
+@media (prefers-reduced-motion: reduce) { .medal.is-next .medal-disc { animation: none; box-shadow: 0 7px 0 rgba(29, 35, 80, .2), 0 0 0 6px rgba(229, 72, 77, .55); } }
+
+/* le rappel de l'accueil : le mode de jeu à côté de l'instrument ; en Défi, le score */
+.ec-jeu { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; font-size: 15px; color: var(--ec-soft); }
+.ec-jeu svg { width: 17px; height: 17px; }
+.ec-defi { margin: 0; font-size: 14px; font-weight: 700; color: var(--ec-soft); }
+
+/* la première visite, troisième écran : le mode de jeu (trois cartes) et, en Défi, l'accord pour le tableau d'honneur */
+.jeu-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.jeu-card {
+  display: grid; align-content: start; justify-items: start; gap: 6px; min-width: 0; padding: 16px 16px 18px;
+  border: 0; border-radius: 20px; background: var(--onb-field, #FFFBF0); color: #1D2350; box-shadow: 0 4px 0 rgba(29, 35, 80, .2);
+  font: inherit; text-align: left; cursor: pointer; transition: transform .1s, box-shadow .1s;
+}
+.jeu-card[aria-checked="true"] { box-shadow: 0 0 0 4px #1D2350, 0 4px 0 rgba(29, 35, 80, .2); }
+.jeu-ic { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: #FFF3C9; color: #1D2350; }
+.jeu-card[aria-checked="true"] .jeu-ic { background: #E5484D; color: #FFFFFF; }
+.jeu-ic svg { width: 28px; height: 28px; }
+.jeu-card b { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 8px; font-family: var(--font-display); font-weight: 800; font-size: 21px; line-height: 1.1; }
+.jeu-card b small { font-family: var(--font-text); font-size: 12.5px; font-weight: 700; opacity: .7; }
+.jeu-d { font-size: 14.5px; line-height: 1.35; color: rgba(29, 35, 80, .82); }
+.jeu-card:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(29, 35, 80, .2); }
+.jeu-card:focus-visible { outline: 3px solid #1D2350; outline-offset: 3px; }
+@media (hover: hover) { .jeu-card:hover { transform: translateY(-2px); } }
+.onb-defi, .rg-defi { display: flex; align-items: flex-start; gap: 10px; max-width: 640px; font-size: 15px; font-weight: 700; line-height: 1.35; cursor: pointer; }
+.onb-defi input, .rg-defi input { flex: none; width: 22px; height: 22px; margin: 0; accent-color: #E5484D; }
+.onb-defi.is-off, .rg-defi.is-off { cursor: default; font-weight: 400; }
+.onb-defi.is-off input, .rg-defi.is-off input { display: none; }
+@media (max-width: 599px) {
+  .jeu-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .jeu-card { grid-template-columns: 46px minmax(0, 1fr); column-gap: 12px; row-gap: 2px; align-items: center; padding: 12px 14px; }
+  .jeu-ic { grid-row: span 2; align-self: center; }
+  .jeu-card b, .jeu-d { grid-column: 2; }
+  .jeu-card b { font-size: 19px; }
+  .jeu-d { font-size: 14px; }
+}
+
+/* Aventure : une comptine pas encore ouverte (touchée sur le chemin, ou ouverte par un lien) */
+.locked { min-height: 100dvh; display: grid; place-items: center; padding: max(24px, env(safe-area-inset-top, 0px)) 16px 24px; background: var(--bg); color: var(--text); font-family: var(--font-text); }
+.lk-card { width: min(560px, 100%); display: grid; justify-items: center; gap: 12px; padding: 30px 24px 26px; border-radius: 28px; background: var(--panel); box-shadow: 0 8px 0 var(--line), 0 24px 50px rgba(0, 0, 0, .12); text-align: center; }
+.lk-ic { width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; background: var(--panel-2); color: var(--text); }
+.lk-ic svg { width: 40px; height: 40px; }
+.lk-k { margin: 4px 0 0; font-size: 13.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-soft); }
+.lk-t { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(30px, 6vw, 44px); line-height: 1.05; text-wrap: balance; }
+.lk-p { margin: 0; max-width: 30em; font-size: 17px; line-height: 1.45; color: var(--text-soft); }
+.lk-act { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: center; margin-top: 6px; }
+.lk-back { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--text); }
+.lk-back svg { width: 18px; height: 18px; }
+.lk-free { margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; justify-content: center; font-size: 14.5px; color: var(--text-soft); }
+.lk-disc { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 999px; border: 2px solid var(--line-strong); background: transparent; color: var(--text); font: 700 14.5px var(--font-text); cursor: pointer; }
+.lk-disc svg { width: 17px; height: 17px; }
+@media (max-width: 599px) { .lk-act { flex-direction: column; } .lk-go { max-width: 100%; } .lk-go span:last-child { white-space: normal; text-align: left; } }
+
+/* Aventure : la flèche vers la comptine suivante, tant que celle-ci est fermée */
+.next-song > span:not([hidden]) { display: grid; place-items: center; }
+.next-song.is-locked { color: var(--ink-soft); }
+.next-song.is-locked svg { width: 19px; height: 19px; }
+
+/* le tableau d'honneur du Défi, sur l'accueil */
+.defi-board { margin-top: 54px; max-width: 760px; padding: 22px 22px 24px; border-radius: 26px; background: var(--paper); box-shadow: 0 6px 0 rgba(29, 35, 80, .12); }
+.db-t { margin: 0; display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 800; font-size: clamp(24px, 2.8vw, 32px); line-height: 1.1; }
+.db-t svg { flex: none; width: 32px; height: 32px; color: #C8901A; }
+.db-sub { margin: 6px 0 14px; font-size: 15px; color: var(--ink-soft); }
+.db-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.db-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 14px 8px 10px; border-radius: 16px; background: #FFF3C9; }
+.db-row:nth-child(n+4) { background: transparent; box-shadow: inset 0 0 0 2px rgba(29, 35, 80, .08); }
+.db-row.is-me { box-shadow: inset 0 0 0 3px var(--ink); }
+.db-rank { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: var(--paper); font: 800 17px/1 var(--font-display); }
+.db-row:nth-child(1) .db-rank { background: #E0A92B; color: #2A1E06; }
+.db-row:nth-child(2) .db-rank { background: #B9BCC8; color: #1D2350; }
+.db-row:nth-child(3) .db-rank { background: #C9814A; color: #FFFFFF; }
+.db-who { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 8px; min-width: 0; }
+.db-name { font-family: var(--font-display); font-weight: 800; font-size: 19px; line-height: 1.15; overflow-wrap: anywhere; }
+.db-inst { font-size: 13.5px; color: var(--ink-soft); }
+.db-score { display: grid; justify-items: end; font-size: 15px; line-height: 1.15; color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.db-score b { font-family: var(--font-display); font-size: 22px; color: var(--ink); }
+.db-score small { font-size: 12.5px; }
+.db-empty { margin: 0; font-size: 15.5px; color: var(--ink-soft); }

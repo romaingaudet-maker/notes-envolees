@@ -37,8 +37,11 @@ const iconOf = (bg, ink) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns
 const icon = iconOf('#F6C744', '#1D2350');
 let rev = ''; // la version testée, affichée dans le bandeau
 if (QUALIF) { try { rev = execSync('git rev-parse --short HEAD', { cwd: new URL('./', import.meta.url) }).toString().trim(); } catch (e) { /* hors dépôt */ } }
+// le Worker du suivi de la production : en qualification, la page de suivi et le tableau d'honneur du Défi le lisent
+// (la qualification, elle, n'envoie rien)
+const PROD_SUIVI = (r('suivi.js').match(/'(https:\/\/[^']+\.workers\.dev)'/) || [])[1] || '';
 const STAMP = !QUALIF ? '' : `<meta name="robots" content="noindex">
-<script>window.NE_SUIVI_URL = ''; window.NE_NS = 'qualif-';</script>
+<script>window.NE_SUIVI_URL = ''; window.NE_NS = 'qualif-';${PROD_SUIVI ? ` window.NE_SUIVI_LECTURE = ${JSON.stringify(PROD_SUIVI)};` : ''}</script>
 <style>html::after { content: "Qualification${rev ? ' · ' + rev : ''}"; position: fixed; left: max(8px, env(safe-area-inset-left, 0px)); bottom: max(8px, env(safe-area-inset-bottom, 0px)); z-index: 2147483647; padding: 4px 10px; border-radius: 999px; background: #D93D43; color: #FFFFFF; font: 700 11px/1.3 system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; box-shadow: 0 2px 6px rgba(0, 0, 0, .3); pointer-events: none; }</style>`;
 const doc = (head, body, color, ico = icon, extra = '') => `<!doctype html>
 <html lang="fr">
@@ -68,7 +71,6 @@ const pCss = font('Gluten', 700, 'gluten-latin-700-normal.woff2') + '\n' + r('_s
 const pJs = ['songs.js', 'suivi.js', 'suivi-page.js'].map(r).join('\n');
 const pCut = pShell.indexOf('<div id="app"');
 // en qualification, le jeu n'envoie rien, mais la page de suivi lit les vrais résultats (Worker de production)
-const PROD_SUIVI = (r('suivi.js').match(/'(https:\/\/[^']+\.workers\.dev)'/) || [])[1] || '';
 const pExtra = QUALIF && PROD_SUIVI ? `<script>window.NE_SUIVI_LECTURE = ${JSON.stringify(PROD_SUIVI)};</script>` : '';
 const prof = doc(fill(pShell.slice(0, pCut), pCss, pJs).trim(), fill(pShell.slice(pCut), pCss, pJs).trim(), '#F6C744', icon, pExtra);
 write('suivi.html', prof);

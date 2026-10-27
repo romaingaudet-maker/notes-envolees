@@ -280,16 +280,21 @@ const HomeSkin = (() => {
 
   function render(ctx) {
     const { app, LIB, records, inst, star, ICON, esc, titleHtml, LEVEL, framed, ONLINE_URL, GO, eleveHtml, bindEleve, HOWTO } = ctx;
+    // le mode de jeu : comptines fermées et prochaine à jouer (Aventure), essais du Défi
+    const songState = ctx.songState || (() => ({ open: true, next: false, defi: null, defiTxt: '' }));
+    const NX = ctx.nextToPlay ? ctx.nextToPlay() : null;
+    const NBS = '\u00a0';
     const LEGAL_URL = ctx.LEGAL_URL || 'mentions-legales.html';
     const gl = Engine.supported();
     lastLIB = LIB;
     const hoops = LIB.map((s, i) => {
       const best = +records[s.id] || 0, best2 = +records[s.id + '@2'] || 0;
+      const st = songState(s, NX);
       const c = (SCENES[s.theme] && SCENES[s.theme].color) || '#3A2A52';
       const stars = best ? `<span class="hoop-stars" aria-label="Record : ${best} étoile${best > 1 ? 's' : ''}">${[1, 2, 3].map((k) => star(k <= best, 14)).join('')}</span>` : '';
       const r2 = best2 ? `<span class="hoop-r2" aria-label="Niveau 2 : ${best2} étoile${best2 > 1 ? 's' : ''}">${ICON.metro}${'★'.repeat(best2)}</span>` : '';
       const pic = portraits.get(s.theme) || (SCENES[s.theme] ? `${PORTRAITS_BASE}${s.theme}.webp` : '');
-      return `<li class="hoop-li" data-i="${i}" data-theme="${s.theme}" style="--c:${c};--tilt:${((hashi(i, 3) - 0.5) * 7).toFixed(1)}deg">
+      return `<li class="hoop-li${st.open ? '' : ' is-locked'}${st.next ? ' is-next' : ''}" data-i="${i}" data-theme="${s.theme}" style="--c:${c};--tilt:${((hashi(i, 3) - 0.5) * 7).toFixed(1)}deg">
         <a class="hoop${portraits.has(s.theme) ? ' has-pic' : ''}" href="#${s.id}">
           <span class="hoop-ring">
             <span class="hoop-cloth">
@@ -297,11 +302,11 @@ const HomeSkin = (() => {
               <span class="hoop-pic" aria-hidden="true">${pic ? `<img src="${pic}" alt="" loading="lazy" decoding="async">` : ''}</span>
             </span>
             <span class="hoop-screw" aria-hidden="true"><i></i></span>
-            <span class="hoop-tag" aria-hidden="true">${s.level}</span>
+            <span class="hoop-tag" aria-hidden="true">${s.level}</span>${st.open ? '' : `<span class="hoop-lock" aria-hidden="true">${ICON.lock}</span>`}${st.next ? `<span class="hoop-next" aria-hidden="true">À toi${NBS}!</span>` : ''}
           </span>
           <span class="hoop-title">${titleHtml(s.title)}</span>
           <span class="hoop-meta">${LEVEL(s.level)} · ${s.notes.length} notes${r2}</span>
-          ${stars}
+          ${stars}${st.defiTxt ? `<span class="hoop-defi${st.defi.ok ? ' ok' : ''}">${st.defi.ok ? ICON.check : ''}${esc(st.defiTxt)}</span>` : ''}${st.open ? '' : `<span class="lh-sr">, fermée${NBS}: termine d’abord «${NBS}${esc(st.lockedBy.title.replace(/_/g, ' '))}${NBS}»</span>`}${st.next ? '<span class="lh-sr">, la prochaine à jouer</span>' : ''}
         </a>
       </li>`;
     }).join('');
@@ -334,6 +339,7 @@ const HomeSkin = (() => {
           <ol class="lh-hoops">${hoops}</ol>
         </div>
       </section>
+      <section class="lh-defi" id="defi-board" aria-labelledby="db-t" hidden></section>
       <section class="lh-bench" aria-label="Réglages et mode d’emploi">
         <div class="lh-patch lh-how">
           <h2>Comment jouer</h2>

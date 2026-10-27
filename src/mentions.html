@@ -59,6 +59,7 @@ dd { margin: 0; min-width: 0; }
       <li>Le son du micro reste sur l’appareil : il sert seulement à reconnaître les notes (et, quand on chante, leur nom). Il n’est ni enregistré ni envoyé.</li>
       <li>Pas de compte, pas de publicité, pas de cookie.</li>
       <li>Le déroulé des parties (comptine, étoiles, erreurs…) est envoyé au professeur avec un identifiant tiré au hasard et, si l’élève l’a écrit sur l’accueil, son prénom (c’est facultatif), pour qu’il suive les progrès. Il est effacé au bout de 13 mois, et on peut le couper sur cet appareil (plus bas).</li>
+      <li>En mode Défi, et seulement si l’élève coche la case, son prénom et son score paraissent sur l’accueil, au tableau d’honneur, pour tout le monde. Il peut décocher à tout moment.</li>
     </ul>
   </section>
 
@@ -80,14 +81,14 @@ dd { margin: 0; min-width: 0; }
       <li><strong>Le son du micro</strong> : on joue sur un vrai instrument (ou à la voix) et la page écoute au micro, qui s’allume tout seul en ouvrant une comptine. Le navigateur demande d’abord l’autorisation, puis le son est analysé dans la page pour reconnaître la hauteur des notes et, si l’élève chante avec la voix, la syllabe chantée (do, ré, mi…), et aussitôt oublié. Il n’est jamais enregistré ni envoyé. Le micro s’éteint à la fin de la comptine, au retour à l’accueil et dès que la page passe en arrière-plan (il se rallume au retour).</li>
       <li><strong>Le réglage de la voix</strong>, seulement si l’élève touche « Régler ma voix » : pour chaque nom de note, un résumé chiffré du timbre de la syllabe chantée, qui aide à reconnaître les noms. Ce n’est pas un enregistrement : ni le son ni la hauteur de la voix n’y sont gardés. Il reste dans le navigateur et n’est jamais envoyé.
         <span class="voice-wipe" id="voice-wipe" hidden><button type="button" id="voice-forget">Effacer le réglage de la voix</button> <span id="voice-state"></span></span></li>
-      <li><strong>Les réglages</strong> (prénom s’il a été écrit, instrument, niveau) et <strong>le meilleur nombre d’étoiles</strong> de chaque comptine, gardés dans le navigateur (stockage local). Le site n’utilise aucun cookie.</li>
+      <li><strong>Les réglages</strong> (prénom s’il a été écrit, instrument, niveau, mode de jeu), <strong>le meilleur nombre d’étoiles</strong> de chaque comptine et, en Défi, <strong>les essais</strong> de chaque comptine, gardés dans le navigateur (stockage local). Le site n’utilise aucun cookie.</li>
     </ul>
     <h3>Le suivi des parties, pour le professeur</h3>
     <dl>
       <dt>Responsable</dt>
       <dd>Romain Gaudet, le professeur.</dd>
       <dt>Ce qui est envoyé</dt>
-      <dd>Un identifiant tiré au hasard et gardé dans le navigateur, le prénom de l’élève s’il l’a écrit sur l’accueil (facultatif : on peut le laisser vide, ou l’effacer sur l’accueil pour qu’il ne soit plus envoyé ; seulement le prénom : ni nom de famille, ni adresse, ni photo), le type d’écran (téléphone, tablette ou ordinateur), l’instrument choisi, le niveau, les étoiles déjà gagnées et, pour chaque comptine jouée : le résultat (étoiles, erreurs, notes justes et en place au niveau 2), les notes montrées, l’usage du mode lent, la durée, l’endroit où l’élève s’est arrêté s’il quitte avant la fin, et les éventuels problèmes de micro. Le serveur y ajoute la date et l’adresse IP de la connexion.</dd>
+      <dd>Un identifiant tiré au hasard et gardé dans le navigateur, le prénom de l’élève s’il l’a écrit sur l’accueil (facultatif : on peut le laisser vide, ou l’effacer sur l’accueil pour qu’il ne soit plus envoyé ; seulement le prénom : ni nom de famille, ni adresse, ni photo), le type d’écran (téléphone, tablette ou ordinateur), l’instrument choisi, le mode de jeu, le niveau, les étoiles déjà gagnées et, pour chaque comptine jouée : le résultat (étoiles, erreurs, notes justes et en place au niveau 2), les notes montrées, l’usage du mode lent, la durée, l’endroit où l’élève s’est arrêté s’il quitte avant la fin, et les éventuels problèmes de micro ; en Défi, le score (comptines réussies, essais) et le choix de paraître ou non au tableau d’honneur. Le serveur y ajoute la date et l’adresse IP de la connexion.</dd>
       <dt>Pourquoi</dt>
       <dd>Permettre au professeur de suivre les progrès de ses élèves et d’améliorer le jeu. Le prénom, s’il est donné, et l’adresse IP l’aident à reconnaître quel appareil est celui de quel élève.</dd>
       <dt>Sur quelle base</dt>
@@ -104,6 +105,19 @@ dd { margin: 0; min-width: 0; }
       <p id="track-state">Le choix est gardé dans ce navigateur.</p>
       <p id="device-code" hidden></p>
     </div>
+    <h3>Le tableau d’honneur du Défi, sur l’accueil</h3>
+    <dl>
+      <dt>Ce qui est montré</dt>
+      <dd>Pour les élèves qui jouent en mode Défi et qui ont coché la case « Afficher mon score sur l’accueil » (dans les réglages, ou au choix du mode), et seulement eux : le nom (le prénom écrit sur l’accueil ; d’un deuxième mot, seulement l’initiale, par exemple « Léa M. »), l’instrument, le nombre de comptines réussies et le nombre d’essais. Les dix meilleurs scores.</dd>
+      <dt>Qui le voit</dt>
+      <dd>Tout le monde : il paraît sur l’accueil du site, qui est public.</dd>
+      <dt>Sur quelle base</dt>
+      <dd>Le choix de l’élève (la case est décochée tant qu’il ne la coche pas), avec l’accord de ses parents, recueilli par le professeur.</dd>
+      <dt>Pour ne plus y paraître</dt>
+      <dd>Décocher la case dans les réglages d’une comptine : le nom disparaît du tableau en une minute au plus. Couper le suivi sur l’appareil (plus haut) l’en retire aussi. Le professeur peut également retirer un élève du tableau, et effacer ses données.</dd>
+      <dt>Combien de temps</dt>
+      <dd>Le score reste tant qu’il est mis à jour, et s’efface 13 mois après le dernier envoi.</dd>
+    </dl>
     <h3>Vos droits</h3>
     <p>Vous pouvez demander à voir ou effacer les données de votre enfant, ou retirer votre accord, auprès du professeur. Donnez-lui le code affiché dans l’encadré ci-dessus, en ouvrant cette page sur l’appareil où joue l’enfant : il lui permet de retrouver ses données. Vous pouvez aussi adresser une réclamation à la CNIL (<a href="https://www.cnil.fr" target="_blank" rel="noopener">cnil.fr</a>).</p>
   </section>

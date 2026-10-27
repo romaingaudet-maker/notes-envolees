@@ -173,7 +173,7 @@
 
 /* carte de fin affichée : le pied de page s'efface ; s'il manque encore de la place, son message aussi */
 .song:has(#done:not([hidden])) .play-foot { display: none; }
-.song.tight .done-card > p { display: none; }
+.song.tight .done-card > p:not(.done-unlock) { display: none; }
 .seg button[aria-pressed="true"] { background: var(--text); color: var(--panel); }
 /* diagnostic du micro (?diag) */
 .ear-diag { position: fixed; right: 8px; top: calc(76px + env(safe-area-inset-top, 0px)); z-index: 2147483646; max-width: 70vw; padding: 6px 9px; border-radius: 10px; background: rgba(0, 0, 0, .78); color: #fff; font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace; pointer-events: none; }
@@ -377,3 +377,14 @@
   .stage-bar .stage-title b { font-size: 15px; line-height: 1.04; white-space: normal; text-wrap: balance; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
   .pupitre { border-radius: 22px 22px 0 0; }
 }
+
+/* le Défi, en haut du pupitre (à la place du niveau) : où en est le Défi de cette comptine */
+.pu-defi { width: 100%; height: var(--pt); margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 6px; font-weight: 700; font-size: 15px; line-height: 1.15; text-align: center; color: var(--text); }
+.pu-defi svg { flex: none; width: 22px; height: 22px; color: var(--accent); }
+/* fin de comptine, en Aventure : la comptine suivante vient de s'ouvrir */
+.done-unlock { display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 6px 14px; border-radius: 999px; background: var(--panel-2); font-weight: 700; }
+.done-unlock svg { flex: none; width: 20px; height: 20px; color: var(--accent); }
+/* les réglages : le mode de jeu, et l'accord pour le tableau d'honneur du Défi */
+.rg-jeu button svg { width: 20px; height: 20px; }
+.rg-defi input { accent-color: var(--accent); }
+@media (max-width: 420px) { .rg-jeu button { padding-left: 6px; padding-right: 6px; gap: 4px; font-size: 13.5px; } .rg-jeu button svg { width: 17px; height: 17px; } }
