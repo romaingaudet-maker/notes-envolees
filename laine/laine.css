@@ -214,6 +214,17 @@
 .lh-defi .db-rank { background: rgba(247, 235, 221, .9); color: #231A33; }
 .onb .jeu-card[aria-checked="true"] { box-shadow: 0 0 0 4px #F2C14E, 0 4px 0 rgba(0, 0, 0, .3); }
 .onb .onb-defi input { accent-color: #E0473F; }
+/* les réglages ouverts depuis l'accueil : la feuille en feutrine, comme la première visite (dans une comptine, elle
+   prend les couleurs du décor) */
+:root[data-view="home"] .rg-modal { --panel: #2B2040; --text: #F7EBDD; --text-soft: #CDBBD8; --accent: #F2C14E; --accent-ink: #231A33; --line: rgba(247, 235, 221, .16); --line-strong: rgba(247, 235, 221, .4); color-scheme: dark; }
+:root[data-view="home"] .rg-modal .ec-sheet { box-shadow: 0 24px 60px rgba(0, 0, 0, .55), inset 0 0 0 2px rgba(247, 235, 221, .08); }
+:root[data-view="home"] .rg-modal .rg-title { color: #F2C14E; }
+:root[data-view="home"] .rg-modal .rg-x:hover { background: rgba(247, 235, 221, .12); }
+:root[data-view="home"] .rg-modal .rg-name { background: #F7EBDD; border-color: #F7EBDD; color: #231A33; }
+:root[data-view="home"] .rg-modal .rg-name::placeholder { color: rgba(35, 26, 51, .5); }
+:root[data-view="home"] .rg-modal .rg-name:focus { border-color: #F2C14E; box-shadow: 0 0 0 3px rgba(242, 193, 78, .45); }
+:root[data-view="home"] .rg-modal .ic-card { box-shadow: 0 5px 0 rgba(6, 2, 12, .55); }
+:root[data-view="home"] .rg-modal .ic-card[aria-pressed="true"] { box-shadow: 0 0 0 4px #F2C14E, 0 5px 0 rgba(6, 2, 12, .55); }
 /* le Défi, version laine : la course sur un carré de feutre, à la place du fil des comptines */
 .lh-dh .dh { --dh-bg: var(--lh-felt); --dh-ink: var(--lh-ink); --dh-soft: var(--lh-soft); --dh-gold: var(--lh-gold); --dh-cell: rgba(247, 235, 221, .07); --dh-line: rgba(247, 235, 221, .16);
   max-width: none; margin: 0; box-shadow: 0 12px 26px rgba(6, 2, 12, .4); }
