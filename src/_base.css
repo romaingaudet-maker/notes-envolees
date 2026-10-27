@@ -440,8 +440,7 @@ a { color: inherit; }
 .ic-card.is-picked { animation: ic-pick .34s cubic-bezier(.3, 1.6, .5, 1); }
 @keyframes ic-pick { 45% { transform: scale(1.08); } }
 @media (hover: hover) { .ic-card:hover { transform: translateY(-2px); } }
-@media (min-width: 600px) { .ic-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-@media (min-width: 860px) { .ic-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (min-width: 600px) { .ic-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 
 /* la première visite : en plein écran sur téléphone, au milieu de la page sur ordinateur */
 html.onb-open, html.onb-open body { overflow: hidden; }

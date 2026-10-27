@@ -65,6 +65,31 @@ const INST_ICON = (() => {
     alto: svg(fiddle('#A9592C', 'rotate(28 32 32) translate(32 32) scale(1) translate(-32 -30)')),
     // le violoncelle : debout sur sa pique, la caisse plus grande par rapport au manche
     violoncelle: svg(fiddle('#9A4E27', 'translate(32 .6) scale(1.04) translate(-32 -.8)', '<path d="M32 57v4" stroke="#1D2350" stroke-width="2.2" stroke-linecap="round"/>')),
+    // la guitare classique : caisse en huit (table claire, rosace), chevalet, manche, tête ajourée et ses six mécaniques
+    guitare: svg(`<g transform="rotate(32 32 32) translate(32 32) scale(.9) translate(-32 -32)">
+      <path d="M32 30C37.6 30 42.4 32.6 42.4 37.6C42.4 41.2 39.8 42.4 39.8 45C39.8 47.6 45.8 49 45.8 55.2C45.8 60.8 39.8 63.6 32 63.6C24.2 63.6 18.2 60.8 18.2 55.2C18.2 49 24.2 47.6 24.2 45C24.2 42.4 21.6 41.2 21.6 37.6C21.6 32.6 26.4 30 32 30Z" fill="#F0BE72" stroke="${K}" stroke-width="2.2" stroke-linejoin="round"/>
+      <circle cx="32" cy="43.6" r="5.4" fill="none" stroke="#B4662E" stroke-width="1.6"/>
+      <circle cx="32" cy="43.6" r="3.6" fill="${K}"/>
+      <rect x="26" y="53.6" width="12" height="3.4" rx="1.2" fill="#7A3E1C" stroke="${K}" stroke-width="1.3"/>
+      <path d="M30 9.5h4l.6 30h-5.2z" fill="#3A2A2A" stroke="${K}" stroke-width="1.4" stroke-linejoin="round"/>
+      <rect x="28.4" y=".8" width="7.2" height="9.6" rx="1.6" fill="#B4662E" stroke="${K}" stroke-width="1.6"/>
+      <rect x="30.1" y="2.6" width="1.3" height="6" rx=".6" fill="${K}"/><rect x="32.6" y="2.6" width="1.3" height="6" rx=".6" fill="${K}"/>
+      <path d="M28.4 3.4h-2.2M28.4 5.7h-2.2M28.4 8h-2.2M35.6 3.4h2.2M35.6 5.7h2.2M35.6 8h2.2" stroke="${K}" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M31 9.5V54M32 9.5V54M33 9.5V54" stroke="#F6E7C8" stroke-width=".6"/>
+    </g>`),
+    // la guitare électrique : corps plein à deux cornes (rouge), plaque blanche, trois micros, boutons, manche d'érable
+    guitareelec: svg(`<g transform="rotate(32 32 32) translate(32 32) scale(.9) translate(-32 -32)">
+      <path d="M27.4 33.6C26.2 29.4 22.8 26.6 20.4 28.4C18.6 29.8 19.8 33.4 20.4 36C21 39.6 17.6 43 17.6 50C17.6 57.8 23.8 63.2 32 63.2C40.2 63.2 46.4 57.8 46.4 50C46.4 44.4 43.4 41.4 43.4 37.8C43.4 35.4 45 33.2 44 31.6C42.6 29.4 39.2 30.8 36.6 33.6Z" fill="#E5484D" stroke="${K}" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M27.6 35.2H36.6C39.8 38.6 41 43 40 47.6L38.8 53.6C35.6 57 29.4 57.6 25.8 54.4C23.6 50 24.4 43 27.6 35.2Z" fill="#FBF3E4" stroke="${K}" stroke-width="1.3" stroke-linejoin="round"/>
+      <rect x="28.4" y="39.2" width="7.2" height="2.4" rx="1.2" fill="${K}"/><rect x="28.4" y="43.8" width="7.2" height="2.4" rx="1.2" fill="${K}"/><rect x="28.4" y="48.4" width="7.2" height="2.4" rx="1.2" fill="${K}"/>
+      <rect x="27.6" y="53.2" width="8.8" height="2.2" rx="1" fill="${SILVER}" stroke="${K}" stroke-width="1"/>
+      <circle cx="41.2" cy="52.6" r="1.8" fill="${GOLD2}" stroke="${K}" stroke-width="1"/><circle cx="38.6" cy="56.8" r="1.8" fill="${GOLD2}" stroke="${K}" stroke-width="1"/>
+      <path d="M30 9.2h4l.4 26.4h-4.8z" fill="#F2C987" stroke="${K}" stroke-width="1.4" stroke-linejoin="round"/>
+      <path d="M30.2 14.5h3.8M30.1 19.5h4M30 24.5h4.2M30 29.5h4.3" stroke="#9A6A34" stroke-width=".9"/>
+      <path d="M30 9.6V2.4C30 1 31.6.3 32.8.8L36.6 2.4C38 3 38.2 4.8 37 5.6L34 9.6Z" fill="#F2C987" stroke="${K}" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M30 2.6h-2.2M30 4.9h-2.2M30 7.2h-2.2" stroke="${K}" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M31.2 9.6V54M32 9.6V54M32.8 9.6V54" stroke="${K}" stroke-width=".45" opacity=".6"/>
+    </g>`),
     piano: svg(`<rect x="5" y="13" width="54" height="37" rx="5" fill="${K}"/>
       <rect x="9" y="17" width="46" height="4" rx="2" fill="${GOLD}"/>
       <rect x="8.5" y="24" width="47" height="22.5" rx="2" fill="#fff"/>

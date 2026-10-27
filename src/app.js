@@ -57,6 +57,9 @@
     violon: { name: 'Violon', the: 'le violon', at: 'au violon', fam: 'C', play: 0, voice: 'violin', free: true },
     alto: { name: 'Alto', the: 'l’alto', at: 'à l’alto', fam: 'C', play: 0, voice: 'viola', free: true },
     violoncelle: { name: 'Violoncelle', the: 'le violoncelle', at: 'au violoncelle', fam: 'C', play: -12, voice: 'cello', free: true },
+    // les guitares : écrites une octave au-dessus de leur son (comme le violoncelle ici), la page joue donc une octave plus bas
+    guitare: { name: 'Guitare classique', the: 'la guitare classique', at: 'à la guitare', fam: 'C', play: -12, voice: 'guitar' },
+    guitareelec: { name: 'Guitare électrique', the: 'la guitare électrique', at: 'à la guitare électrique', fam: 'C', play: -12, voice: 'eguitar' },
     xylophone: { name: 'Xylophone', the: 'le xylophone', at: 'au xylophone', fam: 'C', play: 12, voice: 'xylo' },
   };
   const OLD_INST = { C: 'piano', Bb: 'clarinette', Eb: 'saxalto', F: 'cor' };
@@ -123,9 +126,9 @@
      joué) renvoie au départ, la comptine 1. Le record (comptines d'affilée depuis le départ) peut paraître sur
      l'accueil, au tableau d'honneur, si l'élève le veut. */
   const JEU = {
-    aventure: { name: 'Aventure', d: 'Les comptines s’ouvrent une à une : termine-en une pour ouvrir la suivante.' },
-    decouverte: { name: 'Découverte', d: 'Toutes les comptines sont ouvertes : joue celles que tu veux.' },
-    defi: { name: 'Défi', d: 'Les 20 comptines dans l’ordre, en rythme, d’un coup et sans erreur. Une erreur : retour au départ ! Ton record peut paraître sur l’accueil.' },
+    aventure: { name: 'Aventure', d: 'Les comptines s’ouvrent une à une : termine-en une pour ouvrir la suivante.', s: 'Les comptines s’ouvrent une à une : termine-en une pour ouvrir la suivante.' },
+    decouverte: { name: 'Découverte', d: 'Toutes les comptines sont ouvertes : joue celles que tu veux.', s: 'Toutes les comptines sont ouvertes : joue celles que tu veux.' },
+    defi: { name: 'Défi', d: 'Les 20 comptines dans l’ordre, en rythme, d’un coup et sans erreur. Une erreur : retour au départ ! Ton record peut paraître sur l’accueil.', s: 'Les 20 comptines dans l’ordre, au niveau 2, sans erreur. Une erreur : retour au départ !' },
   };
   const bestOf = (id) => Math.max(+records[id] || 0, +records[id + '@2'] || 0);
 
@@ -163,18 +166,6 @@
   const instOptions = () => Object.entries(INSTS).map(([k, v]) => `<option value="${k}"${settings.inst === k ? ' selected' : ''}>${v.name}</option>`).join('');
   // le timbre qui joue la musique de la page : celui de l'instrument choisi, sinon celui de la comptine
   const voiceNow = () => inst().voice || (G && G.song.voice);
-  const FREE_NOTE = ' Comme c’est toi qui fais la justesse de la note, la page accepte une note un peu trop haute ou trop basse.';
-  const instNote = () => {
-    const i = inst();
-    if (i.sing) return 'Chante chaque note en disant son nom (do, ré, mi…) : la page écoute au micro la hauteur et le nom. Une voix grave peut chanter une octave plus bas. Les phrases gardent le timbre de chaque comptine.' + FREE_NOTE;
-    if (!i.voice) return 'Pour un instrument en do qui n’est pas dans la liste : les notes sonnent comme elles sont écrites, et chaque comptine garde son propre timbre.';
-    const of = i.the.startsWith('l’') ? 'de ' + i.the : i.the.startsWith('le ') ? 'du ' + i.the.slice(3) : 'de ' + i.the;
-    const sound = ` Les phrases sont jouées avec le son enregistré ${of}.`;
-    if (i.fam !== 'C') return `Instrument ${i.short} : ${i.how}.${sound}`;
-    if (i.voice === 'xylo') return `Le xylophone sonne une octave plus haut que ce qui est écrit : la page aussi.${sound}`;
-    const reg = i.play === -12 ? 'la page joue une octave plus bas, dans son registre.' : i.play === 12 ? 'la page joue une octave plus haut, dans son registre.' : 'les notes sonnent comme elles sont écrites.';
-    return `Instrument en do : ${reg}${sound}${i.free ? FREE_NOTE : ''}`;
-  };
   function instrLine(song) {
     const i = inst();
     if (i.sing) return `En do majeur, jouée ${song.instrument} : chante-la en disant le nom des notes.`;
@@ -213,10 +204,10 @@
      bouton « Changer », comme dans une comptine le bouton à son nom, ouvre les réglages : le prénom, le mode de jeu et
      l'instrument s'y changent directement, sans repasser par les trois écrans. Quand le suivi est branché, le prénom
      part avec les résultats (voir les mentions légales). */
-  const INST_LIST = ['flute', 'clarinette', 'saxalto', 'trompette', 'trombone', 'cor', 'violon', 'alto', 'violoncelle', 'piano', 'xylophone', 'voix', 'none'];
+  const INST_LIST = ['flute', 'clarinette', 'saxalto', 'trompette', 'trombone', 'cor', 'violon', 'alto', 'violoncelle', 'guitare', 'guitareelec', 'piano', 'xylophone', 'voix', 'none'];
   // nom court (bouton d'une comptine, rappel de l'accueil) ; sur les cartes à dessin, une précision si besoin
-  const INST_TILE = { flute: 'Flûte', clarinette: 'Clarinette', saxalto: 'Saxophone', trompette: 'Trompette', trombone: 'Trombone', cor: 'Cor', violon: 'Violon', alto: 'Alto', violoncelle: 'Violoncelle', piano: 'Piano', xylophone: 'Xylophone', voix: 'Voix', none: 'Autre' };
-  const INST_CARD = { saxalto: ['Saxophone', 'alto'], voix: ['Je chante', 'avec ma voix'], none: ['Autre', 'instrument'] };
+  const INST_TILE = { flute: 'Flûte', clarinette: 'Clarinette', saxalto: 'Saxophone', trompette: 'Trompette', trombone: 'Trombone', cor: 'Cor', violon: 'Violon', alto: 'Alto', violoncelle: 'Violoncelle', guitare: 'Guitare', guitareelec: 'Guitare élec.', piano: 'Piano', xylophone: 'Xylophone', voix: 'Voix', none: 'Autre' };
+  const INST_CARD = { saxalto: ['Saxophone', 'alto'], guitare: ['Guitare', 'classique'], guitareelec: ['Guitare', 'électrique'], voix: ['Je chante', 'avec ma voix'], none: ['Autre', 'instrument'] };
   const instShort = (k = settings.inst) => INST_TILE[k] || INST_TILE.none;
   const instPic = (k = settings.inst) => (typeof INST_ICON !== 'undefined' && (INST_ICON[k] || INST_ICON.none)) || ICON.note;
   // les cartes à dessin (l'instrument déjà choisi est marqué)
@@ -275,15 +266,17 @@
   const sendsHere = () => Suivi.configured && !Suivi.excluded();
   const canBoard = () => !!publicName() && sendsHere();
   const defiOkHtml = (cls) => `<label class="${cls}" hidden><input type="checkbox" class="defi-ok"${settings.affiche ? ' checked' : ''}><span class="defi-ok-t"></span></label>`;
-  function defiOkUI(label, on) {
+  // short : les textes courts des réglages (deux lignes au plus)
+  function defiOkUI(label, on, short) {
     if (!label) return;
     const box = label.querySelector('input'), can = canBoard();
     label.hidden = !on;
     box.disabled = !can;
     if (!can) box.checked = false;
     label.classList.toggle('is-off', !can);
-    label.querySelector('.defi-ok-t').textContent = can
-      ? `Afficher mon record sur l’accueil, au tableau d’honneur, pour tout le monde (avec mon prénom${NB}: ${publicName()})`
+    label.querySelector('.defi-ok-t').textContent = can && short ? `Afficher mon record sur l’accueil, pour tout le monde, avec «${NB}${publicName()}${NB}»`
+      : !can && short ? (!sendsHere() ? `Rien ne part de cet appareil${NB}: pas de tableau d’honneur.` : 'Pour le tableau d’honneur de l’accueil, écris ton prénom.')
+      : can ? `Afficher mon record sur l’accueil, au tableau d’honneur, pour tout le monde (avec mon prénom${NB}: ${publicName()})`
       : !sendsHere() ? `Ici, rien ne part de cet appareil${Suivi.configured ? ' (le suivi y est coupé)' : ''}${NB}: pas de tableau d’honneur.`
         : 'Pour paraître au tableau d’honneur de l’accueil, il faut écrire ton prénom.';
   }
@@ -405,10 +398,13 @@
     step(steps[0]);
   }
   /* Les réglages, sur une seule feuille : le prénom, le mode de jeu et l'instrument, chacun modifiable directement ;
-     dans une comptine, aussi le niveau, la vitesse (la tortue : la page joue plus lentement ; au niveau 2, le décompte
-     et la mesure aussi) et, pour la voix, « Régler ma voix ». On l'ouvre par « Changer » (le rappel, en haut de
-     l'accueil) ou par le bouton à son nom, en haut d'une comptine ; la tortue reste dessinée sur ce bouton tant que la
-     vitesse lente est choisie. card : le rappel de l'accueil d'où l'on vient (remis à jour en fermant). */
+     dans une comptine, aussi le niveau et la vitesse (la tortue : la page joue plus lentement ; au niveau 2, le
+     décompte et la mesure aussi) et, pour la voix, « Régler ma voix ». On l'ouvre par « Changer » (le rappel, en haut
+     de l'accueil) ou par le bouton à son nom, en haut d'une comptine ; la tortue reste dessinée sur ce bouton tant que
+     la vitesse lente est choisie. Chaque zone garde sa taille quel que soit le choix : les textes de tous les choix
+     sont posés au même endroit (seul celui du choix se voit), la case du tableau d'honneur garde sa place, le niveau
+     et la vitesse restent (grisés en Défi). La feuille tient dans l'écran, bouton OK compris (fitSheet).
+     card : le rappel de l'accueil d'où l'on vient (remis à jour en fermant). */
   function setSlow(on) {
     if (!G) return;
     G.slow = !!on;
@@ -416,67 +412,111 @@
     const ic = app.querySelector('#ip-slow');
     if (ic) ic.hidden = !G.slow;
   }
+  // en une ou deux lignes (réglages) : comment la page joue pour cet instrument, et avec quel son
+  function instBrief(k) {
+    const i = INSTS[k], f = FAMS[i.fam];
+    if (i.sing) return 'Chante chaque note en disant son nom (do, ré, mi…) : la page écoute la hauteur et le nom.';
+    if (!i.voice) return 'Les notes sonnent comme elles sont écrites, et chaque comptine garde son propre timbre.';
+    const of = i.the.startsWith('l’') ? 'de ' + i.the : i.the.startsWith('le ') ? 'du ' + i.the.slice(3) : 'de ' + i.the;
+    const how = i.fam !== 'C' ? { Bb: 'un ton', Eb: 'une sixte', F: 'une quinte' }[i.fam] + ' plus bas' : i.play === 12 ? 'une octave plus haut' : i.play === -12 ? 'une octave plus bas' : '';
+    return `Instrument ${f.short}${NB}: ${how ? `la page joue ${how}` : 'les notes sonnent comme elles sont écrites'}, avec le son ${of}.`;
+  }
+  // la feuille tient dans l'écran : sinon, des tailles plus serrées (rg-fit1, puis rg-fit2) ; en dernier recours, elle défile
+  function fitSheet(wrap) {
+    const sheet = wrap.querySelector('.ec-sheet');
+    wrap.classList.remove('rg-fit1', 'rg-fit2');
+    const over = () => sheet.scrollHeight > sheet.clientHeight + 1;
+    if (over()) wrap.classList.add('rg-fit1');
+    if (over()) wrap.classList.add('rg-fit2');
+  }
   function reglages({ card } = {}) {
     if (app.querySelector('.ec-modal, .onb')) return;
     const inSong = !!G && view === 'song';
     let pick = jeu();
     const name0 = publicName(), aff0 = settings.affiche, inst0 = settings.inst;
     const wrap = document.createElement('div');
-    wrap.className = 'ec-modal rg-modal';
-    // le prénom, le mode de jeu (avec ce qui le distingue), dans une comptine le niveau et la vitesse (pas en Défi :
-    // niveau 2, vitesse normale), puis l'instrument
+    wrap.className = 'ec-modal rg-modal' + (inSong ? ' rg-song' : '');
+    const lv2 = inSong && G.level === 2;
     wrap.innerHTML = `<div class="ec-sheet" role="dialog" aria-modal="true" aria-labelledby="rg-title">
       <div class="rg-in">
         <div class="rg-head"><h2 class="rg-title" id="rg-title">Réglages</h2><button class="rg-x" type="button" aria-label="Fermer">${ICON.close}</button></div>
-        <label class="rg-lbl" for="rg-name">Ton prénom</label>
-        <input class="rg-name" id="rg-name" type="text" maxlength="30" autocomplete="given-name" autocapitalize="words" spellcheck="false" enterkeyhint="done" placeholder="Ton prénom" value="${esc(settings.prenom)}">
-        <p class="rg-note">${nameWhy()}</p>
-        <p class="rg-lbl">Mode de jeu</p>
-        <div class="seg rg-seg rg-jeu" role="radiogroup" aria-label="Mode de jeu">${JEUX.map((k) => `<button type="button" role="radio" data-jeu="${k}" aria-checked="${k === pick}">${ICON[k]}<span>${JEU[k].name}</span></button>`).join('')}</div>
-        <p class="rg-note rg-jeu-note" aria-live="polite"></p>
-        ${defiOkHtml('rg-defi')}${inSong ? `
-        <p class="rg-lbl rg-nodefi">Niveau</p>
-        <div class="seg rg-seg rg-level rg-nodefi" role="radiogroup" aria-label="Niveau">
-          <button type="button" role="radio" data-level="1" aria-checked="${G.level !== 2}"><b class="lv">1</b><span>Les notes</span></button>
-          <button type="button" role="radio" data-level="2" aria-checked="${G.level === 2}"><b class="lv">2</b><span>Notes et rythme</span></button>
+        <div class="rg-col rg-col-a">
+          <div class="rg-z rg-z-name">
+            <label class="rg-lbl" for="rg-name">Ton prénom</label>
+            <input class="rg-name" id="rg-name" type="text" maxlength="30" autocomplete="given-name" autocapitalize="words" spellcheck="false" enterkeyhint="done" placeholder="Facultatif" value="${esc(settings.prenom)}" title="${nameWhy()}">
+          </div>
+          <div class="rg-z rg-z-jeu">
+            <p class="rg-lbl" id="rg-jeu-l">Mode de jeu</p>
+            <div class="seg rg-seg rg-jeu" role="radiogroup" aria-labelledby="rg-jeu-l">${JEUX.map((k) => `<button type="button" role="radio" data-jeu="${k}" aria-checked="${k === pick}">${ICON[k]}<span>${JEU[k].name}</span></button>`).join('')}</div>
+            <div class="rg-stack rg-jeu-notes">${JEUX.map((k) => `<p class="rg-note" data-jeu="${k}">${JEU[k].s}</p>`).join('')}</div>
+            ${defiOkHtml('rg-defi')}
+          </div>${inSong ? `
+          <div class="rg-z rg-z-play">
+            <div class="rg-pl">
+              <p class="rg-lbl" id="rg-lv-l">Niveau</p>
+              <div class="seg rg-seg rg-level" role="radiogroup" aria-labelledby="rg-lv-l">
+                <button type="button" role="radio" data-level="1" aria-checked="${!lv2}"><b class="lv">1</b><span class="rg-lg">Les notes</span><span class="rg-sh">Notes</span></button>
+                <button type="button" role="radio" data-level="2" aria-checked="${lv2}"><b class="lv">2</b><span class="rg-lg">Notes et rythme</span><span class="rg-sh">+ rythme</span></button>
+              </div>
+            </div>
+            <div class="rg-pl">
+              <p class="rg-lbl" id="rg-sp-l">Vitesse</p>
+              <div class="seg rg-seg rg-speed" role="radiogroup" aria-labelledby="rg-sp-l">
+                <button type="button" role="radio" data-slow="0" aria-checked="${!G.slow}">Normale</button>
+                <button type="button" role="radio" data-slow="1" aria-checked="${G.slow}">${ICON.turtle}<span>Lente</span></button>
+              </div>
+            </div>
+          </div>` : ''}
         </div>
-        <p class="rg-note rg-nodefi">Changer de niveau recommence la comptine.</p>
-        <p class="rg-lbl rg-nodefi">Vitesse</p>
-        <div class="seg rg-seg rg-speed rg-nodefi" role="radiogroup" aria-label="Vitesse">
-          <button type="button" role="radio" data-slow="0" aria-checked="${!G.slow}">Normale</button>
-          <button type="button" role="radio" data-slow="1" aria-checked="${G.slow}">${ICON.turtle}<span>Lente</span></button>
+        <div class="rg-col rg-col-b rg-z rg-z-inst">
+          <div class="rg-lblrow"><p class="rg-lbl" id="rg-inst-l">Ton instrument</p>${inSong ? `<button class="btn rg-voice" type="button">${ICON.mic}<span>Régler ma voix</span></button>` : ''}</div>
+          <div class="ic-grid rg-grid" role="group" aria-labelledby="rg-inst-l">${instCards()}</div>
+          <div class="rg-stack rg-inst-notes">${INST_LIST.map((k) => `<p class="rg-note" data-k="${k}">${esc(instBrief(k))}</p>`).join('')}</div>
         </div>
-        <p class="rg-note rg-nodefi">Lente${NB}: la page joue plus lentement${G.level === 2 ? ', et compte plus lentement avant que tu joues' : ''}.</p>` : ''}
-        <p class="rg-lbl">Ton instrument</p>
-        <div class="ic-grid rg-grid">${instCards()}</div>
-        <p class="rg-note rg-inst-note" aria-live="polite">${esc(instNote())}</p>${inSong ? `
-        <button class="btn rg-voice" type="button"${inst().sing ? '' : ' hidden'}>${ICON.mic}<span>Régler ma voix</span></button>` : ''}
-        <button class="btn-big rg-ok" type="button"><span>OK</span></button>
+        <div class="rg-foot"><button class="btn-big rg-ok" type="button"><span>OK</span></button></div>
       </div>
     </div>`;
     const behind = [...app.children];
     behind.forEach((c) => { c.inert = true; });
     app.appendChild(wrap);
     document.documentElement.classList.add('onb-open'); // l'accueil ne défile plus derrière
-    const sheet = wrap.querySelector('.ec-sheet'), note = wrap.querySelector('.rg-inst-note'), voice = wrap.querySelector('.rg-voice');
-    const nameEl = wrap.querySelector('.rg-name'), jeuNote = wrap.querySelector('.rg-jeu-note'), okLbl = wrap.querySelector('.rg-defi'), box = okLbl.querySelector('input');
+    const sheet = wrap.querySelector('.ec-sheet'), voice = wrap.querySelector('.rg-voice');
+    const nameEl = wrap.querySelector('.rg-name'), okLbl = wrap.querySelector('.rg-defi'), box = okLbl.querySelector('input');
     // l'accord pour le tableau d'honneur, tel que l'élève l'a coché (gardé s'il efface son prénom un instant)
-    let want = box.checked;
-    // le mode choisi : ce qui le distingue ; en Défi, l'accord pour le tableau d'honneur, ni niveau ni vitesse
+    let want = box.checked, boxOn = false;
+    const stack = (sel, attr, v) => wrap.querySelectorAll(sel + ' > p').forEach((p) => p.classList.toggle('is-on', p.dataset[attr] === v));
+    // le mode choisi : son texte ; la case du tableau d'honneur (elle garde sa place, même cachée) ; en Défi, niveau 2
+    // et vitesse normale, grisés
     const jeuUI = () => {
       wrap.querySelectorAll('.rg-jeu [role="radio"]').forEach((x) => x.setAttribute('aria-checked', String(x.dataset.jeu === pick)));
-      // dans une comptine, ce qui suivra : elle recommence, ou (pas encore ouverte dans ce mode) la page dit laquelle jouer
-      const nx = defiSong(), then = !inSong || pick === jeu() ? '' : isOpen(G.song, pick) ? ' La comptine recommence.'
-        : pick === 'defi' ? (nx ? ` Ta prochaine étape${NB}: «${NB}${nb(nx.title)}${NB}».` : '') : ' Cette comptine n’est pas encore ouverte en Aventure.';
-      jeuNote.textContent = `${JEU[pick].d}${pick === 'defi' ? ' Il se joue au niveau 2 (notes et rythme), à vitesse normale.' : ''}${then}`;
-      wrap.querySelectorAll('.rg-nodefi').forEach((x) => { x.hidden = pick === 'defi'; });
-      defiOkUI(okLbl, pick === 'defi' || settings.affiche);
+      stack('.rg-jeu-notes', 'jeu', pick);
+      boxOn = pick === 'defi' || settings.affiche;
+      defiOkUI(okLbl, boxOn, true);
+      okLbl.hidden = false;
+      okLbl.classList.toggle('is-gone', !boxOn);
+      box.tabIndex = boxOn ? 0 : -1;
       if (!box.disabled) box.checked = want;
+      const pz = wrap.querySelector('.rg-z-play');
+      if (pz) {
+        const df = pick === 'defi';
+        pz.classList.toggle('is-off', df);
+        pz.querySelectorAll('[role="radio"]').forEach((x) => {
+          x.disabled = df;
+          x.setAttribute('aria-checked', String(df ? x.dataset.level === '2' || x.dataset.slow === '0' : x.dataset.level ? (x.dataset.level === '2') === (G.level === 2) : (x.dataset.slow === '1') === G.slow));
+        });
+      }
+    };
+    const instUI = () => {
+      wrap.querySelectorAll('.ic-card').forEach((x) => x.setAttribute('aria-pressed', String(settings.choisi && x.dataset.k === settings.inst)));
+      stack('.rg-inst-notes', 'k', settings.inst);
+      // « Régler ma voix » (la voix, dans une comptine) : il respire tant que la voix n'est pas réglée sur cet appareil
+      if (voice) { voice.classList.toggle('is-gone', !inst().sing); voice.tabIndex = inst().sing ? 0 : -1; voice.classList.toggle('is-ready', !hasMyVoice()); }
     };
     jeuUI();
-    // « Régler ma voix » (la voix, dans une comptine) : il respire tant que la voix n'est pas réglée sur cet appareil
-    const voiceBtn = () => { if (voice) { voice.hidden = !inst().sing; voice.classList.toggle('is-ready', !hasMyVoice()); } };
-    voiceBtn();
+    instUI();
+    fitSheet(wrap);
+    const onResize = () => fitSheet(wrap);
+    addEventListener('resize', onResize);
     sheet.tabIndex = -1;
     sheet.focus({ preventScroll: true });
     const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
@@ -486,13 +526,14 @@
       shut = true;
       behind.forEach((c) => { c.inert = false; });
       wrap.remove();
+      removeEventListener('resize', onResize);
       document.documentElement.classList.remove('onb-open');
       document.removeEventListener('keydown', onKey, true);
       settings.prenom = cleanName(nameEl.value);
       save(SET_KEY, settings);
       // le mode de jeu et l'accord pour le tableau d'honneur (setJeu les garde et, s'ils changent, les envoie) ; un
       // autre prénom, quand l'élève paraît déjà au tableau d'honneur : le nouveau nom part aussi
-      const otherJeu = setJeu(pick, okLbl.hidden ? settings.affiche : box.checked);
+      const otherJeu = setJeu(pick, boxOn ? box.checked : settings.affiche);
       if (settings.affiche && aff0 && publicName() !== name0) defiSend();
       if (inSong) {
         // un autre mode de jeu : la comptine recommence avec lui (fermée en Aventure, au niveau 2 en Défi)
@@ -524,24 +565,24 @@
     box.addEventListener('change', () => { want = box.checked; });
     wrap.querySelectorAll('.rg-jeu [role="radio"]').forEach((b) => b.addEventListener('click', () => { pick = b.dataset.jeu; jeuUI(); }));
     wrap.querySelectorAll('.ic-card').forEach((b) => b.addEventListener('click', () => {
-      wrap.querySelectorAll('.ic-card').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
       settings.choisi = true;
       setInst(b.dataset.k);
-      note.textContent = instNote();
-      voiceBtn();
+      instUI();
     }));
     if (!inSong) return;
     wrap.querySelectorAll('.rg-speed [role="radio"]').forEach((b) => b.addEventListener('click', () => {
+      if (b.disabled) return;
       setSlow(b.dataset.slow === '1');
       wrap.querySelectorAll('.rg-speed [role="radio"]').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
     }));
     // un autre niveau : la comptine recommence (la feuille se ferme d'abord)
     wrap.querySelectorAll('.rg-level [role="radio"]').forEach((b) => b.addEventListener('click', () => {
+      if (b.disabled) return;
       const v = +b.dataset.level, was = G.level;
       close();
       if (v !== was && G && view === 'song') setLevel(v);
     }));
-    voice.addEventListener('click', () => { close(); if (G && view === 'song') calStart(false); });
+    voice.addEventListener('click', () => { if (!inst().sing) return; close(); if (G && view === 'song') calStart(false); });
   }
 
   /* ---------------- la justesse ----------------
@@ -748,7 +789,7 @@
     D.leave();
     D = PAPER;
     setWorld(null);
-    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, instNote, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, decorFor, GO, eleveHtml, bindEleve, HOWTO, songState, nextToPlay, defiHomeHtml })) {
+    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, decorFor, GO, eleveHtml, bindEleve, HOWTO, songState, nextToPlay, defiHomeHtml })) {
       welcome(() => eleveRefresh(app.querySelector('.eleve-card')));
       homeExtras();
       return;
@@ -800,7 +841,7 @@
         </section>
         <p class="home-foot">${Suivi.configured
           ? 'Chaque visite d’une comptine repart de zéro ; ton meilleur nombre d’étoiles reste sur cet appareil. Pour que ton professeur suive tes progrès et pour améliorer le jeu, le déroulé des parties (comptine, instrument, étoiles, erreurs) est enregistré avec ton prénom si tu l’as écrit et l’adresse IP de la connexion, puis effacé au bout de 13 mois ; le son du micro n’est jamais envoyé.'
-          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Le micro s’allume tout seul dans une comptine (le navigateur demande d’abord l’autorisation). Sur ordinateur, la barre d’espace lance «${NB}${GO}${NB}». Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax (Karoryfer) et Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0). Reconnaissance des noms chantés : modèles tirés des voix de synthèse Kokoro (licence Apache 2.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
+          : 'Chaque visite d’une comptine repart de zéro ; seul ton meilleur nombre d’étoiles reste sur cet appareil.'} Le micro s’allume tout seul dans une comptine (le navigateur demande d’abord l’autorisation). Sur ordinateur, la barre d’espace lance «${NB}${GO}${NB}». Comptines traditionnelles du domaine public. Sons d’instruments enregistrés, libres de droits : VSCO 2 Community Edition, VCSL, Weresax et Black and Green Guitars (Karoryfer), Sonatina Symphonic Orchestra (licence CC Sampling Plus 1.0) et MS Basic de MuseScore, d’après Fluid R3 de Frank Wen (licence MIT). Reconnaissance des noms chantés : modèles tirés des voix de synthèse Kokoro (licence Apache 2.0).<a class="legal-link" href="${esc(LEGAL_URL)}">Mentions légales et confidentialité</a></p>
       </div>
     </main>`;
     const card = app.querySelector('.eleve-card');

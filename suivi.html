@@ -744,9 +744,9 @@ const Suivi = (() => {
   const BY_ID = Object.fromEntries(LIB.map((s) => [s.id, s]));
   const INST = {
     none: 'Autre instrument en do', voix: 'Voix', piano: 'Piano', flute: 'Flûte', clarinette: 'Clarinette', saxalto: 'Saxophone alto',
-    trompette: 'Trompette', trombone: 'Trombone', cor: 'Cor', violon: 'Violon', alto: 'Alto', violoncelle: 'Violoncelle', xylophone: 'Xylophone',
+    trompette: 'Trompette', trombone: 'Trombone', cor: 'Cor', violon: 'Violon', alto: 'Alto', violoncelle: 'Violoncelle', guitare: 'Guitare classique', guitareelec: 'Guitare électrique', xylophone: 'Xylophone',
   };
-  const INST_SHORT = { none: 'Sans', clarinette: 'Clar.', saxalto: 'Sax.', trompette: 'Tromp.', trombone: 'Tromb.', violoncelle: 'Vlc.', xylophone: 'Xylo.' };
+  const INST_SHORT = { none: 'Sans', clarinette: 'Clar.', saxalto: 'Sax.', trompette: 'Tromp.', trombone: 'Tromb.', violoncelle: 'Vlc.', guitare: 'Guit.', guitareelec: 'Guit. él.', xylophone: 'Xylo.' };
   const INST_ORDER = Object.keys(INST);
   const instName = (k) => INST[k] || nb(k || '?');
   const JEU_NAME = { aventure: 'Aventure', decouverte: 'Découverte', defi: 'Défi' };

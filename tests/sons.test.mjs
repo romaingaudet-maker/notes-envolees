@@ -14,7 +14,7 @@ for (let m = 55; m <= 72; m++) WRITTEN.push(m);
 let fails = 0;
 const check = (name, ok, info = '') => { if (!ok) fails++; console.log(`${ok ? '✓' : '✗'} ${name}${info ? ' — ' + info : ''}`); };
 
-check('instruments de la page trouvés', insts.length === 11, insts.map((i) => i.key).join(', '));
+check('instruments de la page trouvés', insts.length === 13, insts.map((i) => i.key).join(', '));
 for (const inst of insts) {
   const file = new URL(`sons/${inst.voice}.js`, root);
   if (!fs.existsSync(file)) { check(`${inst.key} : fichier sons/${inst.voice}.js`, false, 'absent'); continue; }

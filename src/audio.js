@@ -43,6 +43,7 @@ const Sound = (() => {
     harpsi:    { kind: 'ks', rev: 0.24, gain: 0.34, seconds: 1.6, bright: 1, damp: 0.997, lp: 6500, tail: 0.25, octave: 0.32 },
     ukulele:   { kind: 'ks', rev: 0.22, gain: 0.52, seconds: 1.2, bright: 0.45, damp: 0.994, lp: 3200, tail: 0.2 },
     guitar:    { kind: 'ks', rev: 0.25, gain: 0.5, seconds: 2.2, bright: 0.3, damp: 0.997, lp: 3000, tail: 0.4 },
+    eguitar:   { kind: 'ks', rev: 0.2, gain: 0.46, seconds: 2.6, bright: 0.6, damp: 0.998, lp: 4200, tail: 0.5 },
     banjo:     { kind: 'ks', rev: 0.18, gain: 0.42, seconds: 1.0, bright: 0.95, damp: 0.99, lp: 5500, tail: 0.12 },
     galoubet:  { kind: 'wind', rev: 0.26, gain: 0.25, attack: 0.035, release: 0.07,
                  wave: [1, 0.3, 0.12, 0.05, 0.025], vibrato: [5.4, 0.0032], breath: 0.05 },
@@ -398,6 +399,8 @@ const Sound = (() => {
   const SAMPLED = {
     piano:    { gain: 0.97, rev: 0.12, ring: 0.18, damp: 0.12 },
     xylo:     { gain: 0.89, rev: 0.1,  ring: 0.12, damp: 0.1 },
+    guitar:   { gain: 0.89, rev: 0.14, ring: 0.3,  damp: 0.16 },
+    eguitar:  { gain: 0.93, rev: 0.12, ring: 0.3,  damp: 0.14 },
     flute:    { gain: 0.98, rev: 0.14, release: 0.12 },
     clarinet: { gain: 0.91, rev: 0.12, release: 0.1 },
     sax:      { gain: 0.97, rev: 0.1,  release: 0.1 },

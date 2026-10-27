@@ -12,6 +12,10 @@ Sources (à cloner dans un même dossier, passé en argument) :
   git clone https://github.com/sgossner/VCSL vcsl                    (CC0)
   git clone https://github.com/sfzinstruments/karoryfer.weresax weresax (CC0)
   git clone https://github.com/peastman/sso sso                      (CC Sampling Plus 1.0)
+  git clone https://github.com/sfzinstruments/karoryfer.black-and-green-guitars bgg (CC0)
+  musescore/MS Basic.sf3 : la banque de sons de MuseScore (licence MIT), tirée de
+    https://github.com/musescore/MuseScore (share/sound/MS Basic.sf3) ; la guitare
+    classique en vient (échantillons en Ogg Vorbis, lus ici par sf_sample)
 
 Usage : python3 outils/fabriquer-sons.py DOSSIER_DES_SOURCES [instrument…]
 Il faut numpy et ffmpeg (avec libmp3lame).
@@ -24,6 +28,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, '..', 'sons')
 
 VSCO, VCSL, WERESAX, SSO = 'vsco', 'vcsl', 'weresax', 'sso/Sonatina Symphonic Orchestra/Samples'
+BGG, MSB = 'bgg/Samples', 'musescore/MS Basic.sf3'
 
 # kind : 'tenu' (boucle) ou 'frappe' (le son s'éteint tout seul)
 INSTRUMENTS = {
@@ -50,6 +55,15 @@ INSTRUMENTS = {
         f'{SSO}/Viola/viola-sus-{n}.flac' for n in ['f#3', 'a3', 'c4', 'd#4', 'f#4', 'a4', 'c5']]),
     'cello': dict(kind='tenu', files=[
         f'{SSO}/Cello/cello-{n}.wav' for n in ['f#2', 'a2', 'c3', 'd#3', 'f#3', 'a3', 'c4']]),
+    # guitare classique : les cordes à vide de la « Nylon Guitar » de MS Basic (mi2 la2 ré3 sol3 si3, son réel)
+    'guitar': dict(kind='frappe', keep=2.2, files=[
+        f'{MSB}#Nylon {n}' for n in ['E3', 'A3', 'D4', 'G4', 'B4']],
+        notice='MS Basic (MuseScore), d’après Fluid R3 : © 2000-2002, 2008 Frank Wen ; mono © 2014-2017 Michael Cowgill ; '
+               'adaptation © 2018-2020 S. Christian Collins ; licence MIT (texte dans sons/LISEZMOI.md)'),
+    # guitare électrique : la verte des Black and Green Guitars (Karoryfer nomme les notes une octave
+    # au-dessus : « gb3 » sonne fa♯2)
+    'eguitar': dict(kind='frappe', keep=2.2, files=[
+        f'{BGG}/green/ord/twang_{n}_mf_rr1.wav' for n in ['gb3', 'a3', 'c4', 'eb4', 'gb4', 'a4', 'c5']]),
 }
 
 PRE = 0.004          # silence gardé avant l'attaque
@@ -63,8 +77,46 @@ MARK = 0.03          # instant du repère de calage dans le MP3
 
 
 def load(path):
+    if '#' in path:
+        return sf_sample(*path.split('#', 1))
     out = subprocess.run(['ffmpeg', '-v', 'error', '-i', path, '-ac', '1', '-ar', str(SR), '-f', 'f32le', '-'],
                          capture_output=True, check=True).stdout
+    return np.frombuffer(out, dtype=np.float32).astype(np.float64)
+
+
+_banks = {}
+
+
+def sf_sample(bank, name):
+    """Un échantillon d'une banque SoundFont, par son nom : SF2 (16 bits) ou SF3 (chaque échantillon en Ogg Vorbis)."""
+    if bank not in _banks:
+        import struct
+        data = open(bank, 'rb').read()
+        assert data[:4] == b'RIFF' and data[8:12] == b'sfbk', bank
+        parts, off = {}, 12
+        while off < len(data):
+            cid, size = data[off:off + 4], struct.unpack('<I', data[off + 4:off + 8])[0]
+            if cid == b'LIST':
+                kind, o = data[off + 8:off + 12], off + 12
+                while o < off + 8 + size:
+                    c2, s2 = data[o:o + 4], struct.unpack('<I', data[o + 4:o + 8])[0]
+                    parts[(kind, c2)] = (o + 8, s2)
+                    o += 8 + s2 + (s2 & 1)
+            off += 8 + size + (size & 1)
+        so, ss = parts[(b'pdta', b'shdr')]
+        heads = {}
+        for i in range(ss // 46):
+            h = struct.unpack('<20sIIIIIBbHH', data[so + 46 * i:so + 46 * (i + 1)])
+            heads[h[0].split(b'\0')[0].decode('latin-1')] = h
+        _banks[bank] = (data, parts[(b'sdta', b'smpl')][0], heads)
+    data, smpl, heads = _banks[bank]
+    h = heads[name]
+    if h[9] & 0x10:  # SF3 : début et fin en octets, un flux Ogg Vorbis
+        blob, fmt = data[smpl + h[1]:smpl + h[2]], ['-f', 'ogg']
+    else:            # SF2 : début et fin en échantillons de 16 bits
+        blob, fmt = data[smpl + 2 * h[1]:smpl + 2 * h[2]], ['-f', 's16le', '-ar', str(h[5]), '-ac', '1']
+    out = subprocess.run(['ffmpeg', '-v', 'error', *fmt, '-i', '-', '-ac', '1', '-ar', str(SR), '-f', 'f32le', '-'],
+                         input=blob, capture_output=True, check=True).stdout
     return np.frombuffer(out, dtype=np.float32).astype(np.float64)
 
 
@@ -201,7 +253,7 @@ def build(name, cfg, root):
     for f in cfg['files']:
         z = make_zone(os.path.join(root, f), cfg['kind'], cfg.get('keep', 0))
         n = len(z['x']) / SR
-        print(f'   {os.path.basename(f):40} hauteur {z["m"]:6.2f}  durée {n:4.2f} s  attaque {z["att"] * 1000:3.0f} ms')
+        print(f'   {os.path.basename(f.split("#")[-1]):40} hauteur {z["m"]:6.2f}  durée {n:4.2f} s  attaque {z["att"] * 1000:3.0f} ms')
         zone = {'m': round(z['m'], 3), 's': round(pos, 5), 'n': round(n, 4), 'r': round(z['ref'], 5), 'a': round(min(z['att'], 0.15), 4)}
         if z['loop']: zone['l'] = z['loop']
         zones.append(zone)
@@ -213,7 +265,8 @@ def build(name, cfg, root):
                           '-codec:a', 'libmp3lame', '-b:a', '80k', '-f', 'mp3', '-'],
                          input=pcm.tobytes(), capture_output=True, check=True).stdout
     data = {'id': name, 'kind': cfg['kind'], 'mark': MARK, 'zones': zones}
-    js = ('/* Sons enregistrés : voir sons/LISEZMOI.md (sources et licences) */\n'
+    notice = f' — {cfg["notice"]}' if cfg.get('notice') else ''
+    js = (f'/* Sons enregistrés : voir sons/LISEZMOI.md (sources et licences){notice} */\n'
           f'(window.NotesSons = window.NotesSons || []).push({json.dumps(data, separators=(",", ":"))[:-1]},'
           f'"mp3":"{base64.b64encode(mp3).decode()}"}});\n')
     with open(os.path.join(OUT, name + '.js'), 'w') as fh:
