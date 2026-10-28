@@ -50,17 +50,22 @@ Tout le code est dans `src/` ; `index.html` est fabriqué à partir de ces fichi
 
 ## Production et qualification
 
-Deux versions du site sont publiées sur GitHub Pages, par les GitHub Actions du dépôt (`.github/workflows/`) :
+Deux versions du site sont publiées sur GitHub Pages, par les GitHub Actions du dépôt (`.github/workflows/`), et la production est copiée sur Netlify :
 
 | | Branche | Adresse |
 |---|---|---|
 | **Production** (les élèves) | `main` | https://romaingaudet-maker.github.io/notes-envolees/ |
 | **Qualification** (les essais) | `qualif` | https://romaingaudet-maker.github.io/notes-envolees/qualif/ |
+| **Production**, copie sur Netlify | `main` | https://notes-envolees.netlify.app/ |
 
 - Les essais se font sur la branche `qualif`. À chaque envoi, `Verification` lance les tests ; s'ils passent, `Publication` met la qualification à jour (en une à deux minutes). La production n'est pas touchée.
 - La qualification est construite par `node build.mjs --qualif` (dans `_qualif/`, non suivi par git) : un bandeau rouge « Qualification » avec la version testée, **aucun envoi au suivi des élèves**, des réglages et des étoiles gardés à part de la production, pas d'indexation par les moteurs de recherche. La page de suivi de la qualification lit, elle, les vrais résultats (le Worker de production), pour juger une nouvelle présentation sur de vraies données.
 - Pour passer en production ce qui est validé : fusionner `qualif` dans `main` (`git checkout main && git merge qualif && git push`).
 - Réglage à faire une fois sur GitHub : *Settings → Pages → Build and deployment → Source : GitHub Actions*.
+
+### Netlify
+
+La production est aussi servie par Netlify (https://notes-envolees.netlify.app/), branché sur le dépôt : à chaque envoi sur `main`, Netlify publie le site tel quel (réglages dans `netlify.toml` : rien à construire, le dossier publié est la racine du dépôt). Pour la brancher : sur app.netlify.com, **Add new site** → **Import an existing project** → GitHub → `notes-envolees`, branche `main`, commande de construction vide, dossier publié `.` ; puis **Site configuration** → **Change site name**. Le Worker du suivi doit connaître la nouvelle adresse : variable `ORIGINES` du Worker (voir `suivi/LISEZMOI.md`), avec les deux adresses séparées par une virgule (`https://romaingaudet-maker.github.io,https://notes-envolees.netlify.app`), sinon les parties jouées sur Netlify ne sont pas suivies et le tableau d'honneur n'y paraît pas.
 
 ## Sources des mélodies
 

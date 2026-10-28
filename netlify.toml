@@ -1,0 +1,5 @@
+# Netlify : la production (branche main), publiée telle quelle à chaque envoi.
+# Les pages sont déjà construites (node build.mjs) et vérifiées par GitHub Actions : rien à construire.
+# La qualification reste sur GitHub Pages (…/notes-envolees/qualif/).
+[build]
+  publish = "."
