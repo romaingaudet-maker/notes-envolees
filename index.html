@@ -6331,7 +6331,7 @@ const INST_ICON = (() => {
     const p = sc.full ? 0 : sc.p;
     showPhrase(p, false);
     const ci = countIn(p);
-    const c = Object.assign({}, ci, { sc, k: -1, raf: 0, srcs: ci.clicks.map((t, i) => Sound.clickAt(t, ci.downs[i])) });
+    const c = Object.assign({}, ci, { sc, k: -1, ka: -1, raf: 0, Tgo: ci.clicks[0] + ci.total * ci.beatSec, srcs: ci.clicks.map((t, i) => Sound.clickAt(t, ci.downs[i])) });
     G.cnt = c;
     el.main.classList.add('is-taking');
     setGoUI(true);
@@ -6339,21 +6339,35 @@ const INST_ICON = (() => {
       if (!G || G.cnt !== c) return;
       const now = Sound.now() - Sound.outLatency();
       const k = Math.floor((now - c.clicks[0]) / c.beatSec + 0.001);
-      if (k >= 0 && k < c.N && k !== c.k) { c.k = k; showCount(c, k); retrigger(el.card, 'beat'); }
-      if (now >= c.T0 - 0.04) { G.cnt = null; beginLive(sc); return; }
+      if (k >= 0 && k < c.N && k !== c.k) { c.k = k; retrigger(el.card, 'beat'); }
+      if (k >= 0) paintCountIn(c, now);
+      if (now >= c.T0 - 0.04) { G.cnt = null; beginLive(sc, c); return; }
       c.raf = requestAnimationFrame(tick);
     };
     c.raf = requestAnimationFrame(tick);
   }
 
-  function beginLive(sc) {
+  // ci : le décompte ; en levée, l'élève part pendant le décompte : il finit de se remplir, puis « Joue ! »
+  // (sauf si la page a déjà répondu à une note jouée)
+  function beginLive(sc, ci) {
     G.live = sc;
     // comptine entière, sans aide : écoute et choix des phrases fermés le temps de l'essai
     el.main.classList.toggle('is-taking', !!sc.full);
     const first = sc.full ? 0 : G.song.phrases[sc.p].notes.find((m) => !G.found.has(m));
     setCursor(first, true, false);
-    setHint('Joue !', 'go');
-    laterHint(() => { if (G && G.live === sc) cursorHint(); }, 700);
+    const go = () => {
+      setHint('Joue !', 'go');
+      laterHint(() => { if (G && G.live === sc) cursorHint(); }, 700);
+    };
+    if (!ci || ci.Tgo <= ci.T0 + 0.01) { go(); return; }
+    const tick = () => {
+      if (!G || G.live !== sc) return;
+      const now = Sound.now() - Sound.outLatency();
+      if (!paintCountIn(ci, now, false)) return;
+      if (now >= ci.Tgo - 0.04) { go(); return; }
+      ci.raf = requestAnimationFrame(tick);
+    };
+    ci.raf = requestAnimationFrame(tick);
   }
 
   function endLive() {
@@ -6710,7 +6724,7 @@ const INST_ICON = (() => {
      compter au moins trois temps. On les compte d'un bout à l'autre (« 1 2 3 4 »,
      même en 2/4 ; « 1 2 3 » pour une levée sur le 2e temps en 2/4, ou sur le 3e temps
      et demi en 4/4) ; le premier temps de chaque mesure sonne plus fort (downs).
-     Au niveau 2, le décompte s'affiche en entier, jusqu'à la barre qui suit le départ (paintTake). */
+     Aux deux niveaux, le décompte s'affiche en entier, jusqu'à la barre qui suit le départ (paintCountIn). */
   function countIn(p, lead = 0.3) {
     const song = G.song, spb = spbOf();
     const compound = song.meter[1] === 8 && song.meter[0] % 3 === 0;
@@ -6746,15 +6760,18 @@ const INST_ICON = (() => {
     setHint(`<span class="cin" aria-label="Décompte : ${ci.labels[k]}">${ci.labels.map((l, i) => `<b class="${i < k ? 'past' : i === k ? 'on' : ''}">${l}</b>`).join('')}</span>`, 'count');
   }
 
-  /* Le décompte du niveau 2, redessiné à chaque image : le décompte entier (tk.total temps). Pour une phrase en
+  /* Le décompte des deux niveaux, redessiné à chaque image : le décompte entier (tk.total temps). Pour une phrase en
      levée, le départ tombe dedans : chaque bulle est la durée de son temps, pleine jusqu'au départ, en pointillé
      après (l'élève joue déjà, et ces temps-là ne cliquent pas), coupée en deux quand le départ tombe au milieu d'un
      temps ; un petit trait au-dessus marque la coupure, et la partie en pointillé se remplit pendant que l'élève
-     joue. Une phrase qui part sur le temps garde le décompte habituel. */
-  function paintTake(tk, now) {
+     joue. Une phrase qui part sur le temps garde le décompte habituel.
+     create : faux une fois l'élève parti (le décompte ne revient pas si une réponse a pris sa place) ;
+     rend faux quand il n'y a plus de décompte à l'écran. */
+  function paintCountIn(tk, now, create = true) {
     const cut = (i) => Math.max(0, Math.min(1, tk.S - i)); // la part comptée de la bulle i
     let cin = el.hint && el.hint.classList.contains('count') ? el.hint.querySelector('.cin') : null;
     if (!cin || cin.children.length !== tk.total) {
+      if (!create) return false;
       const sk = Math.floor(tk.S + 1e-6);
       setHint(`<span class="cin" aria-label="Décompte">${Array.from({ length: tk.total }, (_, i) => {
         const f = cut(i);
@@ -6779,6 +6796,7 @@ const INST_ICON = (() => {
       cin.setAttribute('aria-label', `Décompte : ${k + 1}${p >= tk.S ? ', tu joues' : ''}`);
       hintSeq++;
     }
+    return true;
   }
 
 
@@ -6818,7 +6836,7 @@ const INST_ICON = (() => {
       if (!tk.go) {
         const k = Math.floor((now - tk.clicks[0]) / tk.beatSec + 0.001);
         if (k >= 0 && k < tk.N && k !== tk.k) { tk.k = k; retrigger(el.card, 'beat'); }
-        if (k >= 0) paintTake(tk, now);
+        if (k >= 0) paintCountIn(tk, now, tk.phase === 'count');
         if (tk.phase === 'count' && now >= tk.T0 - 0.04) tk.phase = 'play';
         if (now >= tk.Tgo - 0.04) { tk.go = true; setHint(tk.full ? 'Toute la comptine : joue !' : 'Joue !', 'go'); }
       }
