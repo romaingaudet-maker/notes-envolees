@@ -1,12 +1,12 @@
 /* ------------------------------------------------------------------
-   Les Notes Envolées — « Retour au jeu », en haut des pages de texte (comment-jouer.html, mentions-legales.html) :
-   ramène à la version d'où l'on vient (papier ou laine). Venu du jeu, on y revient par l'historique, à l'endroit
-   où l'on était ; venu de l'autre page de texte (« Comment jouer », puis « Mentions légales »), on retourne à la
-   version gardée pour cet onglet. Sinon, le lien par défaut : la première version.
+   Les Notes Envolées — le lien de retour en haut des pages à part : « Retour au jeu » (comment-jouer.html,
+   mentions-legales.html), « Retour au menu » (suivi.html, la page du professeur). Il ramène à la version d'où l'on
+   vient (papier ou laine). Venu du jeu, on y revient par l'historique, à l'endroit où l'on était ; venu d'une autre
+   page à part (« Comment jouer », puis « Mentions légales »), on retourne à la version gardée pour cet onglet.
+   Sinon, le lien par défaut : la première version.
+   Retour.bind(lien) : pour un lien dessiné plus tard (la page de suivi redessine son bandeau).
 ------------------------------------------------------------------- */
-(() => {
-  const back = document.getElementById('back');
-  if (!back) return;
+const Retour = (() => {
   const KEY = (window.NE_NS || '') + 'notes-envolees-retour';
   const TEXT = /\/(?:comment-jouer|mentions-legales|suivi)\.html$/;
   let ref = null;
@@ -19,7 +19,11 @@
   } else {
     try { game = sessionStorage.getItem(KEY) || ''; } catch (e) { game = ''; }
   }
-  if (!game) return;
-  back.href = game;
-  if (fromGame) back.addEventListener('click', (e) => { if (history.length > 1) { e.preventDefault(); history.back(); } });
+  function bind(back) {
+    if (!back || !game) return;
+    back.href = game;
+    if (fromGame) back.addEventListener('click', (e) => { if (history.length > 1) { e.preventDefault(); history.back(); } });
+  }
+  bind(document.getElementById('back'));
+  return { bind };
 })();

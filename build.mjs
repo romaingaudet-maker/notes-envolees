@@ -68,7 +68,7 @@ write('index.html', index);
 // 3) la page de suivi des élèves, pour le professeur (suivi.html, non liée depuis le jeu)
 const pShell = r('suivi-page.html');
 const pCss = font('Gluten', 700, 'gluten-latin-700-normal.woff2') + '\n' + r('_suivi.css');
-const pJs = ['songs.js', 'suivi.js', 'suivi-page.js'].map(r).join('\n');
+const pJs = ['songs.js', 'suivi.js', 'page-retour.js', 'suivi-page.js'].map(r).join('\n');
 const pCut = pShell.indexOf('<div id="app"');
 // en qualification, le jeu n'envoie rien, mais la page de suivi lit les vrais résultats (Worker de production)
 const pExtra = QUALIF && PROD_SUIVI ? `<script>window.NE_SUIVI_LECTURE = ${JSON.stringify(PROD_SUIVI)};</script>` : '';

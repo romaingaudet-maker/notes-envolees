@@ -79,6 +79,10 @@ h1, h2, h3, p { margin: 0; }
 .top-in { max-width: 980px; margin: 0 auto; padding: 14px 16px 13px; display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: flex-end; justify-content: space-between; }
 .mark { display: block; font: 700 17px/1 'Gluten', 'Trebuchet MS', cursive; letter-spacing: 0.01em; margin-bottom: 3px; }
 .top h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
+/* « Retour au menu », au-dessus du titre (comme en haut des autres pages à part) */
+.back { display: flex; width: fit-content; align-items: center; gap: 5px; margin: 0 0 10px; padding: 6px 13px 6px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--page); color: var(--ink); font-size: 14px; font-weight: 600; text-decoration: none; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.12); }
+.back svg { width: 16px; height: 16px; flex: none; }
+.back:hover { background: var(--surface); }
 .top-act { display: flex; gap: 10px; align-items: center; }
 .upd { font-size: 13px; color: var(--ink-2); }
 
@@ -709,6 +713,36 @@ const Suivi = (() => {
 })();
 
 /* ------------------------------------------------------------------
+   Les Notes Envolées — le lien de retour en haut des pages à part : « Retour au jeu » (comment-jouer.html,
+   mentions-legales.html), « Retour au menu » (suivi.html, la page du professeur). Il ramène à la version d'où l'on
+   vient (papier ou laine). Venu du jeu, on y revient par l'historique, à l'endroit où l'on était ; venu d'une autre
+   page à part (« Comment jouer », puis « Mentions légales »), on retourne à la version gardée pour cet onglet.
+   Sinon, le lien par défaut : la première version.
+   Retour.bind(lien) : pour un lien dessiné plus tard (la page de suivi redessine son bandeau).
+------------------------------------------------------------------- */
+const Retour = (() => {
+  const KEY = (window.NE_NS || '') + 'notes-envolees-retour';
+  const TEXT = /\/(?:comment-jouer|mentions-legales|suivi)\.html$/;
+  let ref = null;
+  try { ref = document.referrer ? new URL(document.referrer) : null; } catch (e) { ref = null; }
+  const fromGame = !!ref && ref.origin === location.origin && ref.pathname !== location.pathname && !TEXT.test(ref.pathname);
+  let game = '';
+  if (fromGame) {
+    game = ref.origin + ref.pathname + ref.search;
+    try { sessionStorage.setItem(KEY, game); } catch (e) { /* stockage indisponible */ }
+  } else {
+    try { game = sessionStorage.getItem(KEY) || ''; } catch (e) { game = ''; }
+  }
+  function bind(back) {
+    if (!back || !game) return;
+    back.href = game;
+    if (fromGame) back.addEventListener('click', (e) => { if (history.length > 1) { e.preventDefault(); history.back(); } });
+  }
+  bind(document.getElementById('back'));
+  return { bind };
+})();
+
+/* ------------------------------------------------------------------
    Les Notes Envolées — page de suivi des élèves (pour le professeur)
 
    Lit les résultats rangés par le Worker (suivi/worker.js) et montre,
@@ -1081,12 +1115,17 @@ const Suivi = (() => {
       <section class="card pad empty"><p><b>Aucun élève pour l’instant.</b></p><p>Dès qu’un élève ouvrira le jeu, il apparaîtra ici.</p></section>`}
       ${footer()}
     </main>`;
+    bindBack();
   }
+
+  // le bandeau : « Retour au menu » (vers la version du jeu d'où l'on vient : src/page-retour.js), puis le titre
+  const brand = () => `<div class="brand"><a class="back" id="back" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Retour au menu</a><span class="mark">Les Notes Envolées</span><h1>Suivi des élèves</h1></div>`;
+  const bindBack = () => { if (typeof Retour !== 'undefined') Retour.bind(document.getElementById('back')); };
 
   function header() {
     return `<header class="top">
       <div class="top-in">
-        <div class="brand"><span class="mark">Les Notes Envolées</span><h1>Suivi des élèves</h1></div>
+        ${brand()}
         <div class="top-act">
           <span class="upd" id="upd">${loadedAt ? `À jour à ${esc(DF_TIME.format(new Date(loadedAt)))}` : ''}</span>
           <button type="button" class="btn" data-act="reload">Actualiser</button>
@@ -1287,21 +1326,23 @@ const Suivi = (() => {
   }
 
   function renderSetup() {
-    app.innerHTML = `<header class="top"><div class="top-in"><div class="brand"><span class="mark">Les Notes Envolées</span><h1>Suivi des élèves</h1></div></div></header>
+    app.innerHTML = `<header class="top"><div class="top-in">${brand()}</div></header>
     <main class="wrap narrow"><section class="card pad">
       <h2>Le suivi n’est pas encore branché</h2>
       <p>Il manque l’adresse du Worker Cloudflare dans <code>src/suivi.js</code>. La marche à suivre est dans <code>suivi/LISEZMOI.md</code>.</p>
     </section></main>`;
+    bindBack();
   }
 
   function renderLogin(msg) {
-    app.innerHTML = `<header class="top"><div class="top-in"><div class="brand"><span class="mark">Les Notes Envolées</span><h1>Suivi des élèves</h1></div></div></header>
+    app.innerHTML = `<header class="top"><div class="top-in">${brand()}</div></header>
     <main class="wrap narrow"><form class="card pad login" id="login">
       <label class="fld block"><span>Clé du suivi</span><input type="password" name="cle" autocomplete="current-password" required minlength="8" autofocus></label>
       <label class="chk"><input type="checkbox" name="garder" checked><span>Rester connecté sur cet appareil</span></label>
       ${msg ? `<p class="err" role="alert">${esc(msg)}</p>` : ''}
       <p><button class="btn" type="submit">Ouvrir le suivi</button></p>
     </form></main>`;
+    bindBack();
   }
 
   function renderBusy(text) {

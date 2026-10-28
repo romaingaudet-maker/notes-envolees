@@ -371,12 +371,17 @@
       <section class="card pad empty"><p><b>Aucun élève pour l’instant.</b></p><p>Dès qu’un élève ouvrira le jeu, il apparaîtra ici.</p></section>`}
       ${footer()}
     </main>`;
+    bindBack();
   }
+
+  // le bandeau : « Retour au menu » (vers la version du jeu d'où l'on vient : src/page-retour.js), puis le titre
+  const brand = () => `<div class="brand"><a class="back" id="back" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Retour au menu</a><span class="mark">Les Notes Envolées</span><h1>Suivi des élèves</h1></div>`;
+  const bindBack = () => { if (typeof Retour !== 'undefined') Retour.bind(document.getElementById('back')); };
 
   function header() {
     return `<header class="top">
       <div class="top-in">
-        <div class="brand"><span class="mark">Les Notes Envolées</span><h1>Suivi des élèves</h1></div>
+        ${brand()}
         <div class="top-act">
           <span class="upd" id="upd">${loadedAt ? `À jour à ${esc(DF_TIME.format(new Date(loadedAt)))}` : ''}</span>
           <button type="button" class="btn" data-act="reload">Actualiser</button>
@@ -577,21 +582,23 @@
   }
 
   function renderSetup() {
-    app.innerHTML = `<header class="top"><div class="top-in"><div class="brand"><span class="mark">Les Notes Envolées</span><h1>Suivi des élèves</h1></div></div></header>
+    app.innerHTML = `<header class="top"><div class="top-in">${brand()}</div></header>
     <main class="wrap narrow"><section class="card pad">
       <h2>Le suivi n’est pas encore branché</h2>
       <p>Il manque l’adresse du Worker Cloudflare dans <code>src/suivi.js</code>. La marche à suivre est dans <code>suivi/LISEZMOI.md</code>.</p>
     </section></main>`;
+    bindBack();
   }
 
   function renderLogin(msg) {
-    app.innerHTML = `<header class="top"><div class="top-in"><div class="brand"><span class="mark">Les Notes Envolées</span><h1>Suivi des élèves</h1></div></div></header>
+    app.innerHTML = `<header class="top"><div class="top-in">${brand()}</div></header>
     <main class="wrap narrow"><form class="card pad login" id="login">
       <label class="fld block"><span>Clé du suivi</span><input type="password" name="cle" autocomplete="current-password" required minlength="8" autofocus></label>
       <label class="chk"><input type="checkbox" name="garder" checked><span>Rester connecté sur cet appareil</span></label>
       ${msg ? `<p class="err" role="alert">${esc(msg)}</p>` : ''}
       <p><button class="btn" type="submit">Ouvrir le suivi</button></p>
     </form></main>`;
+    bindBack();
   }
 
   function renderBusy(text) {

@@ -66,6 +66,10 @@ h1, h2, h3, p { margin: 0; }
 .top-in { max-width: 980px; margin: 0 auto; padding: 14px 16px 13px; display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: flex-end; justify-content: space-between; }
 .mark { display: block; font: 700 17px/1 'Gluten', 'Trebuchet MS', cursive; letter-spacing: 0.01em; margin-bottom: 3px; }
 .top h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
+/* « Retour au menu », au-dessus du titre (comme en haut des autres pages à part) */
+.back { display: flex; width: fit-content; align-items: center; gap: 5px; margin: 0 0 10px; padding: 6px 13px 6px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--page); color: var(--ink); font-size: 14px; font-weight: 600; text-decoration: none; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.12); }
+.back svg { width: 16px; height: 16px; flex: none; }
+.back:hover { background: var(--surface); }
 .top-act { display: flex; gap: 10px; align-items: center; }
 .upd { font-size: 13px; color: var(--ink-2); }
 
