@@ -781,6 +781,73 @@
   /* ================================ ACCUEIL ================================ */
   const OFFSETS = [0, -26, 18, 28, -14, 26, -22, 12, -26, 20, -8, 24, -20, 10, -24, 18, -10, 26, -18, 8];
 
+  /* Le code secret du professeur : le Konami code, joué sur le titre de l'accueil (↑ ↑ ↓ ↓ ← → ← → B A Start).
+     ↑ une lettre du fil du haut (« Les Notes »), ↓ une lettre du fil du bas (« Envolées »), ← la première lettre
+     d'un fil, → la dernière, B un Si et A un La (la notation anglaise), Start la pelote bleue (version en laine) ou
+     les petites notes qui s'envolent au bout du titre (version papier). Il ouvre la page de suivi, qui demande
+     toujours la clé du professeur. Chaque touche du titre arrive ici : { note, line, first, last } ou { start }. */
+  const KONAMI = [
+    (t) => t.line === 0, (t) => t.line === 0, (t) => t.line === 1, (t) => t.line === 1,
+    (t) => !!t.first, (t) => !!t.last, (t) => !!t.first, (t) => !!t.last,
+    (t) => t.note === 'B', (t) => t.note === 'A', (t) => !!t.start,
+  ];
+  const SUIVI_PAGE = window.NE_SUIVI_PAGE || 'suivi.html';
+  let titleTaps = [];
+  function titleTap(t) {
+    const now = performance.now();
+    if (titleTaps.length && now - titleTaps[titleTaps.length - 1].at > 4000) titleTaps = []; // trop lent : on repart de zéro
+    titleTaps.push(Object.assign({ at: now }, t));
+    if (titleTaps.length > KONAMI.length) titleTaps.shift();
+    if (titleTaps.length < KONAMI.length || !KONAMI.every((ok, i) => ok(titleTaps[i]))) return;
+    titleTaps = [];
+    // une petite fanfare, puis la page de suivi (dans claude.ai : la version en ligne, dans un nouvel onglet)
+    if (Sound.ensure()) [60, 64, 67, 72].forEach((m, i) => later(() => Sound.tap(inst().voice || 'musicbox', m, 0.5), i * 110));
+    if (framed) { window.open('https://romaingaudet-maker.github.io/notes-envolees/suivi.html', '_blank', 'noopener'); return; }
+    later(() => { location.href = SUIVI_PAGE; }, 520);
+  }
+  // le titre de l'accueil papier : chaque lettre chante sa note (comme dans la version en laine), dans l'ordre
+  // de la gamme ; une petite note s'envole de la lettre touchée
+  function titleHtmlHome() {
+    let n = 0;
+    const letter = (ch, line, end) => `<span class="nl" data-l="${'CDEFGAB'[n++ % 7]}" data-line="${line}"${end ? ` data-end="${end}"` : ''}>${ch}</span>`;
+    const word = (w, line, first, last) => [...w].map((ch, i) => letter(ch, line, first && i === 0 ? 'first' : last && i === w.length - 1 ? 'last' : '')).join('');
+    return `<span class="vh">Les Notes Envolées</span><span class="w" aria-hidden="true">${word('Les', 0, true, false)} ${word('Notes', 0, false, true)}</span>`
+      + `<span class="w" aria-hidden="true">${word('Envol', 1, true, false)}<span class="lift c1">${letter('é', 1)}</span><span class="lift c2">${letter('e', 1)}</span><span class="lift c3">${letter('s', 1, 'last')}</span>`
+      + '<span class="flyaway"><i style="--c:var(--n-do);--dl:-.3s"></i><i style="--c:var(--n-sol);--dl:-1.1s;translate:0 -.25em"></i><i style="--c:var(--n-la);--dl:-1.9s;translate:0 -.55em"></i></span></span>';
+  }
+  function bindTitle(h1) {
+    if (!h1) return;
+    // la lettre (ou les petites notes envolées) la plus proche du doigt, parmi celles qui sont dessous : les lettres
+    // envolées de « Envolées » débordent sur la ligne du dessus
+    const pick = (e) => {
+      let best = null, bd = Infinity;
+      for (const el of document.elementsFromPoint(e.clientX, e.clientY)) {
+        const n = el.closest && el.closest('.nl, .flyaway');
+        if (!n || !h1.contains(n)) continue;
+        const r = n.getBoundingClientRect();
+        const d = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2));
+        if (d < bd) { bd = d; best = n; }
+      }
+      return best;
+    };
+    h1.addEventListener('pointerdown', (e) => {
+      const n = pick(e);
+      if (!n) return;
+      const fly = n.classList.contains('flyaway') ? n : null, nl = fly ? null : n;
+      const voice = inst().voice || 'musicbox';
+      if (fly) {
+        if (Sound.ensure()) [60, 67, 69].forEach((m, i) => later(() => Sound.tap(voice, m, 0.3), i * 70));
+        retrigger(fly, 'sing');
+        titleTap({ start: true });
+        return;
+      }
+      const L = nl.dataset.l;
+      if (Sound.ensure()) Sound.tap(voice, 60 + NOTE_PC[L], 0.6);
+      retrigger(nl, 'sing');
+      titleTap({ note: L, line: +nl.dataset.line, first: nl.dataset.end === 'first', last: nl.dataset.end === 'last' });
+    });
+  }
+
   function renderHome() {
     trackLeave('accueil');
     view = 'home';
@@ -790,7 +857,7 @@
     D.leave();
     D = PAPER;
     setWorld(null);
-    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, HELP_URL, decorFor, eleveHtml, bindEleve, songState, nextToPlay, defiHomeHtml })) {
+    if (window.HomeSkin && window.HomeSkin.render({ app, LIB, records, settings, inst, instOptions, setInst, save, SET_KEY, star, ICON, esc, nb, titleHtml, LEVEL, framed, ONLINE_URL, LEGAL_URL, HELP_URL, decorFor, eleveHtml, bindEleve, songState, nextToPlay, defiHomeHtml, titleTap })) {
       welcome(() => eleveRefresh(app.querySelector('.eleve-card')));
       homeExtras();
       return;
@@ -818,7 +885,7 @@
       <div class="home-in">
         <header class="home-head">
           <p class="eyebrow">Jeu d’oreille · ${LIB.length} comptines</p>
-          <h1 class="home-title"><span class="w">Les Notes</span><span class="w">Envol<span class="lift c1">é</span><span class="lift c2">e</span><span class="lift c3">s</span><span class="flyaway" aria-hidden="true"><i style="--c:var(--n-do);--dl:-.3s"></i><i style="--c:var(--n-sol);--dl:-1.1s;translate:0 -.25em"></i><i style="--c:var(--n-la);--dl:-1.9s;translate:0 -.55em"></i></span></span></h1>
+          <h1 class="home-title">${titleHtmlHome()}</h1>
           <p class="home-lede"><strong>Les notes se sont envolées.</strong> Retrouve-les à l’oreille : la page t’écoute au micro.</p>
           <div class="home-eleve">${eleveHtml()}${micNote}</div>
         </header>
@@ -832,6 +899,7 @@
     </main>`;
     const card = app.querySelector('.eleve-card');
     bindEleve(card);
+    bindTitle(app.querySelector('.home-title'));
     welcome(() => eleveRefresh(card));
     layoutMedals();
     homeExtras();

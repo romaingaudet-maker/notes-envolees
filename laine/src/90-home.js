@@ -205,7 +205,8 @@ function buildHero(V, o = {}) {
             return w;
           });
         }
-        letters.push({ piv, letter, peg, color, note: NOTE_ORDER[ci % 7], ph: hashi(ci, 4) * TAU, imp: 0, t0: -9, fly, wings, idx: letters.length, home: piv.position.clone() });
+        letters.push({ piv, letter, peg, color, note: NOTE_ORDER[ci % 7], ph: hashi(ci, 4) * TAU, imp: 0, t0: -9, fly, wings, idx: letters.length, home: piv.position.clone(),
+          line: li, first: i === 0, last: i === chars.length - 1 });
         ci++;
       }
       x += a;
@@ -222,7 +223,10 @@ function buildHero(V, o = {}) {
   // peluches dans le faisceau
   if (!o.portrait) pointCloud(V, { n: 120, box0: [-80, 2, -40], box1: [80, 110, 50], size: 1.1, color: '#FFE9C8', opacity: 0.55, vel: [0.2, 0.45, 0.1], beam: 0.9, keyDir: [-0.45, 0.68, 0.58] });
 
+  let ballT = -9;
   V.anim((t, f) => {
+    const ba = t - ballT;
+    ballR.scale.setScalar(ba >= 0 && ba < 0.45 ? 1 + 0.12 * Math.sin((ba / 0.45) * Math.PI) : 1);
     letters.forEach((Lt) => {
       const age = t - Lt.t0;
       const kick = age >= 0 && age < 3 ? Lt.imp * Math.exp(-age * 1.6) * Math.sin(age * 9) : 0;
@@ -257,18 +261,21 @@ function buildHero(V, o = {}) {
 
   return {
     letters, birds,
-    // ce qu'on peut toucher : rend la note jouée (lettre C..B) ou null
+    // ce qu'on peut toucher : une note ailée ou une lettre ({ note: C..B, et pour une lettre son fil, première ou
+    // dernière }), la pelote bleue ({ start: true }), ou null
     hit(obj) {
-      for (const B of birds) { let p = obj; while (p) { if (p === B.g) { B.t0 = V.now; return B.L; } p = p.parent; } }
-      for (const Lt of letters) { let p = obj; while (p) { if (p === Lt.piv) { Lt.t0 = V.now; Lt.imp = 0.45; return Lt.note; } p = p.parent; } }
+      for (const B of birds) { let p = obj; while (p) { if (p === B.g) { B.t0 = V.now; return { note: B.L }; } p = p.parent; } }
+      for (const Lt of letters) { let p = obj; while (p) { if (p === Lt.piv) { Lt.t0 = V.now; Lt.imp = 0.45; return { note: Lt.note, line: Lt.line, first: Lt.first, last: Lt.last }; } p = p.parent; } }
+      { let p = obj; while (p) { if (p === ballR) { ballT = V.now; return { start: true }; } p = p.parent; } }
       return null;
     },
-    targets() { return birds.map((b) => b.g).concat(letters.map((l) => l.piv)); },
+    targets() { return birds.map((b) => b.g).concat(letters.map((l) => l.piv), [ballR]); },
   };
 }
 
 const HomeSkin = (() => {
   let hero = null; // { V, H } : la scène de l'accueil, gardée d'une visite à l'autre
+  let onTitle = null; // chaque touche du titre ou de la pelote bleue, pour le code secret du professeur (app.js)
   const portraits = new Map(); // thème → url d'une bande de 4 images fabriquée ici (si le fichier manque)
   /* Les portraits des décors sont fabriqués à l'avance (outils/portraits.mjs → laine/portraits/{thème}.webp) :
      les fabriquer sur le téléphone, vingt décors en 3D rendus quatre fois chacun, faisait ramer l'accueil.
@@ -280,6 +287,7 @@ const HomeSkin = (() => {
 
   function render(ctx) {
     const { app, LIB, records, inst, star, ICON, esc, titleHtml, LEVEL, framed, ONLINE_URL, eleveHtml, bindEleve } = ctx;
+    onTitle = ctx.titleTap || null;
     // le mode de jeu : comptines fermées et prochaine à jouer (Aventure), essais du Défi
     const songState = ctx.songState || (() => ({ open: true, next: false }));
     const NX = ctx.nextToPlay ? ctx.nextToPlay() : null;
@@ -476,8 +484,9 @@ const HomeSkin = (() => {
     host.onpointerdown = (e) => {
       const o = pick(e);
       if (!o) return;
-      const L = H.hit(o);
-      if (L && typeof Sound !== 'undefined' && Sound.ensure()) Sound.tap(voice(), MIDI[L], 0.6);
+      const h = H.hit(o);
+      if (h && h.note && typeof Sound !== 'undefined' && Sound.ensure()) Sound.tap(voice(), MIDI[h.note], 0.6);
+      if (h && onTitle) onTitle(h);
       Engine.poke();
     };
     let last = 0;

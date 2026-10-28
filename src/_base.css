@@ -119,6 +119,17 @@ a { color: inherit; }
 .home-title .lift.c3 { --ty: -.3em; --rot: 14deg; --dl: -2s; }
 .home-title .flyaway { position: absolute; left: 100%; top: -.05em; margin-left: .06em; display: flex; gap: .06em; }
 .home-title .flyaway i { width: .2em; height: .2em; border-radius: 50%; display: inline-block; background: var(--c); animation: drift 3.6s ease-in-out infinite alternate; animation-delay: var(--dl); }
+/* le titre chante : chaque lettre joue sa note, et une petite note s'en envole ; les trois petites notes du bout du
+   titre (le « Start » du code secret du professeur) sautillent */
+.home-title { -webkit-user-select: none; user-select: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.home-title .nl { position: relative; cursor: pointer; }
+.home-title .nl::after { content: ""; position: absolute; left: 50%; top: 45%; width: .24em; height: .24em; margin: -.12em 0 0 -.12em; border-radius: 50%; background: var(--nc); box-shadow: 0 0 0 .025em var(--ink); opacity: 0; pointer-events: none; }
+.home-title .nl.sing::after { animation: nl-fly .9s ease-out; }
+@keyframes nl-fly { from { opacity: 1; transform: translate(0, 0) scale(.5); } to { opacity: 0; transform: translate(.3em, -.85em) scale(1); } }
+.home-title .flyaway { cursor: pointer; }
+.home-title .flyaway::before { content: ""; position: absolute; inset: -.3em -.2em; }
+.home-title .flyaway.sing { animation: fly-hop .5s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes fly-hop { 40% { transform: translateY(-.12em) rotate(-6deg); } }
 @keyframes drift { from { translate: 0 0; } to { translate: .04em -.12em; } }
 .home-lede { margin: 0 0 10px; font-size: clamp(17px, 1.6vw, 20px); max-width: 36em; color: var(--ink); }
 .home-lede strong { font-weight: 700; }

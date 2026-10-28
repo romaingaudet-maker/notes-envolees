@@ -107,8 +107,8 @@ write('suivi.html', prof);
   const lfill = (t, pre) => t.replace('/*__CSS__*/', () => css2).replace('/*__PRE__*/', () => pre).replace('/*__THREE__*/', () => three).replace('/*__JS__*/', () => js2);
   // a) fragment publié comme artifact : les sons sont à côté (sons/)
   out('laine.html', lfill(lshell, `window.NE_ONLINE_URL = ${JSON.stringify(ONLINE)};`));
-  // b) document autonome, publié sur GitHub Pages dans laine/ : les sons et les pages de texte sont dans le dossier parent
-  const pre = `window.NE_ONLINE_URL = ${JSON.stringify(ONLINE)}; window.SONS_BASE = '../sons/'; window.NE_HELP_URL = '../comment-jouer.html'; window.NE_LEGAL_URL = '../mentions-legales.html';`;
+  // b) document autonome, publié sur GitHub Pages dans laine/ : les sons, les pages de texte et la page de suivi sont dans le dossier parent
+  const pre = `window.NE_ONLINE_URL = ${JSON.stringify(ONLINE)}; window.SONS_BASE = '../sons/'; window.NE_HELP_URL = '../comment-jouer.html'; window.NE_LEGAL_URL = '../mentions-legales.html'; window.NE_SUIVI_PAGE = '../suivi.html';`;
   const lcut = lshell.indexOf('<svg');
   const ldoc = doc(lfill(lshell.slice(0, lcut), pre).trim(), lfill(lshell.slice(lcut), pre).trim(), '#2B2350', iconOf('#2B2350', '#F2C14E'), INSTALL_V2);
   write('laine/index.html', ldoc);

@@ -1,6 +1,6 @@
 # Suivi des élèves
 
-Ce dossier contient le petit serveur (un *Worker* Cloudflare, `worker.js`) qui reçoit les résultats des parties et les garde pour la page de suivi du professeur : **https://romaingaudet-maker.github.io/notes-envolees/suivi.html** (elle n'est liée nulle part dans le jeu et demande une clé).
+Ce dossier contient le petit serveur (un *Worker* Cloudflare, `worker.js`) qui reçoit les résultats des parties et les garde pour la page de suivi du professeur : **https://romaingaudet-maker.github.io/notes-envolees/suivi.html** (elle n'est liée nulle part dans le jeu et demande une clé ; sur l'accueil, le code secret du professeur l'ouvre : voir `KONAMI` dans `src/app.js`).
 
 ## Ce qui est enregistré
 
