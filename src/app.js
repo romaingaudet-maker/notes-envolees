@@ -783,9 +783,10 @@
 
   /* Le code secret du professeur : le Konami code, joué sur le titre de l'accueil (↑ ↑ ↓ ↓ ← → ← → B A Start).
      ↑ une lettre du fil du haut (« Les Notes »), ↓ une lettre du fil du bas (« Envolées »), ← la première lettre
-     d'un fil, → la dernière, B un Si et A un La (la notation anglaise), Start la pelote bleue (version en laine) ou
-     les petites notes qui s'envolent au bout du titre (version papier). Il ouvre la page de suivi, qui demande
-     toujours la clé du professeur. Chaque touche du titre arrive ici : { note, line, first, last } ou { start }. */
+     d'un mot (L, N ou E), → la dernière (un des trois « s »), B un Si et A un La (la notation anglaise), Start la
+     pelote bleue (version en laine) ou les petites notes qui s'envolent au bout du titre (version papier). Il ouvre
+     la page de suivi, qui demande toujours la clé du professeur ; plus de 10 s entre deux touches, et il repart de
+     zéro. Chaque touche du titre arrive ici : { note, line, first, last } ou { start }. */
   const KONAMI = [
     (t) => t.line === 0, (t) => t.line === 0, (t) => t.line === 1, (t) => t.line === 1,
     (t) => !!t.first, (t) => !!t.last, (t) => !!t.first, (t) => !!t.last,
@@ -795,7 +796,7 @@
   let titleTaps = [];
   function titleTap(t) {
     const now = performance.now();
-    if (titleTaps.length && now - titleTaps[titleTaps.length - 1].at > 4000) titleTaps = []; // trop lent : on repart de zéro
+    if (titleTaps.length && now - titleTaps[titleTaps.length - 1].at > 10000) titleTaps = []; // trop lent : on repart de zéro
     titleTaps.push(Object.assign({ at: now }, t));
     if (titleTaps.length > KONAMI.length) titleTaps.shift();
     if (titleTaps.length < KONAMI.length || !KONAMI.every((ok, i) => ok(titleTaps[i]))) return;
@@ -803,7 +804,7 @@
     // une petite fanfare, puis la page de suivi (dans claude.ai : la version en ligne, dans un nouvel onglet)
     if (Sound.ensure()) [60, 64, 67, 72].forEach((m, i) => later(() => Sound.tap(inst().voice || 'musicbox', m, 0.5), i * 110));
     if (framed) { window.open('https://romaingaudet-maker.github.io/notes-envolees/suivi.html', '_blank', 'noopener'); return; }
-    later(() => { location.href = SUIVI_PAGE; }, 520);
+    setTimeout(() => { location.href = SUIVI_PAGE; }, 520);
   }
   // le titre de l'accueil papier : chaque lettre chante sa note (comme dans la version en laine), dans l'ordre
   // de la gamme ; une petite note s'envole de la lettre touchée
@@ -811,7 +812,7 @@
     let n = 0;
     const letter = (ch, line, end) => `<span class="nl" data-l="${'CDEFGAB'[n++ % 7]}" data-line="${line}"${end ? ` data-end="${end}"` : ''}>${ch}</span>`;
     const word = (w, line, first, last) => [...w].map((ch, i) => letter(ch, line, first && i === 0 ? 'first' : last && i === w.length - 1 ? 'last' : '')).join('');
-    return `<span class="vh">Les Notes Envolées</span><span class="w" aria-hidden="true">${word('Les', 0, true, false)} ${word('Notes', 0, false, true)}</span>`
+    return `<span class="vh">Les Notes Envolées</span><span class="w" aria-hidden="true">${word('Les', 0, true, true)} ${word('Notes', 0, true, true)}</span>`
       + `<span class="w" aria-hidden="true">${word('Envol', 1, true, false)}<span class="lift c1">${letter('é', 1)}</span><span class="lift c2">${letter('e', 1)}</span><span class="lift c3">${letter('s', 1, 'last')}</span>`
       + '<span class="flyaway"><i style="--c:var(--n-do);--dl:-.3s"></i><i style="--c:var(--n-sol);--dl:-1.1s;translate:0 -.25em"></i><i style="--c:var(--n-la);--dl:-1.9s;translate:0 -.55em"></i></span></span>';
   }

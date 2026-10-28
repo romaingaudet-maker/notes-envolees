@@ -206,7 +206,7 @@ function buildHero(V, o = {}) {
           });
         }
         letters.push({ piv, letter, peg, color, note: NOTE_ORDER[ci % 7], ph: hashi(ci, 4) * TAU, imp: 0, t0: -9, fly, wings, idx: letters.length, home: piv.position.clone(),
-          line: li, first: i === 0, last: i === chars.length - 1 });
+          line: li, first: i === 0 || chars[i - 1] === ' ', last: i === chars.length - 1 || chars[i + 1] === ' ' });
         ci++;
       }
       x += a;
@@ -262,7 +262,7 @@ function buildHero(V, o = {}) {
   return {
     letters, birds,
     // ce qu'on peut toucher : une note ailée ou une lettre ({ note: C..B, et pour une lettre son fil, première ou
-    // dernière }), la pelote bleue ({ start: true }), ou null
+    // dernière de son mot }), la pelote bleue ({ start: true }), ou null
     hit(obj) {
       for (const B of birds) { let p = obj; while (p) { if (p === B.g) { B.t0 = V.now; return { note: B.L }; } p = p.parent; } }
       for (const Lt of letters) { let p = obj; while (p) { if (p === Lt.piv) { Lt.t0 = V.now; Lt.imp = 0.45; return { note: Lt.note, line: Lt.line, first: Lt.first, last: Lt.last }; } p = p.parent; } }
