@@ -1881,7 +1881,8 @@
      la phrase commence, précédés d'une mesure entière s'il en faut pour
      compter au moins trois temps. On les compte d'un bout à l'autre (« 1 2 3 4 »,
      même en 2/4 ; « 1 2 3 » pour une levée sur le 2e temps en 2/4, ou sur le 3e temps
-     et demi en 4/4) ; le premier temps de chaque mesure sonne plus fort (downs). */
+     et demi en 4/4) ; le premier temps de chaque mesure sonne plus fort (downs).
+     Au niveau 2, le décompte s'affiche en entier, jusqu'à la barre qui suit le départ (paintTake). */
   function countIn(p, lead = 0.3) {
     const song = G.song, spb = spbOf();
     const compound = song.meter[1] === 8 && song.meter[0] % 3 === 0;
@@ -1899,7 +1900,10 @@
     const clicks = Array.from({ length: N }, (_, k) => c0 + k * beatSec);
     const labels = clicks.map((_, k) => k + 1);
     const downs = clicks.map((_, k) => (((k - full) % perBar) + perBar) % perBar === 0);
-    return { N, clicks, labels, downs, beatSec, spb, T0: c0 + (full + pos) * beatSec };
+    // S : le départ, en temps depuis le premier clic ; total : le décompte entier, jusqu'à la barre qui suit le
+    // départ (pour une levée, le départ tombe dedans : « 1 2 3 4 » avec la levée sur le 4 ou le 3 et demi)
+    const S = full + pos, total = pos > 1e-6 ? full + perBar : N;
+    return { N, clicks, labels, downs, beatSec, spb, T0: c0 + S * beatSec, S, total };
   }
 
   function showCount(ci, k) {
@@ -1912,6 +1916,41 @@
       return;
     }
     setHint(`<span class="cin" aria-label="Décompte : ${ci.labels[k]}">${ci.labels.map((l, i) => `<b class="${i < k ? 'past' : i === k ? 'on' : ''}">${l}</b>`).join('')}</span>`, 'count');
+  }
+
+  /* Le décompte du niveau 2, redessiné à chaque image : le décompte entier (tk.total temps). Pour une phrase en
+     levée, le départ tombe dedans : chaque bulle est la durée de son temps, pleine jusqu'au départ, en pointillé
+     après (l'élève joue déjà, et ces temps-là ne cliquent pas), coupée en deux quand le départ tombe au milieu d'un
+     temps ; un petit trait au-dessus marque la coupure, et la partie en pointillé se remplit pendant que l'élève
+     joue. Une phrase qui part sur le temps garde le décompte habituel. */
+  function paintTake(tk, now) {
+    const cut = (i) => Math.max(0, Math.min(1, tk.S - i)); // la part comptée de la bulle i
+    let cin = el.hint && el.hint.classList.contains('count') ? el.hint.querySelector('.cin') : null;
+    if (!cin || cin.children.length !== tk.total) {
+      const sk = Math.floor(tk.S + 1e-6);
+      setHint(`<span class="cin" aria-label="Décompte">${Array.from({ length: tk.total }, (_, i) => {
+        const f = cut(i);
+        if (f >= 1) return `<b>${i + 1}</b>`;
+        return `<b class="cut${f > 0 ? '' : ' f0'}" style="--f:${f.toFixed(3)}"><i class="cg"></i><i class="cw"></i><i class="cs"></i>${i === sk ? '<i class="cn"></i>' : ''}<span>${i + 1}</span></b>`;
+      }).join('')}</span>`, 'count');
+      cin = el.hint.querySelector('.cin');
+    }
+    const p = (now - tk.clicks[0]) / tk.beatSec, k = Math.floor(p + 0.001);
+    [...cin.children].forEach((b, i) => {
+      const f = cut(i);
+      if (f >= 1) { b.classList.toggle('past', k > i); b.classList.toggle('on', k === i); return; }
+      const gOn = p >= i + f && p < i + 1, gPast = p >= i + 1;
+      b.classList.toggle('s-on', p >= i && p < i + f);
+      b.classList.toggle('s-past', f > 0 && p >= i + f);
+      b.classList.toggle('g-on', gOn);
+      b.classList.toggle('g-past', gPast);
+      if (gOn || gPast) b.style.setProperty('--w', Math.min(1, p - i).toFixed(3));
+    });
+    if (k !== tk.ka && k >= 0 && k < tk.total) {
+      tk.ka = k;
+      cin.setAttribute('aria-label', `Décompte : ${k + 1}${p >= tk.S ? ', tu joues' : ''}`);
+      hintSeq++;
+    }
   }
 
 
@@ -1935,8 +1974,9 @@
     const exp = idx.map((n) => { const nt = song.notes[n]; return { n, t: (nt.t - t0) * ci.spb, midi: nt.midi, ph: nt.phrase }; });
     const starts = song.phrases.map((ph) => (song.notes[ph.notes[0]].t - t0) * ci.spb);
     const tk = Object.assign({}, ci, {
-      p, full, exp, starts, got: [], phase: 'count', k: -1, raf: 0, mic: settings.mode === 'mic', sing: singing() && Ear.voiceOk(),
+      p, full, exp, starts, got: [], phase: 'count', k: -1, ka: -1, go: false, raf: 0, mic: settings.mode === 'mic', sing: singing() && Ear.voiceOk(),
       Tend: ci.T0 + exp[exp.length - 1].t + Math.max(0.9, 1.6 * ci.beatSec),
+      Tgo: ci.clicks[0] + ci.total * ci.beatSec, // « Joue ! » : à la fin du décompte entier (au départ, sans levée)
       srcs: ci.clicks.map((t, i) => Sound.clickAt(t, ci.downs[i])),
     });
     G.take = tk;
@@ -1946,11 +1986,15 @@
     const tick = () => {
       if (!G || G.take !== tk) return;
       const now = Sound.now() - Sound.outLatency();
-      if (tk.phase === 'count') {
+      // le décompte reste à l'écran jusqu'à la fin du décompte entier (en levée, l'élève joue déjà : phase 'play')
+      if (!tk.go) {
         const k = Math.floor((now - tk.clicks[0]) / tk.beatSec + 0.001);
-        if (k >= 0 && k < tk.N && k !== tk.k) { tk.k = k; showCount(tk, k); retrigger(el.card, 'beat'); }
-        if (now >= tk.T0 - 0.04) { tk.phase = 'play'; setHint(tk.full ? 'Toute la comptine : joue !' : 'Joue !', 'go'); }
-      } else {
+        if (k >= 0 && k < tk.N && k !== tk.k) { tk.k = k; retrigger(el.card, 'beat'); }
+        if (k >= 0) paintTake(tk, now);
+        if (tk.phase === 'count' && now >= tk.T0 - 0.04) tk.phase = 'play';
+        if (now >= tk.Tgo - 0.04) { tk.go = true; setHint(tk.full ? 'Toute la comptine : joue !' : 'Joue !', 'go'); }
+      }
+      if (tk.phase === 'play') {
         if (tk.full) {
           // la carte suit la comptine : la phrase suivante paraît juste avant sa première note
           const at = now - tk.T0;
