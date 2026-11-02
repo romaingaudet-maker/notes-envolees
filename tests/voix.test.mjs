@@ -40,9 +40,11 @@ for (const [v, mc, m] of VOICES) {
 
 // 3) une phrase chantée : le suivi, l'attaque et la fenêtre de chaque syllabe comme dans l'oreille
 //    (fenêtre arrêtée au début de la note suivante), après « Régler ma voix »
-function listen(y, sr, mine) {
+function listen(y, sr, mine, expectPc = null) {
   const T = PK.makeTracker(), N = 2048, hop = Math.round(0.028 * sr), onset = PK.makeOnset(sr), hits = [];
   T.voice = true; // comme l'oreille quand on chante (Ear.setVoice)
+  // la note attendue (comme pendant un essai : Ear.expect)
+  if (expectPc != null) { T.expectPcs = [expectPc]; T.expectPc = expectPc; }
   let nf = PK.NF0;
   for (let s = 0; s + N <= y.length; s += hop) {
     const w = y.subarray(s, s + N), now = (s + N) / sr;
@@ -80,5 +82,35 @@ phrase('enfant-bella', 62, 67, ['do', 're', 'mi', 'mi', 'fa', 'sol']);
 phrase('enfant-bella', 62, 67, ['sol', 'sol', 'la', 'la', 'si', 'si'], 0.03); // presque lié
 phrase('am_michael', 50, 45, ['fa', 'fa', 'la', 'la', 'do', 'do']);
 check(`dans les phrases, noms reconnus : ${names.ok}/${names.n}`, names.ok >= 0.9 * names.n);
+
+// 4) une note répétée chantée en rythme, comme au niveau 2 (« do do do » d'« Au clair de la lune ») : les syllabes
+//    enchaînées sans silence, chacune coupée à la durée de sa note (noires, croches). Le début de chaque note n'est
+//    entendu qu'à sa voyelle : la consonne doit rester dans sa syllabe (sinon « do » passe pour « fa » ou « la »)
+function rhythm(v, mc, m, want, durs) {
+  const sr = 48000, mine = Object.fromEntries(SYL.map((s) => [s, [syllableSeq(wav(v, mc, s))]]));
+  const parts = want.map((s, i) => {
+    const z = wav(v, m, s);
+    let mx = 0; for (const q of z) mx = Math.max(mx, Math.abs(q));
+    let on = 0; while (on < z.length && Math.abs(z[on]) < 0.02 * mx) on++;
+    const n = Math.round(durs[i] * sr), out = z.slice(on, on + n), f = Math.round(0.01 * sr);
+    for (let k = 0; k < f && k < out.length; k++) out[out.length - 1 - k] *= k / f;
+    return out;
+  });
+  const y = new Float32Array(Math.round(0.3 * sr) + parts.reduce((a, z) => a + z.length, 0) + sr / 2);
+  const starts = []; let at = Math.round(0.3 * sr);
+  parts.forEach((z, i) => { starts.push(at / sr); y.set(z, at); at += Math.round(durs[i] * sr); });
+  const got = listen(y, sr, mine, m % 12), firsts = starts.map((t0, i) => got.find((g) => g.t > t0 - 0.05 && (i + 1 >= starts.length || g.t < starts[i + 1] - 0.05)));
+  const txt = got.map((g) => `${g.syl}@${g.t.toFixed(2)}`).join(' ') + ' (débuts ' + starts.map((t) => t.toFixed(2)).join(' ') + ')';
+  check(`en rythme « ${want.join(' ')} » (${v}) : une note par syllabe`, got.length === want.length && firsts.every(Boolean), txt);
+  rnames.n += want.length; rnames.ok += firsts.filter((g, i) => g && g.syl === want[i]).length;
+}
+const rnames = { ok: 0, n: 0 };
+rhythm('bf_emma', 57, 64, ['do', 'do', 'do', 'do'], Array(4).fill(60 / 100));
+rhythm('am_michael', 45, 50, ['sol', 'sol', 'sol', 'sol', 'sol'], Array(5).fill(0.28));
+rhythm('enfant-bella', 62, 67, ['mi', 'mi', 'mi', 'mi'], Array(4).fill(60 / 108));
+rhythm('bf_emma', 57, 64, ['la', 'la', 'la', 'la'], Array(4).fill(0.3));
+rhythm('am_michael', 45, 50, ['re', 're', 're', 're'], Array(4).fill(60 / 100));
+rhythm('enfant-bella', 62, 67, ['do', 'do', 'do', 'do'], Array(4).fill(60 / 100));
+check(`en rythme, noms reconnus : ${rnames.ok}/${rnames.n}`, rnames.ok >= 0.8 * rnames.n);
 console.log(fails ? `\n${fails} échec(s)` : '\nLes tests de la voix passent.');
 process.exit(fails ? 1 : 0);

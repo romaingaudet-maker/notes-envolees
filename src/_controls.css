@@ -399,6 +399,11 @@
 .pu-ear .heard-n { font-size: calc(var(--gc) * .3); }
 .heard-s { font-size: 13px; font-weight: 700; line-height: 1; }
 .heard-s:empty { display: none; }
+/* la voix : un autre nom que celui de la note chantée */
+.heard-s.is-bad { color: #B3261E; background: rgba(255, 255, 255, .85); padding: 2px 5px; border-radius: 999px; }
+/* niveau 2, la voix : chaque note chantée, une fois son nom reconnu */
+.heard.is-sung { animation: sung .26s ease-out; }
+@keyframes sung { 40% { scale: 1.07; } }
 
 /* le micro ne marche pas : une bulle au-dessus du pupitre, avec de quoi le rallumer */
 .pu-msg {

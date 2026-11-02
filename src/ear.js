@@ -203,7 +203,10 @@ const PitchKit = (() => {
         // note longue de piano suivie d'une autre note passait pour la même note rejouée (« note en trop »).
         if (h.re) {
           if (h.r === r && rms > h.re.base * h.re.k) {
-            if (++h.re.n >= 2) {
+            // la voix, quand la note attendue est une autre note : 4 trames (~110 ms) à la même hauteur. En chantant lié,
+            // la consonne de la note suivante fait un creux avant que la voix ait rejoint sa hauteur : ce n'est pas la
+            // même note chantée de nouveau. (Une note répétée attendue, « sol sol », se confirme toujours en 2 trames.)
+            if (++h.re.n >= (T.voice && T.expectPc != null && T.expectPc !== pc ? 4 : 2)) {
               const t0 = h.re.t;
               if (T.voice && h.t0 != null && t0 - h.t0 < 0.18) { h.re = null; k.push(rms); if (k.length > 9) k.shift(); return null; }
               T.held = { pc, r, peak: rms, min: rms, armed: false, t0, lv: T.voice ? T.hist.slice(-3) : undefined };
@@ -481,7 +484,14 @@ const PitchKit = (() => {
     let cut = a;
     if (E.length > 1) {
       let mn = Infinity; for (const e of E) mn = Math.min(mn, e);
-      for (let i = E.length - 1; i >= 0; i--) if (E[i] <= mn * 2 + 1e-12) { cut = a + i * hop; break; }
+      // la fin du PREMIER creux (à 6 dB près du plus bas) : le silence, ou la consonne juste après la note d'avant.
+      // Pas un creux plus tardif : en chantant en rythme, le début d'une note est entendu tard (à la voyelle), et le
+      // creux entre la consonne et la voyelle (« d » puis « o ») couperait la consonne.
+      const lo = mn * 4 + 1e-12;
+      let i = 0;
+      while (i < E.length - 1 && E[i] > lo) i++;
+      while (i + 1 < E.length && E[i + 1] <= lo) i++;
+      cut = a + i * hop;
     }
     return mfcc(x, sr, cut, b, warp);
   }
