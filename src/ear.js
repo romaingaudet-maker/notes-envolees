@@ -230,11 +230,17 @@ const PitchKit = (() => {
           if (h.armed) h.min = Math.min(h.min, rms);
           // la voix, consonne voisée (« do do », « ré ré ») : le volume ne baisse parfois que de 6 dB ; ce petit creux
           // compte s'il est suivi d'une vraie attaque, entendue à l'instant (l'énergie fait presque doubler d'un coup),
-          // et seulement quand la même note est attendue de nouveau (une voyelle tenue n'est pas coupée en deux)
-          if (T.voice && !h.soft && rms < ref * 0.5) { h.soft = true; h.smin = rms; }
+          // et seulement quand la même note est attendue de nouveau (une voyelle tenue n'est pas coupée en deux).
+          // Pas de creux dans les 0,15 premières secondes de la note : c'est la consonne puis la voyelle de sa syllabe.
+          const same = T.voice && T.expectPc === pc; // la même note attendue de nouveau
+          if (T.voice && !h.soft && rms < ref * 0.5 && (h.t0 == null || now > h.t0 + 0.15)) { h.soft = true; h.smin = rms; }
           if (h.soft) h.smin = Math.min(h.smin, rms);
           const dip = h.armed && rms > h.min * (T.voice ? 2.5 : 1.8) && rms > gate * 1.3;
           const soft = T.voice && !dip && h.soft && T.expectPc === pc && T.on != null && now - T.on < 0.075 && (h.t0 == null || T.on > h.t0 + 0.15) && rms > h.smin * 1.8 && rms > gate * 1.3;
+          // la même note attendue de nouveau, chantée liée (« la la », « mi mi », « do do » : l, m, d sans silence) : on est
+          // plus généreux, un creux de 6 dB puis une remontée de 6 dB suffisent, même sans attaque nette (une voyelle tenue
+          // ondule moins : son volume remonte rarement autant après un creux)
+          const again = same && !dip && !soft && h.soft && (h.t0 == null || now > h.t0 + 0.2) && rms > h.smin * 2 && rms > gate * 1.3;
           // une attaque entendue à l'instant (même hauteur juste après) : la même note, jouée de nouveau
           // Si c'est justement cette note qui est attendue de nouveau (Sol Sol Sol Sol), l'attaque suffit,
           // même plus douce que la précédente (le volume peut ne pas monter : l'étouffoir du piano coupe
@@ -243,6 +249,7 @@ const PitchKit = (() => {
           if (onT != null) { h.re = { t: onT, base: L ? k[L - 1] : rms, n: 0, k: T.expectPc === pc ? 0.75 : 1.1 }; T.on = null; }
           else if (restrike || dip) h.re = { t: now, base: restrike ? lo : h.min, n: 0, k: 1.15 };
           else if (soft) { h.re = { t: T.on, base: h.smin, n: 0, k: 1.15 }; T.on = null; }
+          else if (again) h.re = { t: now, base: h.smin, n: 0, k: 1.15 };
         } else if (!h.re) {
           if (!h.armed && rms < (T.voice && L ? Math.max(...k.slice(-6)) * 0.3 : h.peak * 0.55)) { h.armed = true; h.min = rms; }
           if (h.armed) h.min = Math.min(h.min, rms);

@@ -6771,11 +6771,17 @@ const PitchKit = (() => {
           if (h.armed) h.min = Math.min(h.min, rms);
           // la voix, consonne voisée (« do do », « ré ré ») : le volume ne baisse parfois que de 6 dB ; ce petit creux
           // compte s'il est suivi d'une vraie attaque, entendue à l'instant (l'énergie fait presque doubler d'un coup),
-          // et seulement quand la même note est attendue de nouveau (une voyelle tenue n'est pas coupée en deux)
-          if (T.voice && !h.soft && rms < ref * 0.5) { h.soft = true; h.smin = rms; }
+          // et seulement quand la même note est attendue de nouveau (une voyelle tenue n'est pas coupée en deux).
+          // Pas de creux dans les 0,15 premières secondes de la note : c'est la consonne puis la voyelle de sa syllabe.
+          const same = T.voice && T.expectPc === pc; // la même note attendue de nouveau
+          if (T.voice && !h.soft && rms < ref * 0.5 && (h.t0 == null || now > h.t0 + 0.15)) { h.soft = true; h.smin = rms; }
           if (h.soft) h.smin = Math.min(h.smin, rms);
           const dip = h.armed && rms > h.min * (T.voice ? 2.5 : 1.8) && rms > gate * 1.3;
           const soft = T.voice && !dip && h.soft && T.expectPc === pc && T.on != null && now - T.on < 0.075 && (h.t0 == null || T.on > h.t0 + 0.15) && rms > h.smin * 1.8 && rms > gate * 1.3;
+          // la même note attendue de nouveau, chantée liée (« la la », « mi mi », « do do » : l, m, d sans silence) : on est
+          // plus généreux, un creux de 6 dB puis une remontée de 6 dB suffisent, même sans attaque nette (une voyelle tenue
+          // ondule moins : son volume remonte rarement autant après un creux)
+          const again = same && !dip && !soft && h.soft && (h.t0 == null || now > h.t0 + 0.2) && rms > h.smin * 2 && rms > gate * 1.3;
           // une attaque entendue à l'instant (même hauteur juste après) : la même note, jouée de nouveau
           // Si c'est justement cette note qui est attendue de nouveau (Sol Sol Sol Sol), l'attaque suffit,
           // même plus douce que la précédente (le volume peut ne pas monter : l'étouffoir du piano coupe
@@ -6784,6 +6790,7 @@ const PitchKit = (() => {
           if (onT != null) { h.re = { t: onT, base: L ? k[L - 1] : rms, n: 0, k: T.expectPc === pc ? 0.75 : 1.1 }; T.on = null; }
           else if (restrike || dip) h.re = { t: now, base: restrike ? lo : h.min, n: 0, k: 1.15 };
           else if (soft) { h.re = { t: T.on, base: h.smin, n: 0, k: 1.15 }; T.on = null; }
+          else if (again) h.re = { t: now, base: h.smin, n: 0, k: 1.15 };
         } else if (!h.re) {
           if (!h.armed && rms < (T.voice && L ? Math.max(...k.slice(-6)) * 0.3 : h.peak * 0.55)) { h.armed = true; h.min = rms; }
           if (h.armed) h.min = Math.min(h.min, rms);
@@ -22724,6 +22731,8 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   const sylOf = (midi) => PitchKit.SYL_PC[mod12(midi)];
   // 'oui', 'non' (un autre nom, nettement) ou null (pas de syllabe, ou la reconnaissance hésite)
   const nameSaid = (syl, midi) => (syl ? PitchKit.sayMatch(syl, sylOf(midi), syl.user) : null);
+  // la note n répète la précédente (même nom) : la page est généreuse avec son nom, qui vient d'être chanté
+  const repeats = (n) => !!G && n > 0 && mod12(G.song.notes[n].midi) === mod12(G.song.notes[n - 1].midi);
   let defVoice = null;
   // VOICE_V : la façon de résumer le timbre ; un réglage fait autrement (version précédente) est à refaire
   const VOICE_V = 2;
@@ -23799,11 +23808,15 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
      (do sur un do) ; un autre nom seulement quand elle en est sûre (nettement plus proche) ; rien quand elle hésite.
      (Avant, il fallait qu'un nom l'emporte nettement sur les six autres : en chantant en rythme, ou sans « Régler ma
      voix », presque aucun nom ne s'affichait.) */
+  let lastSung = null; // la note chantée juste avant (sa hauteur, son instant)
   function sylHeard(hit) {
     const syl = hit.syl, pc = mod12(hit.r - inst().off), want = PitchKit.SYL_PC[pc], t = performance.now();
+    // la même note chantée de nouveau (« do do do ») : pas de nom refusé, la page est généreuse
+    const again = !!lastSung && lastSung.pc === pc && t - lastSung.t < 2500;
+    lastSung = { pc, t };
     if (want) {
       if (syl.best === want) return { s: want, pc, t, ok: true };
-      return PitchKit.sayMatch(syl, want, syl.user) === 'non' ? { s: syl.best, pc, t, ok: false } : null;
+      return !again && PitchKit.sayMatch(syl, want, syl.user) === 'non' ? { s: syl.best, pc, t, ok: false } : null;
     }
     // entre deux notes de la gamme (dièse, bémol) : seulement un nom sûr
     return PitchKit.SYL.every((s) => s === syl.best || PitchKit.sayMatch(syl, s, syl.user) === 'non') ? { s: syl.best, pc, t, ok: false } : null;
@@ -23843,7 +23856,8 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     const written = hit.r - inst().off;
     const target = G.song.notes[G.cursor];
     const pitchOk = rightPitch(hit, target.midi);
-    const said = singing() ? nameSaid(hit.syl, target.midi) : null;
+    // la voix : le nom compte, sauf sur une note qui répète la précédente (« do do do ») : la hauteur suffit
+    const said = singing() && !repeats(G.cursor) ? nameSaid(hit.syl, target.midi) : null;
     if (G.live.full) {
       if (pitchOk) tuneTo(hit, target.midi);
       wholeNote(pitchOk && said !== 'non', el.heard);
@@ -24176,7 +24190,8 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     const ci = countIn(p);
     const idx = full ? song.notes.map((_, n) => n) : song.phrases[p].notes;
     const t0 = song.notes[idx[0]].t;
-    const exp = idx.map((n) => { const nt = song.notes[n]; return { n, t: (nt.t - t0) * ci.spb, midi: nt.midi, ph: nt.phrase }; });
+    // rep : la note répète la précédente (« do do do ») : à la voix, son nom n'est pas vérifié (voir endTake)
+    const exp = idx.map((n) => { const nt = song.notes[n]; return { n, t: (nt.t - t0) * ci.spb, midi: nt.midi, ph: nt.phrase, rep: repeats(n) }; });
     const starts = song.phrases.map((ph) => (song.notes[ph.notes[0]].t - t0) * ci.spb);
     const tk = Object.assign({}, ci, {
       p, full, exp, starts, got: [], phase: 'count', k: -1, ka: -1, go: false, raf: 0, mic: settings.mode === 'mic', sing: singing() && Ear.voiceOk(),
@@ -24288,8 +24303,8 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     G.take = null;
     el.main.classList.remove('is-taking');
     if (tk.mic) Ear.expect(null);
-    // la voix : la bonne hauteur ET le bon nom (sauf si la reconnaissance hésite)
-    const same = tk.mic ? (e, g) => rightPitch(g.hit, e.midi) && !(tk.sing && nameSaid(g.syl, e.midi) === 'non') : (e, g) => g.midi === e.midi;
+    // la voix : la bonne hauteur ET le bon nom (sauf si la reconnaissance hésite, ou si la note répète la précédente)
+    const same = tk.mic ? (e, g) => rightPitch(g.hit, e.midi) && !(tk.sing && !e.rep && nameSaid(g.syl, e.midi) === 'non') : (e, g) => g.midi === e.midi;
     const r = Rhythm.evaluate({ exp: tk.exp, got: tk.got, beat: tk.beatSec, same, mic: tk.mic });
     if (tk.full) { endFullTake(tk, r); return; }
     G.begun = true;

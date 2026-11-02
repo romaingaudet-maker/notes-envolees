@@ -618,6 +618,8 @@
   const sylOf = (midi) => PitchKit.SYL_PC[mod12(midi)];
   // 'oui', 'non' (un autre nom, nettement) ou null (pas de syllabe, ou la reconnaissance hésite)
   const nameSaid = (syl, midi) => (syl ? PitchKit.sayMatch(syl, sylOf(midi), syl.user) : null);
+  // la note n répète la précédente (même nom) : la page est généreuse avec son nom, qui vient d'être chanté
+  const repeats = (n) => !!G && n > 0 && mod12(G.song.notes[n].midi) === mod12(G.song.notes[n - 1].midi);
   let defVoice = null;
   // VOICE_V : la façon de résumer le timbre ; un réglage fait autrement (version précédente) est à refaire
   const VOICE_V = 2;
@@ -1693,11 +1695,15 @@
      (do sur un do) ; un autre nom seulement quand elle en est sûre (nettement plus proche) ; rien quand elle hésite.
      (Avant, il fallait qu'un nom l'emporte nettement sur les six autres : en chantant en rythme, ou sans « Régler ma
      voix », presque aucun nom ne s'affichait.) */
+  let lastSung = null; // la note chantée juste avant (sa hauteur, son instant)
   function sylHeard(hit) {
     const syl = hit.syl, pc = mod12(hit.r - inst().off), want = PitchKit.SYL_PC[pc], t = performance.now();
+    // la même note chantée de nouveau (« do do do ») : pas de nom refusé, la page est généreuse
+    const again = !!lastSung && lastSung.pc === pc && t - lastSung.t < 2500;
+    lastSung = { pc, t };
     if (want) {
       if (syl.best === want) return { s: want, pc, t, ok: true };
-      return PitchKit.sayMatch(syl, want, syl.user) === 'non' ? { s: syl.best, pc, t, ok: false } : null;
+      return !again && PitchKit.sayMatch(syl, want, syl.user) === 'non' ? { s: syl.best, pc, t, ok: false } : null;
     }
     // entre deux notes de la gamme (dièse, bémol) : seulement un nom sûr
     return PitchKit.SYL.every((s) => s === syl.best || PitchKit.sayMatch(syl, s, syl.user) === 'non') ? { s: syl.best, pc, t, ok: false } : null;
@@ -1737,7 +1743,8 @@
     const written = hit.r - inst().off;
     const target = G.song.notes[G.cursor];
     const pitchOk = rightPitch(hit, target.midi);
-    const said = singing() ? nameSaid(hit.syl, target.midi) : null;
+    // la voix : le nom compte, sauf sur une note qui répète la précédente (« do do do ») : la hauteur suffit
+    const said = singing() && !repeats(G.cursor) ? nameSaid(hit.syl, target.midi) : null;
     if (G.live.full) {
       if (pitchOk) tuneTo(hit, target.midi);
       wholeNote(pitchOk && said !== 'non', el.heard);
@@ -2070,7 +2077,8 @@
     const ci = countIn(p);
     const idx = full ? song.notes.map((_, n) => n) : song.phrases[p].notes;
     const t0 = song.notes[idx[0]].t;
-    const exp = idx.map((n) => { const nt = song.notes[n]; return { n, t: (nt.t - t0) * ci.spb, midi: nt.midi, ph: nt.phrase }; });
+    // rep : la note répète la précédente (« do do do ») : à la voix, son nom n'est pas vérifié (voir endTake)
+    const exp = idx.map((n) => { const nt = song.notes[n]; return { n, t: (nt.t - t0) * ci.spb, midi: nt.midi, ph: nt.phrase, rep: repeats(n) }; });
     const starts = song.phrases.map((ph) => (song.notes[ph.notes[0]].t - t0) * ci.spb);
     const tk = Object.assign({}, ci, {
       p, full, exp, starts, got: [], phase: 'count', k: -1, ka: -1, go: false, raf: 0, mic: settings.mode === 'mic', sing: singing() && Ear.voiceOk(),
@@ -2182,8 +2190,8 @@
     G.take = null;
     el.main.classList.remove('is-taking');
     if (tk.mic) Ear.expect(null);
-    // la voix : la bonne hauteur ET le bon nom (sauf si la reconnaissance hésite)
-    const same = tk.mic ? (e, g) => rightPitch(g.hit, e.midi) && !(tk.sing && nameSaid(g.syl, e.midi) === 'non') : (e, g) => g.midi === e.midi;
+    // la voix : la bonne hauteur ET le bon nom (sauf si la reconnaissance hésite, ou si la note répète la précédente)
+    const same = tk.mic ? (e, g) => rightPitch(g.hit, e.midi) && !(tk.sing && !e.rep && nameSaid(g.syl, e.midi) === 'non') : (e, g) => g.midi === e.midi;
     const r = Rhythm.evaluate({ exp: tk.exp, got: tk.got, beat: tk.beatSec, same, mic: tk.mic });
     if (tk.full) { endFullTake(tk, r); return; }
     G.begun = true;
