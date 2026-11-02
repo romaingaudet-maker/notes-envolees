@@ -70,6 +70,8 @@
     stop: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/></svg>',
     back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     next: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    rabbit: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><ellipse cx="15.3" cy="6.2" rx="1.6" ry="4.7" transform="rotate(-20 15.3 6.2)"/><ellipse cx="18.5" cy="6.1" rx="1.6" ry="4.5" transform="rotate(14 18.5 6.1)"/><path fill-rule="evenodd" d="M14.2 12.5a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0zM18 11.8a.9.9 0 1 0 1.8 0a.9.9 0 1 0-1.8 0z"/><ellipse cx="10.6" cy="15.4" rx="7.1" ry="4.7"/><ellipse cx="7" cy="18.7" rx="3.7" ry="1.9"/><ellipse cx="16.8" cy="19.3" rx="2.3" ry="1.3"/><circle cx="3.2" cy="13.8" r="2.1"/></g></svg>',
+    ears: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.2 15.2v-3.4a7.8 7.8 0 0 1 15.6 0v3.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><rect x="2.6" y="13.2" width="5.2" height="7.8" rx="2.2" fill="currentColor"/><rect x="16.2" y="13.2" width="5.2" height="7.8" rx="2.2" fill="currentColor"/></svg>',
     turtle: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 15.5c0-4.3 3.7-7.5 8.5-7.5s8.5 3.2 8.5 7.5z" fill="currentColor"/><circle cx="20.6" cy="13.2" r="2.3" fill="currentColor"/><path d="M5 15.5v3M9 15.5v3M13.5 15.5v3M17 15.5v3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
     reset: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2.2-5.1M5 4v4h4" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     right: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 16h21M17 8l8 8-8 8" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -407,8 +409,8 @@
   /* Les réglages, sur une seule feuille : le prénom, le mode de jeu et l'instrument, chacun modifiable directement ;
      dans une comptine, aussi le niveau et la vitesse (la tortue : la page joue plus lentement ; au niveau 2, le
      décompte et la mesure aussi) et, pour la voix, « Régler ma voix ». On l'ouvre par « Changer » (le rappel, en haut
-     de l'accueil) ou par le bouton à son nom, en haut d'une comptine ; la tortue reste dessinée sur ce bouton tant que
-     la vitesse lente est choisie. Chaque zone garde sa taille quel que soit le choix : les textes de tous les choix
+     de l'accueil) ou par le bouton à son nom, en haut d'une comptine. La vitesse se change aussi d'un toucher, au
+     bout de la ligne du niveau (le lapin : normale ; la tortue : lente). Chaque zone garde sa taille quel que soit le choix : les textes de tous les choix
      sont posés au même endroit (seul celui du choix se voit), la case du tableau d'honneur garde sa place, le niveau
      et la vitesse restent (grisés en Défi). La feuille tient dans l'écran, bouton OK compris (fitSheet).
      card : le rappel de l'accueil d'où l'on vient (remis à jour en fermant). */
@@ -416,8 +418,17 @@
     if (!G) return;
     G.slow = !!on;
     if (G.slow) G.usedSlow = true;
-    const ic = app.querySelector('#ip-slow');
-    if (ic) ic.hidden = !G.slow;
+    speedUI();
+  }
+  // le bouton de la vitesse, au bout de la ligne du niveau : le lapin (normale) sur fond sombre, la tortue (lente) en jaune
+  function speedUI() {
+    const b = el && el.speed;
+    if (!b || !document.contains(b)) return;
+    b.setAttribute('aria-pressed', String(!!G.slow));
+    b.innerHTML = G.slow ? ICON.turtle : ICON.rabbit;
+    const t = G.slow ? 'Vitesse lente : toucher pour revenir à la vitesse normale' : 'Vitesse normale : toucher pour jouer plus lentement';
+    b.setAttribute('aria-label', t);
+    b.title = t;
   }
   // en une ou deux lignes (réglages) : comment la page joue pour cet instrument, et avec quel son
   function instBrief(k) {
@@ -469,7 +480,7 @@
             <div class="rg-pl">
               <p class="rg-lbl" id="rg-sp-l">Vitesse</p>
               <div class="seg rg-seg rg-speed" role="radiogroup" aria-labelledby="rg-sp-l">
-                <button type="button" role="radio" data-slow="0" aria-checked="${!G.slow}">Normale</button>
+                <button type="button" role="radio" data-slow="0" aria-checked="${!G.slow}">${ICON.rabbit}<span>Normale</span></button>
                 <button type="button" role="radio" data-slow="1" aria-checked="${G.slow}">${ICON.turtle}<span>Lente</span></button>
               </div>
             </div>
@@ -1148,13 +1159,15 @@
     // au repos, les deux petits ronds choisissent ce que joue le grand rond (celui qui est choisi reste enfoncé)
     const side = (id, ic, lbl, aria = '') => `<button class="pu-side" id="${id}" type="button"${aria ? ` aria-label="${aria}"` : ''} hidden><span class="pu-ic">${ic}</span><span class="pu-lbl">${lbl}</span></button>`;
     const pick = (id, ic, lbl, on) => `<button class="pu-side pu-pick" id="${id}" type="button" aria-pressed="${on}" aria-describedby="pick-d"><span class="pu-ic">${ic}</span><span class="pu-lbl">${lbl}</span></button>`;
+    // l'écoute libre : un petit casque sur chacun des deux petits ronds du repos (écouter, sans commencer d'essai)
+    const hear = (id, aria) => `<button class="pu-hear" id="${id}" type="button" aria-label="${aria}" title="${aria}">${ICON.ears}</button>`;
     app.innerHTML = `
     <main class="song" data-mode="${settings.mode}" data-level="${G.level}">
       <section class="stage grain" aria-label="Décor : ${esc(nb(song.title))}">
         ${D.markup(song, info())}
         <div class="stage-bar">
           <a class="back" href="#" aria-label="Les comptines">${ICON.back}<span>Les comptines</span></a>
-          <button class="inst-pill" id="b-rg" type="button" aria-haspopup="dialog" aria-label="Réglages : ton prénom, le mode de jeu, le niveau, la vitesse et ton instrument" title="Réglages : ton prénom, le mode de jeu, le niveau, la vitesse et ton instrument">${ICON.note}<span class="ip-name" id="ip-name">${esc(instShort())}</span><span class="ip-slow" id="ip-slow"${G.slow ? '' : ' hidden'}>${ICON.turtle}</span>${ICON.chev}</button>
+          <button class="inst-pill" id="b-rg" type="button" aria-haspopup="dialog" aria-label="Réglages : ton prénom, le mode de jeu, le niveau, la vitesse et ton instrument" title="Réglages : ton prénom, le mode de jeu, le niveau, la vitesse et ton instrument">${ICON.note}<span class="ip-name" id="ip-name">${esc(instShort())}</span>${ICON.chev}</button>
           <div class="stage-title" aria-hidden="true"><span>Comptine ${song.level} · ${LEVEL(song.level)}</span><b>${titleHtml(song.title)}</b></div>
           <a class="next-song" href="#${next.id}" aria-label="Comptine suivante : ${esc(nb(next.title))}"><span class="ns-ic">${ICON.next}</span><span class="ns-lock" hidden>${ICON.lock}</span></a>
         </div>
@@ -1177,15 +1190,19 @@
       </section>
       <section class="pupitre" aria-label="À toi" data-band="repos">
         <div class="pu-top">
-          ${DEFI ? '<p class="pu-first pu-defi" id="pu-defi"></p>' : `<div class="seg seg-level pu-first" role="radiogroup" aria-label="Niveau">
-            <button type="button" role="radio" data-level="1" aria-checked="${!lv2}"><b class="lv">1</b><span>Les notes</span></button>
-            <button type="button" role="radio" data-level="2" aria-checked="${lv2}"><b class="lv">2</b><span>Notes et rythme</span></button>
+          ${DEFI ? '<p class="pu-first pu-defi" id="pu-defi"></p>' : `<div class="pu-first pu-lvrow">
+            <div class="seg seg-level" role="radiogroup" aria-label="Niveau">
+              <button type="button" role="radio" data-level="1" aria-checked="${!lv2}"><b class="lv">1</b><span>Les notes</span></button>
+              <button type="button" role="radio" data-level="2" aria-checked="${lv2}"><b class="lv">2</b><span>Notes et rythme</span></button>
+            </div>
+            <button class="pu-speed" id="b-speed" type="button" aria-pressed="${!!G.slow}">${G.slow ? ICON.turtle : ICON.rabbit}</button>
           </div>`}
           <p class="hint" id="hint" aria-live="polite" hidden></p>
         </div>
         <div class="pu-row">
           <div class="pu-slot">
             ${pick('b-phrase', ICON.phrase, `Phrase${NB}1`, false)}
+            ${hear('b-hear-p', 'Écouter la phrase 1')}
             ${side('b-stop', ICON.stop, 'Arrêter')}
             ${side('b-level', lv2 ? ICON.note : ICON.metro, lv2 ? `Niveau${NB}1` : `Niveau${NB}2`, lv2 ? 'Niveau 1 : les notes' : 'Niveau 2 : notes et rythme')}
           </div>
@@ -1195,6 +1212,7 @@
           </div>
           <div class="pu-slot">
             ${pick('b-all', ICON.song, ALL_LBL, true)}
+            ${hear('b-hear-a', 'Écouter toute la comptine')}
             ${side('b-restart', ICON.reset, 'Recommencer')}
             ${lv2 ? '' : side('b-to', Q_ICON, 'Jusqu’à la note', 'Écouter la phrase jusqu’à la note à trouver')}
             ${side('b-hear', ICON.play, 'Réécouter', 'Réécouter la note')}
@@ -1226,7 +1244,10 @@
       card: app.querySelector('.card'),
       done: app.querySelector('#done'),
       pu: app.querySelector('.pupitre'),
-      seg: app.querySelector('.pu-top .pu-first'), // le niveau ; en Défi, où en est le Défi de cette comptine
+      seg: app.querySelector('.pu-top .pu-first'), // le niveau (et la vitesse) ; en Défi, où en est le Défi de cette comptine
+      speed: app.querySelector('#b-speed'),
+      hearP: app.querySelector('#b-hear-p'),
+      hearA: app.querySelector('#b-hear-a'),
       hint: app.querySelector('#hint'),
       beads: [...app.querySelectorAll('.bead')].sort((a, b) => a.dataset.n - b.dataset.n),
       syls: [...app.querySelectorAll('.syl')].sort((a, b) => a.dataset.n - b.dataset.n),
@@ -1307,6 +1328,8 @@
     const had = el.pu.contains(document.activeElement) ? document.activeElement : null;
     el.pu.dataset.band = st;
     SIDE_KEYS.forEach((k) => { if (el[k]) el[k].hidden = !shown.includes(k); });
+    if (el.hearP) el.hearP.hidden = el.bPhrase.hidden;
+    if (el.hearA) el.hearA.hidden = el.bAll.hidden;
     const ear = st === 'jeu' || st === 'cal';
     el.bGo.hidden = ear;
     el.ear.hidden = !ear;
@@ -1477,6 +1500,27 @@
     el.bPhrase.setAttribute('aria-pressed', String(!G.whole));
     el.bAll.setAttribute('aria-pressed', String(G.whole));
     el.bPhrase.querySelector('.pu-lbl').textContent = `Phrase${NB}${goPhrase() + 1}`;
+    hearUI();
+  }
+  // les petits casques : écouter (ou arrêter l'écoute en cours)
+  function hearUI() {
+    [[el.hearP, 'p'], [el.hearA, 'a']].forEach(([b, w]) => {
+      if (!b) return;
+      const on = !!(G.playing && G.playing.kind === 'free' && G.playing.which === w);
+      b.classList.toggle('is-on', on);
+      b.innerHTML = on ? ICON.stop : ICON.ears;
+      const t = on ? 'Arrêter l’écoute' : w === 'p' ? `Écouter la phrase ${goPhrase() + 1}` : 'Écouter toute la comptine';
+      b.setAttribute('aria-label', t);
+      b.title = t;
+    });
+  }
+  // l'écoute libre : la phrase affichée, ou toute la comptine, sans commencer d'essai (les notes s'allument au passage)
+  function hearFree(which) {
+    if (!G || busy() || G.done || G.cal) return;
+    G.acts++; // la phrase suivante ne démarre plus toute seule
+    if (G.playing && G.playing.kind === 'free' && G.playing.which === which) { stopPlayback(true); return; }
+    if (!Sound.ensure()) return;
+    playEvents(which === 'a' ? G.song.events : G.song.phrases[goPhrase()].events, 'free', null, { which });
   }
 
   function expectNext() {
@@ -1900,7 +1944,7 @@
     const h = Sound.sequence(voiceNow(), items, opts.at ? Math.max(0.05, opts.at - Sound.now()) : undefined);
     if (!h) { goBack(home); return; }
     const noteEnd = h.t0 + items.reduce((m, it) => Math.max(m, it.start + it.dur), 0);
-    const P = { h, items, kind, t0: h.t0, end: h.t0 + total, noteEnd, cur: -1, raf: 0, onEnd, home, srcs: opts.srcs || [], ci: opts.ci || null, k: -1, then: opts.then || null, natural: false };
+    const P = { h, items, kind, t0: h.t0, end: h.t0 + total, noteEnd, cur: -1, raf: 0, onEnd, home, srcs: opts.srcs || [], ci: opts.ci || null, k: -1, then: opts.then || null, natural: false, which: opts.which || null };
     G.playing = P;
     setPlayingUI(kind, true);
     const tick = () => {
@@ -1984,7 +2028,7 @@
   function setPlayingUI(kind, on) {
     el.main.classList.toggle('is-playing', on);
     if (kind === 'to') sideBusy(el.bTo, on, Q_ICON, 'Jusqu’à la note', 'Écouter la phrase jusqu’à la note à trouver');
-    bandUI();
+    bandUI(); // (les petits casques : hearUI, par pickUI)
   }
 
   const ALL_LBL = 'Toute la comptine';
@@ -2678,6 +2722,9 @@
     el.seg.querySelectorAll('[role="radio"]').forEach((b) => b.addEventListener('click', () => {
       if (+b.dataset.level !== G.level) setLevel(+b.dataset.level);
     }));
+    if (el.speed) { el.speed.addEventListener('click', () => { G.acts++; setSlow(!G.slow); }); speedUI(); }
+    if (el.hearP) el.hearP.addEventListener('click', () => hearFree('p'));
+    if (el.hearA) el.hearA.addEventListener('click', () => hearFree('a'));
     el.earMsg.addEventListener('click', (ev) => { if (ev.target.closest('#mic-on')) startMic(); });
     if (FINE.matches) {
       let raf = 0;
