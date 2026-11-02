@@ -1305,8 +1305,9 @@
     const ear = st === 'jeu' || st === 'cal';
     el.bGo.hidden = ear;
     el.ear.hidden = !ear;
-    // en haut : le niveau tant qu'aucun essai n'est allé au bout (sauf un message à lire, le temps de le lire), sinon ce que dit la page
-    const seg = st === 'repos' && !(G.flashUntil > performance.now());
+    // en haut, hors du jeu : le niveau, qu'on peut changer à tout moment (en Défi, où en est le Défi) ; un message à lire
+    // (le bilan d'un essai…) y prend sa place quelques secondes (flashTop), puis le niveau revient
+    const seg = (st === 'repos' || st === 'apres') && !(G.flashUntil > performance.now());
     el.seg.hidden = !seg;
     el.hint.hidden = seg;
     pickUI();
@@ -1336,7 +1337,8 @@
     el.goT.textContent = t;
     el.goS.textContent = s;
   }
-  // un message à lire au repos (le niveau occupe la ligne du haut) : il prend sa place quelques secondes
+  // un message à lire hors du jeu (le niveau occupe la ligne du haut) : il prend sa place quelques secondes
+  const MSG_MS = 4000; // le bilan d'un essai
   function flashTop(ms = 2800) {
     if (!G) return;
     G.flashUntil = performance.now() + ms;
@@ -1500,7 +1502,7 @@
   function idleHint() {
     if (!G || !el.hint || G.done || busy()) return;
     const q = G.view;
-    // au repos, la ligne du haut montre le niveau : ce message ne se lit qu'une fois un essai allé au bout
+    // hors du jeu, la ligne du haut montre le niveau : ce message n'y paraît que le temps d'un flashTop
     let html = G.defi ? (G.defiFail ? `Retour au départ${NB}! Ton record${NB}: ${defi.best || 'pas encore'}` : `Défi${NB}: toute la comptine, en rythme, sans erreur`) : G.level === 2 ? 'Toute la comptine, en rythme' : 'Toute la comptine, sans aide', cls = '', ready = false;
     if (!G.whole) {
       if (G.queue.includes(q) && !isDone(q)) { html = `À corriger${NB}: phrase ${q + 1}`; cls = 'up'; ready = true; }
@@ -1673,7 +1675,7 @@
     showPhrase(bad[0]);
     setHint(text, 'up');
     if (el.bGo) el.bGo.classList.add('is-ready');
-    bandUI();
+    flashTop(MSG_MS);
   }
 
   // nouvelle partie de la même comptine, toute la comptine d'abord (go : l'essai démarre tout de suite)
@@ -1794,6 +1796,7 @@
     G.begun = true;
     endLive();
     setHint(`Phrase ${p + 1} retrouvée !`, 'ok');
+    flashTop(MSG_MS);
     chain(p);
   }
 
@@ -2206,6 +2209,7 @@
       }
     }
     setHint(v.text, v.mood);
+    flashTop(MSG_MS);
     if (r.pass) G.passed.add(tk.p); else G.fails++;
     paintPill(tk.p);
     paintCount();
@@ -2267,7 +2271,7 @@
       defiTop();
       const ph = whichPh(bad);
       setHint(`${ph[0].toUpperCase() + ph.slice(1)} ${bad.length > 1 ? 'ont' : 'a'} des erreurs${NB}: retour au départ${NB}!`, 'up');
-      bandUI();
+      flashTop(MSG_MS);
       return;
     }
     if (!bad.length) { setHint(text, 'ok'); flashTop(2300); later(() => { if (G && !busy() && !G.done) finish(); }, 1800); return; }
