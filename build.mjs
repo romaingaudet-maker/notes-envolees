@@ -26,8 +26,8 @@ const out = (name, html) => { if (QUALIF) return; fs.writeFileSync(new URL('./di
 
 // le nom du jeu, partout : titre de la page, application installée sur le téléphone, icône
 const NAME = 'Les Notes Envolées';
-const iconOf = (bg, ink) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="${bg}"/><path d="M27 15v25.5a8 8 0 1 0 5 7.4V24l12 4v-9z" fill="${ink}"/></svg>`)}`;
-const icon = iconOf('#2B2350', '#F2C14E'); // l'icône de l'onglet, pour toutes les pages
+// l'icône de l'onglet, pour toutes les pages : le personnage de l'icône du téléphone, sans le ruban (illisible en petit)
+const icon = 'data:image/png;base64,' + fs.readFileSync(new URL('./icone-onglet.png', import.meta.url)).toString('base64');
 let rev = ''; // la version testée, affichée dans le bandeau
 if (QUALIF) { try { rev = execSync('git rev-parse --short HEAD', { cwd: new URL('./', import.meta.url) }).toString().trim(); } catch (e) { /* hors dépôt */ } }
 // le Worker du suivi de la production : en qualification, la page de suivi et le tableau d'honneur du Défi le lisent
