@@ -5030,10 +5030,16 @@ const INST_ICON = (() => {
     }
     applyVoice();
   }
+  // le niveau change : la comptine repart à ce niveau, en gardant ce que jouait le grand rond (« Phrase n » ou
+  // « Toute la comptine »)
   function setLevel(v) {
     settings.level = v === 2 ? 2 : 1;
     save(SET_KEY, settings);
-    if (G && view === 'song') { stopAll(); renderSong(G.song); }
+    if (G && view === 'song') {
+      const keep = { whole: G.whole, view: G.moveTo != null ? G.moveTo : G.view };
+      stopAll();
+      renderSong(G.song, { keep });
+    }
   }
 
   /* ---------------- l'élève : son prénom, son instrument, son mode de jeu ----------------
@@ -5934,7 +5940,8 @@ const INST_ICON = (() => {
   const PRAISE = ['Bravo !', 'Oui !', 'Super !', 'Bien joué !', 'Exactement !', 'Quelle oreille !', 'C’est ça !', 'Génial !'];
   let el = {};
 
-  function renderSong(song) {
+  // keep : ce que jouait le grand rond avant (changement de niveau) : { whole, view }
+  function renderSong(song, { keep } = {}) {
     trackLeave(G && G.song === song ? 'recommence' : 'autre');
     view = 'song';
     Veille.keep(true);
@@ -5945,6 +5952,7 @@ const INST_ICON = (() => {
     const DEFI = jeu() === 'defi';
     const keepSlow = !DEFI && G && G.slow;
     const lv2 = DEFI || settings.level === 2;
+    if (DEFI) keep = null; // le Défi : toujours toute la comptine
     G = {
       song, level: lv2 ? 2 : 1, found: new Set(), revealed: new Set(), errors: 0, attempts: 0, cursor: null, view: 0,
       slow: !!keepSlow, playing: null, done: false, lastStars: 0, defi: DEFI,
@@ -5953,13 +5961,13 @@ const INST_ICON = (() => {
       // whole : ce que joue le grand rond, toute la comptine (au début) ou la phrase affichée (au choix, les petits ronds)
       // begun : un essai est allé jusqu'au bout (en haut du pupitre, ce que dit la page remplace alors le niveau)
       // miss : notes manquées pendant la comptine entière (niveau 1) ; queue : phrases à corriger ; acts : gestes de l'élève
-      whole: true, begun: false, miss: new Set(), queue: [], acts: 0,
+      whole: keep ? !!keep.whole : true, begun: false, miss: new Set(), queue: [], acts: 0,
       // live : essai en cours au niveau 1 (après l'écoute et le décompte) ; cnt : décompte du niveau 1 ; helped : notes montrées
       live: null, cnt: null, helped: 0, nudged: false,
       // suivi : début de la partie (temps page visible), « lentement » utilisé, résultat déjà envoyé
       t0: Suivi.clock(), usedSlow: !!keepSlow, tracked: false,
     };
-    track('debut', { c: song.id, niveau: G.level, entiere: true });
+    track('debut', { c: song.id, niveau: G.level, entiere: G.whole });
     const idx = LIB.indexOf(song);
     const next = LIB[(idx + 1) % LIB.length];
     const span = song.maxStep - song.minStep;
@@ -6072,6 +6080,7 @@ const INST_ICON = (() => {
     D.mount(el.stage, song, info());
     D.update(el.stage, info());
     bindSong();
+    if (keep && keep.view > 0 && keep.view < song.phrases.length) showPhrase(keep.view, false);
     setCursor(null);
     applyMode();
     defiTop();
