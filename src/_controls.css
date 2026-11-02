@@ -68,7 +68,7 @@
 .hint.go { color: var(--accent); font-size: 26px; }
 .card.beat { animation: card-beat .24s ease-out; }
 @keyframes card-beat { from { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 55%, transparent); } to { box-shadow: 0 0 0 0 transparent; } }
-.is-taking .strip, .is-taking .inst-pill { opacity: .45; pointer-events: none; }
+.is-taking .strip, .is-taking .pill-all, .is-taking .inst-pill { opacity: .45; pointer-events: none; }
 
 /* verdict de chaque note : un anneau autour de la perle */
 .bead.r-ok, .bead.r-near, .bead.r-far, .bead.r-wrong, .bead.r-miss { outline-offset: 2px; }
@@ -324,11 +324,17 @@
 .pu-top .hint svg { width: 26px; height: 26px; }
 .pu-top .hint small { font-size: 13px; }
 .pu-top .cin b { width: 1.5em; height: 1.5em; }
-/* le niveau et, au bout, la vitesse : le lapin (normale) sur fond sombre, la tortue (lente) en jaune */
+/* le casque (écouter), le niveau et, au bout, la vitesse : le lapin (normale) au clair, la tortue (lente) en couleur */
 .pu-top .pu-lvrow { width: min(100%, 470px); display: flex; align-items: center; gap: 8px; }
 .pu-top .pu-lvrow[hidden] { display: none; }
 .pu-top .pu-lvrow .seg { flex: 1 1 auto; width: auto; min-width: 0; }
-.pu-top .pu-lvrow .seg button { gap: 6px; padding: 0 6px; }
+/* les deux niveaux prennent la place de leur nom (« Notes et rythme » est plus long), pour rester lisibles en entier */
+.pu-top .pu-lvrow .seg button { flex: 1 1 auto; gap: 6px; padding: 0 6px; }
+@media (max-width: 380px) {
+  .pu-top .pu-lvrow { gap: 6px; }
+  .pu-top .pu-lvrow .seg button { font-size: 12px; gap: 5px; padding: 0 5px; }
+}
+@media (max-width: 340px) { .pu-top .pu-lvrow .seg .lv { display: none; } }
 .pu-speed {
   flex: none; display: grid; place-items: center; width: var(--pt); height: var(--pt); padding: 0; border-radius: 50%;
   border: 2px solid var(--line-strong); background: var(--panel); color: var(--text); cursor: pointer;
@@ -338,6 +344,17 @@
 .pu-speed[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 62%, #000); }
 .pu-speed:active { transform: translateY(2px); }
 .pu-speed:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+/* le casque, au début de la ligne : écouter ce que jouerait le grand rond (la phrase choisie, ou toute la comptine),
+   sans jouer ; pendant l'écoute, il l'arrête */
+.pu-listen {
+  flex: none; display: grid; place-items: center; width: var(--pt); height: var(--pt); padding: 0; border-radius: 50%;
+  border: 2px solid var(--text); background: var(--text); color: var(--panel); cursor: pointer;
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--text) 62%, #000); transition: transform .08s, background-color .15s;
+}
+.pu-listen svg { width: 52%; height: 52%; }
+.pu-listen.is-on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 62%, #000); }
+.pu-listen:active { transform: translateY(2px); }
+.pu-listen:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 
 /* les trois ronds */
 .pu-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--gb) minmax(0, 1fr); width: 100%; max-width: 520px; margin: 0 auto; }
@@ -363,24 +380,6 @@
 .pu-side:focus-visible .pu-ic { outline: 3px solid var(--accent); outline-offset: 3px; }
 .pu-side .q { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px dashed currentColor; font-size: 15px; line-height: 1; }
 @media (hover: hover) { .pu-side:hover .pu-ic { background: var(--panel-2); } .pu-side.is-on:hover .pu-ic { background: var(--text); } }
-/* au repos, « Phrase n » et « Toute la comptine » : celui qui est choisi prend la couleur du grand rond, qui le jouera */
-.pu-pick .pu-ic svg { width: calc(var(--sc) * .52); height: calc(var(--sc) * .52); }
-.pu-pick[aria-pressed="false"] .pu-ic { color: var(--text-soft); }
-.pu-pick[aria-pressed="false"] .pu-lbl { font-weight: 600; }
-.pu-pick[aria-pressed="true"] .pu-ic { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 62%, #000); }
-.pu-pick[aria-pressed="true"]:active .pu-ic { box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 62%, #000); }
-/* le petit casque, en haut à droite de « Phrase n » et de « Toute la comptine » : écouter, sans jouer */
-.pu-hear {
-  align-self: start; justify-self: center; z-index: 1;
-  width: 30px; height: 30px; padding: 0; display: grid; place-items: center; border-radius: 50%;
-  margin-top: calc((var(--gb) - var(--sc)) / 2 - 12px); translate: calc(var(--sc) / 2 - 3px) 0;
-  border: 3px solid var(--band, color-mix(in srgb, var(--panel) 35%, #FFFFFF)); background: var(--text); color: var(--panel); cursor: pointer;
-}
-.pu-hear[hidden] { display: none; }
-.pu-hear svg { width: 15px; height: 15px; }
-.pu-hear.is-on { background: var(--accent); color: var(--accent-ink); }
-.pu-hear:active { transform: translateY(1px); }
-.pu-hear:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 /* le grand rond : « À toi de jouer ! », « Corriger la phrase n », « Rejouer la comptine » */
 .pu-go {
@@ -447,9 +446,17 @@
 @media (max-width: 899px) and (min-height: 760px) {
   .card { padding: 14px 16px 16px; gap: 10px; border-radius: 22px; }
   .pill { width: 34px; height: 34px; font-size: 14px; }
+  .strip { border-radius: 17px; }
+  .pill-all { height: 34px; font-size: 14px; padding: 0 12px 0 9px; }
   .ph-lyric { font-size: 19px; }
   .beads { --stp: 8px; --bs: 32px; gap: 4px; }
   .bead { font-size: 13px; }
+}
+/* téléphone très étroit (320 px) : les huit numéros tiennent sur une ligne */
+@media (max-width: 340px) {
+  .pill { width: 28px; height: 28px; font-size: 12px; }
+  .strip { gap: 4px; border-radius: 14px; }
+  .pill-all { height: 28px; font-size: 12px; padding: 0 9px 0 7px; }
 }
 /* téléphone peu haut : le pupitre se resserre, le décor garde sa place */
 @media (max-width: 899px) and (max-height: 700px) {

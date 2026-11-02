@@ -88,8 +88,7 @@
     lock: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10.5" rx="2.6" fill="currentColor"/><path d="M8.2 10.5V7.8a3.8 3.8 0 0 1 7.6 0v2.7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
     check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     flag: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21.5V3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M6.8 3.6h12l-3.2 4.4 3.2 4.4h-12z" fill="currentColor"/></svg>',
-    // les petits ronds du repos : une phrase (une rangée de perles), toute la comptine (deux rangées)
-    phrase: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><circle cx="3.6" cy="15" r="2.9"/><circle cx="9.2" cy="10" r="2.9"/><circle cx="14.8" cy="12.6" r="2.9"/><circle cx="20.4" cy="7.8" r="2.9"/></g></svg>',
+    // « Tout », au-dessus des paroles : toute la comptine (deux rangées de perles)
     song: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><circle cx="3.6" cy="8" r="2.4"/><circle cx="9.2" cy="4.2" r="2.4"/><circle cx="14.8" cy="6.2" r="2.4"/><circle cx="20.4" cy="2.9" r="2.4"/><circle cx="3.6" cy="20.6" r="2.4"/><circle cx="9.2" cy="16.8" r="2.4"/><circle cx="14.8" cy="18.8" r="2.4"/><circle cx="20.4" cy="15.5" r="2.4"/></g></svg>',
   };
   const star = (on, size = 24) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.45 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z" fill="${on ? '#F5C32C' : 'none'}" stroke="${on ? '#C8901A' : 'currentColor'}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
@@ -193,8 +192,8 @@
     }
     applyVoice();
   }
-  // le niveau change : la comptine repart à ce niveau, en gardant ce que jouait le grand rond (« Phrase n » ou
-  // « Toute la comptine »)
+  // le niveau change : la comptine repart à ce niveau, en gardant ce que jouait le grand rond (la phrase choisie, ou
+  // toute la comptine)
   function setLevel(v) {
     settings.level = v === 2 ? 2 : 1;
     save(SET_KEY, settings);
@@ -1132,7 +1131,8 @@
       slow: !!keepSlow, playing: null, done: false, lastStars: 0, defi: DEFI,
       // niveau 2
       passed: new Set(), fails: 0, tries: song.phrases.map(() => 0), take: null, results: [], moveTo: null, keepMic: false, fullRes: null,
-      // whole : ce que joue le grand rond, toute la comptine (au début) ou la phrase affichée (au choix, les petits ronds)
+      // whole : ce que joue le grand rond, toute la comptine (au début) ou la phrase affichée (au choix, au-dessus des
+      // paroles : un numéro, ou « Tout » et deux touchers rapides sur un numéro pour toute la comptine)
       // begun : un essai est allé jusqu'au bout (en haut du pupitre, ce que dit la page remplace alors le niveau)
       // miss : notes manquées pendant la comptine entière (niveau 1) ; queue : phrases à corriger ; acts : gestes de l'élève
       whole: keep ? !!keep.whole : true, begun: false, miss: new Set(), queue: [], acts: 0,
@@ -1154,13 +1154,12 @@
         <div class="beads" style="--span:${span};--cols:${ph.notes.map((n) => `${wOf(song.notes[n].dur)}fr`).join(' ')}">${ph.notes.map((n) => `<span class="bc"><button class="bead" type="button" data-n="${n}"><span>?</span></button></span>`).join('')}</div>
         <div class="rstrip" aria-hidden="true" hidden></div>
       </div>`).join('');
-    const pills = song.phrases.map((ph, p) => `<li><button class="pill" type="button" data-p="${p}" aria-label="Phrase ${p + 1}">${p + 1}</button></li>`).join('');
-    // le pupitre : de chaque côté du grand rond, un petit rond à la fois (les autres attendent leur moment, cachés) ;
-    // au repos, les deux petits ronds choisissent ce que joue le grand rond (celui qui est choisi reste enfoncé)
+    // les numéros des phrases, au-dessus des paroles : ce que joue le grand rond (un numéro : cette phrase ; « Tout », ou
+    // deux touchers rapides sur un numéro : toute la comptine, les numéros entourés ensemble)
+    const pills = song.phrases.map((ph, p) => `<li><button class="pill" type="button" data-p="${p}" aria-label="Phrase ${p + 1}" aria-pressed="false"${DEFI ? '' : ' aria-describedby="pill-d"'}>${p + 1}</button></li>`).join('');
+    // le pupitre : de chaque côté du grand rond, un petit rond à la fois, pendant le jeu et à la fin (les autres
+    // attendent leur moment, cachés) ; au repos, rien sur les côtés
     const side = (id, ic, lbl, aria = '') => `<button class="pu-side" id="${id}" type="button"${aria ? ` aria-label="${aria}"` : ''} hidden><span class="pu-ic">${ic}</span><span class="pu-lbl">${lbl}</span></button>`;
-    const pick = (id, ic, lbl, on) => `<button class="pu-side pu-pick" id="${id}" type="button" aria-pressed="${on}" aria-describedby="pick-d"><span class="pu-ic">${ic}</span><span class="pu-lbl">${lbl}</span></button>`;
-    // l'écoute libre : un petit casque sur chacun des deux petits ronds du repos (écouter, sans commencer d'essai)
-    const hear = (id, aria) => `<button class="pu-hear" id="${id}" type="button" aria-label="${aria}" title="${aria}">${ICON.ears}</button>`;
     app.innerHTML = `
     <main class="song" data-mode="${settings.mode}" data-level="${G.level}">
       <section class="stage grain" aria-label="Décor : ${esc(nb(song.title))}">
@@ -1181,6 +1180,8 @@
         <section class="card" aria-label="Phrase en cours">
           <div class="card-top">
             <ol class="strip" aria-label="Phrases">${pills}</ol>
+            ${DEFI ? '' : `<button class="pill-all" id="b-tout" type="button" aria-pressed="${G.whole}" aria-label="Toute la comptine" title="Toute la comptine (ou deux touchers rapides sur un numéro)">${ICON.song}<span>Tout</span></button>
+            <span id="pill-d" hidden>Deux touchers rapides${NB}: toute la comptine</span>`}
             <p class="count" id="count"></p>
           </div>
           <div class="panels">${panels}</div>
@@ -1191,6 +1192,7 @@
       <section class="pupitre" aria-label="À toi" data-band="repos">
         <div class="pu-top">
           ${DEFI ? '<p class="pu-first pu-defi" id="pu-defi"></p>' : `<div class="pu-first pu-lvrow">
+            <button class="pu-listen" id="b-ecoute" type="button" aria-label="Écouter toute la comptine" title="Écouter toute la comptine">${ICON.ears}</button>
             <div class="seg seg-level" role="radiogroup" aria-label="Niveau">
               <button type="button" role="radio" data-level="1" aria-checked="${!lv2}"><b class="lv">1</b><span>Les notes</span></button>
               <button type="button" role="radio" data-level="2" aria-checked="${lv2}"><b class="lv">2</b><span>Notes et rythme</span></button>
@@ -1201,8 +1203,6 @@
         </div>
         <div class="pu-row">
           <div class="pu-slot">
-            ${pick('b-phrase', ICON.phrase, `Phrase${NB}1`, false)}
-            ${hear('b-hear-p', 'Écouter la phrase 1')}
             ${side('b-stop', ICON.stop, 'Arrêter')}
             ${side('b-level', lv2 ? ICON.note : ICON.metro, lv2 ? `Niveau${NB}1` : `Niveau${NB}2`, lv2 ? 'Niveau 1 : les notes' : 'Niveau 2 : notes et rythme')}
           </div>
@@ -1211,15 +1211,12 @@
             <div class="pu-ear" id="ear" hidden>${GAUGE}<span class="g-lo" aria-hidden="true">bas</span><span class="g-hi" aria-hidden="true">haut</span><div class="heard" id="heard"><span class="heard-n" id="heard-n">…</span><span class="heard-s" id="heard-s"></span></div></div>
           </div>
           <div class="pu-slot">
-            ${pick('b-all', ICON.song, ALL_LBL, true)}
-            ${hear('b-hear-a', 'Écouter toute la comptine')}
             ${side('b-restart', ICON.reset, 'Recommencer')}
             ${lv2 ? '' : side('b-to', Q_ICON, 'Jusqu’à la note', 'Écouter la phrase jusqu’à la note à trouver')}
             ${side('b-hear', ICON.play, 'Réécouter', 'Réécouter la note')}
             <a class="pu-side" id="a-next" href="#${next.id}" aria-label="Comptine suivante : ${esc(nb(next.title))}" hidden><span class="pu-ic">${ICON.next}</span><span class="pu-lbl">Suivante</span></a>
           </div>
         </div>
-        <span id="pick-d" hidden>Ce que joue le grand rond, avant que tu joues</span>
         <div class="pu-msg" id="ear-msg" hidden></div>
       </section>
     </main>`;
@@ -1227,8 +1224,8 @@
     el = {
       main: app.querySelector('.song'),
       stage: app.querySelector('.stage'),
-      bAll: app.querySelector('#b-all'),
-      bPhrase: app.querySelector('#b-phrase'),
+      strip: app.querySelector('.strip'),
+      tout: app.querySelector('#b-tout'), // « Tout » : toute la comptine (pas en Défi, toujours toute la comptine)
       bTo: app.querySelector('#b-to'),
       bGo: app.querySelector('#b-go'),
       goT: app.querySelector('#go-t'),
@@ -1246,8 +1243,7 @@
       pu: app.querySelector('.pupitre'),
       seg: app.querySelector('.pu-top .pu-first'), // le niveau (et la vitesse) ; en Défi, où en est le Défi de cette comptine
       speed: app.querySelector('#b-speed'),
-      hearP: app.querySelector('#b-hear-p'),
-      hearA: app.querySelector('#b-hear-a'),
+      listen: app.querySelector('#b-ecoute'), // le casque, au début de la ligne du niveau : écouter, sans jouer
       hint: app.querySelector('#hint'),
       beads: [...app.querySelectorAll('.bead')].sort((a, b) => a.dataset.n - b.dataset.n),
       syls: [...app.querySelectorAll('.syl')].sort((a, b) => a.dataset.n - b.dataset.n),
@@ -1299,8 +1295,8 @@
 
   /* ================= LE PUPITRE (en bas) =================
      Deux étages de taille fixe ; seul leur contenu change avec le moment de la partie :
-       repos : en haut le niveau ; « Phrase n » · le grand rond (« À toi de jouer ! ») · « Toute la comptine » : les
-               deux petits ronds choisissent ce que joue le grand rond, la phrase affichée ou toute la comptine
+       repos : en haut le casque (écouter), le niveau et la vitesse ; le grand rond (« À toi de jouer ! »), seul : ce
+               qu'il joue, la phrase choisie ou toute la comptine, se choisit au-dessus des paroles
        jeu   : la consigne (écoute, décompte, « note n sur N », la réponse) ; Arrêter · le grand rond devient la note
                entendue, avec sa jauge · Recommencer (niveau 1, pendant une phrase : « Jusqu'à la note »)
        apres : en haut, ce que dit la page (le bilan, la phrase à corriger) ; en dessous, comme au repos
@@ -1314,10 +1310,11 @@
     if (busy() || (el.main && el.main.classList.contains('is-taking'))) return 'jeu';
     return G.begun ? 'apres' : 'repos';
   }
-  const SIDES = { repos: ['bPhrase', 'bAll'], jeu: ['bStop', 'bRestart'], apres: ['bPhrase', 'bAll'], cal: ['bStop', 'bHear'], fin: ['bLevel', 'aNext'] };
-  // en Défi, toujours toute la comptine : ni « Phrase n » ni « Toute la comptine », ni l'autre niveau à la fin
+  // au repos, rien sur les côtés : ce que joue le grand rond se choisit au-dessus des paroles (les numéros, « Tout »)
+  const SIDES = { repos: [], jeu: ['bStop', 'bRestart'], apres: [], cal: ['bStop', 'bHear'], fin: ['bLevel', 'aNext'] };
+  // en Défi, toujours toute la comptine : ni l'autre niveau à la fin
   const SIDES_DEFI = { repos: [], jeu: ['bStop'], apres: [], cal: ['bStop', 'bHear'], fin: [] };
-  const SIDE_KEYS = ['bPhrase', 'bStop', 'bLevel', 'bAll', 'bRestart', 'bTo', 'bHear', 'aNext'];
+  const SIDE_KEYS = ['bStop', 'bLevel', 'bRestart', 'bTo', 'bHear', 'aNext'];
   function bandUI() {
     if (!G || !el.pu || !document.contains(el.pu)) return;
     const st = bandState();
@@ -1328,8 +1325,6 @@
     const had = el.pu.contains(document.activeElement) ? document.activeElement : null;
     el.pu.dataset.band = st;
     SIDE_KEYS.forEach((k) => { if (el[k]) el[k].hidden = !shown.includes(k); });
-    if (el.hearP) el.hearP.hidden = el.bPhrase.hidden;
-    if (el.hearA) el.hearA.hidden = el.bAll.hidden;
     const ear = st === 'jeu' || st === 'cal';
     el.bGo.hidden = ear;
     el.ear.hidden = !ear;
@@ -1413,6 +1408,8 @@
     pill.classList.toggle('is-redo', G.queue.includes(p) && !complete);
     pill.classList.toggle('is-view', p === G.view);
     pill.setAttribute('aria-current', p === G.view ? 'step' : 'false');
+    // choisie pour le grand rond : la phrase affichée (toute la comptine : aucune seule, les numéros sont entourés ensemble)
+    pill.setAttribute('aria-pressed', String(!G.whole && p === G.view));
   }
 
   function paintCount() {
@@ -1493,34 +1490,32 @@
 
   // le pupitre suit l'essai (au niveau 1, « Jusqu'à la note » paraît pendant une phrase)
   function toUI() { bandUI(); }
-  // les deux petits ronds du repos : « Phrase n » (la phrase que jouerait le grand rond) et « Toute la comptine » ;
-  // celui qui est choisi est enfoncé
+  // au-dessus des paroles, ce que joue le grand rond : la phrase choisie (son numéro entouré), ou toute la comptine
+  // (« Tout » enfoncé, les numéros entourés ensemble)
   function pickUI() {
-    if (!G || !el.bPhrase) return;
-    el.bPhrase.setAttribute('aria-pressed', String(!G.whole));
-    el.bAll.setAttribute('aria-pressed', String(G.whole));
-    el.bPhrase.querySelector('.pu-lbl').textContent = `Phrase${NB}${goPhrase() + 1}`;
+    if (!G || !el.strip) return;
+    el.strip.classList.toggle('is-all', !!G.whole);
+    if (el.tout) el.tout.setAttribute('aria-pressed', String(!!G.whole));
+    G.song.phrases.forEach((_, q) => paintPill(q));
     hearUI();
   }
-  // les petits casques : écouter (ou arrêter l'écoute en cours)
+  // le casque : écouter ce que jouerait le grand rond (ou arrêter l'écoute en cours)
   function hearUI() {
-    [[el.hearP, 'p'], [el.hearA, 'a']].forEach(([b, w]) => {
-      if (!b) return;
-      const on = !!(G.playing && G.playing.kind === 'free' && G.playing.which === w);
-      b.classList.toggle('is-on', on);
-      b.innerHTML = on ? ICON.stop : ICON.ears;
-      const t = on ? 'Arrêter l’écoute' : w === 'p' ? `Écouter la phrase ${goPhrase() + 1}` : 'Écouter toute la comptine';
-      b.setAttribute('aria-label', t);
-      b.title = t;
-    });
+    const b = el.listen;
+    if (!b || !G) return;
+    const on = !!(G.playing && G.playing.kind === 'free');
+    if (b.classList.contains('is-on') !== on || !b.firstChild) { b.classList.toggle('is-on', on); b.innerHTML = on ? ICON.stop : ICON.ears; }
+    const t = on ? 'Arrêter l’écoute' : G.whole ? 'Écouter toute la comptine' : `Écouter la phrase ${goPhrase() + 1}`;
+    b.setAttribute('aria-label', t);
+    b.title = t;
   }
-  // l'écoute libre : la phrase affichée, ou toute la comptine, sans commencer d'essai (les notes s'allument au passage)
-  function hearFree(which) {
+  // l'écoute libre : la phrase choisie, ou toute la comptine, sans commencer d'essai (les notes s'allument au passage)
+  function hearFree() {
     if (!G || busy() || G.done || G.cal) return;
     G.acts++; // la phrase suivante ne démarre plus toute seule
-    if (G.playing && G.playing.kind === 'free' && G.playing.which === which) { stopPlayback(true); return; }
+    if (G.playing && G.playing.kind === 'free') { stopPlayback(true); return; }
     if (!Sound.ensure()) return;
-    playEvents(which === 'a' ? G.song.events : G.song.phrases[goPhrase()].events, 'free', null, { which });
+    playEvents(G.whole ? G.song.events : G.song.phrases[goPhrase()].events, 'free', null, { which: G.whole ? 'a' : 'p' });
   }
 
   function expectNext() {
@@ -1530,7 +1525,7 @@
 
   /* ================= LES ESSAIS =================
      Le grand rond (« À toi de jouer ! ») : la page joue toute la comptine ou la phrase affichée,
-     au choix (les petits ronds « Toute la comptine » et « Phrase n » ; au début, toute la
+     au choix (au-dessus des paroles, les numéros des phrases et « Tout » ; au début, toute la
      comptine), puis l'élève joue.
      - niveau 1 : les notes seules, à son rythme, sans décompte (le rythme ne compte pas). Phrase par phrase, avec l'aide (flèches,
        note montrée) ; comptine entière, sans aide : une fausse note est comptée et on passe.
@@ -2031,7 +2026,6 @@
     bandUI(); // (les petits casques : hearUI, par pickUI)
   }
 
-  const ALL_LBL = 'Toute la comptine';
   function playAll() { playEvents(G.song.events, 'all'); } // à la fin de la comptine, pour fêter
   function playToMystery() {
     if (G.cursor == null) { playAll(); return; }
@@ -2670,13 +2664,38 @@
     if (busy()) cancelAttempt(); else goAttempt();
   }
 
-  // les deux petits ronds du repos : ce que joue le grand rond, la phrase affichée ou toute la comptine
-  function pickWhole(whole) {
-    if (!G || busy() || G.done) return;
+  // « Tout », ou deux touchers rapides sur un numéro : le grand rond jouera toute la comptine (depuis la phrase 1)
+  function pickAll() {
+    if (!G || G.done || G.defi || prepping() || (G.live && G.live.full)) return;
     G.acts++; // la phrase suivante ne démarre plus toute seule
-    if (G.whole === whole) return;
-    G.whole = whole;
-    if (G.moveTo != null) moveOn(); else idleHint();
+    if (G.live) cancelAttempt(true); // une phrase en cours, au niveau 1 : elle s'arrête
+    stopPlayback(true);
+    G.moveTo = null;
+    G.whole = true;
+    showPhrase(0);
+    idleHint();
+    bandUI();
+  }
+  /* Les numéros des phrases : un toucher choisit cette phrase (le grand rond la jouera, phrase par phrase) ; deux
+     touchers rapides sur le même numéro, toute la comptine. Pendant l'écoute d'un essai, ou la comptine entière en
+     cours, ils ne font rien. En Défi, toujours toute la comptine : un numéro montre seulement sa phrase. */
+  const DBL_MS = 450;
+  let lastPill = null;
+  function pillTap(p, at) {
+    if (!G) return;
+    G.acts++;
+    // l'heure du toucher lui-même (deux touchers attendus pendant que la page dessine le décor restent deux touchers)
+    const now = at > 0 ? at : performance.now();
+    const dbl = !!lastPill && lastPill.p === p && lastPill.song === G.song && now - lastPill.t < DBL_MS;
+    lastPill = dbl ? null : { p, t: now, song: G.song };
+    if (prepping() || (G.live && G.live.full)) return;
+    if (dbl && !G.defi && !G.done) { pickAll(); return; }
+    G.moveTo = null;
+    if (G.live && G.live.p !== p) cancelAttempt(true); // une autre phrase : l'essai en cours s'arrête
+    stopPlayback(true);
+    if (!G.defi && !G.done) G.whole = false;
+    showPhrase(p);
+    idleHint();
     bandUI();
   }
 
@@ -2689,8 +2708,7 @@
   }
 
   function bindSong() {
-    el.bPhrase.addEventListener('click', () => pickWhole(false));
-    el.bAll.addEventListener('click', () => pickWhole(true));
+    if (el.tout) el.tout.addEventListener('click', () => { lastPill = null; pickAll(); });
     if (el.bTo) el.bTo.addEventListener('click', toggle('to', playToMystery));
     el.bGo.addEventListener('click', goButton);
     // « Arrêter » : l'essai en cours, ou le réglage de la voix
@@ -2701,15 +2719,7 @@
     el.bLevel.addEventListener('click', () => setLevel(G.level === 2 ? 1 : 2));
     el.bRg.addEventListener('click', () => reglages());
     app.querySelector('#b-reset').addEventListener('click', reset);
-    el.pills.forEach((pill, p) => pill.addEventListener('click', () => {
-      G.acts++;
-      G.moveTo = null;
-      if (prepping() || (G.live && G.live.full)) return;
-      if (G.live && G.live.p !== p) cancelAttempt(true); // une autre phrase : l'essai en cours s'arrête
-      stopPlayback(true);
-      showPhrase(p);
-      idleHint();
-    }));
+    el.pills.forEach((pill, p) => pill.addEventListener('click', (e) => pillTap(p, e.timeStamp)));
     el.panels.forEach((panel) => {
       panel.addEventListener('click', (e) => {
         const b = e.target.closest('.bead');
@@ -2723,8 +2733,7 @@
       if (+b.dataset.level !== G.level) setLevel(+b.dataset.level);
     }));
     if (el.speed) { el.speed.addEventListener('click', () => { G.acts++; setSlow(!G.slow); }); speedUI(); }
-    if (el.hearP) el.hearP.addEventListener('click', () => hearFree('p'));
-    if (el.hearA) el.hearA.addEventListener('click', () => hearFree('a'));
+    if (el.listen) el.listen.addEventListener('click', () => hearFree());
     el.earMsg.addEventListener('click', (ev) => { if (ev.target.closest('#mic-on')) startMic(); });
     if (FINE.matches) {
       let raf = 0;
