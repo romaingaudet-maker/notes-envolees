@@ -597,13 +597,13 @@
      écrite attendue, à l'octave près ? Pour un instrument à touches, à pistons, à clés : le demi-ton le plus
      proche (±0,5 demi-ton). Quand l'élève fait lui-même la justesse (voix, violon, alto, violoncelle,
      trombone), jusqu'à FREE_TOL demi-ton d'écart : une note un peu trop haute ou trop basse est acceptée,
-     mais pas la note voisine jouée juste (à 1 demi-ton). */
-  const FREE_TOL = 0.7;
+     mais pas la note voisine jouée juste (à 1 demi-ton). La voix, plus généreuse encore : SING_TOL. */
+  const FREE_TOL = 0.7, SING_TOL = 0.85;
   const offTarget = (hit, midi) => { // écart à la note attendue la plus proche (en demi-tons, dans [-6, 6[)
     const m = hit.r + (hit.cents || 0) / 100 - inst().off;
     return ((((m - midi) % 12) + 18) % 12) - 6;
   };
-  const rightPitch = (hit, midi) => mod12(hit.r - inst().off) === mod12(midi) || (!!inst().free && Math.abs(offTarget(hit, midi)) <= FREE_TOL);
+  const rightPitch = (hit, midi) => mod12(hit.r - inst().off) === mod12(midi) || (!!inst().free && Math.abs(offTarget(hit, midi)) <= (inst().sing ? SING_TOL : FREE_TOL));
   // l'oreille suit l'accord d'un instrument un peu haut ou bas ; pas quand l'élève fait la justesse (elle suivrait ses erreurs)
   const tuneTo = (hit, midi) => { if (!inst().free) Ear.nudge(Math.round(offTarget(hit, midi) * 100)); };
 
@@ -1127,6 +1127,9 @@
       whole: keep ? !!keep.whole : true, begun: false, miss: new Set(), queue: [], acts: 0,
       // live : essai en cours au niveau 1 (dès la fin de l'écoute, sans décompte) ; helped : notes montrées
       live: null, helped: 0, nudged: false,
+      // la voix : notes dont la hauteur (pitchOk) ou le nom (nameOk) ont été trouvés, à un essai ou un autre : les deux
+      // trouvés, même à des essais différents, la note est réussie (la reconnaissance a pu se tromper une fois)
+      pitchOk: new Set(), nameOk: new Set(),
       // suivi : début de la partie (temps page visible), « lentement » utilisé, résultat déjà envoyé
       t0: Suivi.clock(), usedSlow: !!keepSlow, tracked: false,
     };
@@ -1572,6 +1575,7 @@
     G.nudged = false;
     el.main.classList.add('is-taking');
     setGoUI(true);
+    resetHeard();
     setHint(sc.full ? 'Écoute toute la comptine…' : `Écoute la phrase ${sc.p + 1}…`, '');
     playEvents(sc.full ? song.events : song.phrases[sc.p].events, 'go', (P) => {
       // écoute arrêtée avant la fin : pas d'essai
@@ -1587,6 +1591,7 @@
 
   function beginLive(sc) {
     G.live = sc;
+    resetHeard();
     // comptine entière, sans aide : écoute et choix des phrases fermés le temps de l'essai
     el.main.classList.toggle('is-taking', !!sc.full);
     const first = sc.full ? 0 : G.song.phrases[sc.p].notes.find((m) => !G.found.has(m));
@@ -1719,6 +1724,16 @@
     retrigger(el.heard, 'is-sung');
     if (G.take) G.take.shown = performance.now();
   }
+  // un nouvel essai : la note entendue repart de rien (ni la dernière note de l'essai d'avant, ni celle de l'écoute)
+  function resetHeard() {
+    heardSyl = null;
+    lastSung = null;
+    if (!el.heard || !document.contains(el.heard)) return;
+    el.heardN.textContent = '…';
+    paintSyl(null);
+    delete el.heard.dataset.l;
+    if (el.needle) { el.needle.style.setProperty('--c', '0'); el.needle.classList.add('off'); }
+  }
   function paintSyl(sy) {
     el.heardS.textContent = sy ? `«${NB}${SYL_FR[sy.s]}${NB}»` : '';
     el.heardS.classList.toggle('is-bad', !!sy && !sy.ok);
@@ -1745,12 +1760,23 @@
     const pitchOk = rightPitch(hit, target.midi);
     // la voix : le nom compte, sauf sur une note qui répète la précédente (« do do do ») : la hauteur suffit
     const said = singing() && !repeats(G.cursor) ? nameSaid(hit.syl, target.midi) : null;
+    // la voix : la hauteur et le nom trouvés, peut-être à des essais différents (la reconnaissance a pu se tromper) : réussi
+    let both = false;
+    if (singing()) {
+      if (pitchOk) G.pitchOk.add(G.cursor);
+      if (said === 'oui') G.nameOk.add(G.cursor);
+      both = G.pitchOk.has(G.cursor) && G.nameOk.has(G.cursor);
+    }
     if (G.live.full) {
       if (pitchOk) tuneTo(hit, target.midi);
-      wholeNote(pitchOk && said !== 'non', el.heard);
+      wholeNote((pitchOk && said !== 'non') || both, el.heard);
       return;
     }
-    if (pitchOk && said === 'non') {
+    if (both && !(pitchOk && said !== 'non')) {
+      // trouvés à des essais différents : réussi
+      if (pitchOk) tuneTo(hit, target.midi);
+      good(el.heard, target);
+    } else if (pitchOk && said === 'non') {
       // la bonne hauteur, mais un autre nom
       tuneTo(hit, target.midi);
       retrigger(el.heard, 'is-wrong');
@@ -1903,7 +1929,9 @@
       }
       if (now >= P.end + 0.05) {
         P.natural = true;
-        stopPlayback(false, !!P.then); // l'écoute qui précède un essai passe la main au décompte
+        // l'écoute qui précède un essai passe la main au décompte (niveau 2) ; au niveau 1, l'élève joue tout de suite :
+        // la dernière note de la page s'éteint (fondu rapide), pour que le micro n'entende plus qu'elle
+        stopPlayback(!!P.then && G.level === 1, !!P.then);
         if (P.then && G) P.then();
         return;
       }
@@ -2089,6 +2117,7 @@
     G.take = tk;
     el.main.classList.add('is-taking');
     setGoUI(true);
+    resetHeard();
     expectTake(tk);
     const tick = () => {
       if (!G || G.take !== tk) return;
@@ -2190,9 +2219,22 @@
     G.take = null;
     el.main.classList.remove('is-taking');
     if (tk.mic) Ear.expect(null);
-    // la voix : la bonne hauteur ET le bon nom (sauf si la reconnaissance hésite, ou si la note répète la précédente)
-    const same = tk.mic ? (e, g) => rightPitch(g.hit, e.midi) && !(tk.sing && !e.rep && nameSaid(g.syl, e.midi) === 'non') : (e, g) => g.midi === e.midi;
-    const r = Rhythm.evaluate({ exp: tk.exp, got: tk.got, beat: tk.beatSec, same, mic: tk.mic });
+    // la voix : la bonne hauteur ET le bon nom (sauf si la reconnaissance hésite, ou si la note répète la précédente) ;
+    // ou bien la hauteur et le nom trouvés, mais à des essais différents (G.pitchOk, G.nameOk)
+    const same = tk.mic ? (e, g) => {
+      const p = rightPitch(g.hit, e.midi), said = tk.sing && !e.rep ? nameSaid(g.syl, e.midi) : null;
+      if (p && said !== 'non') return true;
+      return tk.sing && (p || G.pitchOk.has(e.n)) && (said === 'oui' || G.nameOk.has(e.n));
+    } : (e, g) => g.midi === e.midi;
+    let r = Rhythm.evaluate({ exp: tk.exp, got: tk.got, beat: tk.beatSec, same, mic: tk.mic });
+    if (tk.sing && fillRepeats(tk, r)) r = Rhythm.evaluate({ exp: tk.exp, got: tk.got, beat: tk.beatSec, same, mic: tk.mic });
+    // la voix : ce que cette prise a trouvé, note par note, pour les prises suivantes
+    if (tk.sing) r.notes.forEach((x) => {
+      if (x.kind === 'missed') return;
+      const e = tk.exp[x.i], g = tk.got[x.j];
+      if (rightPitch(g.hit, e.midi)) G.pitchOk.add(e.n);
+      if (nameSaid(g.syl, e.midi) === 'oui') G.nameOk.add(e.n);
+    });
     if (tk.full) { endFullTake(tk, r); return; }
     G.begun = true;
     setGoUI(false);
@@ -2229,6 +2271,23 @@
     if (!r.pass) return;
     if (st.done) { later(() => { if (G && !busy() && !G.done) finish(); }, 1400); return; }
     chain(tk.p);
+  }
+
+  /* La voix, les notes répétées (« do do do ») : la page est généreuse. Une note attendue qui répète la précédente, que
+     l'oreille n'a pas séparée (chantée très liée, sans creux), compte si la voix tenait sa hauteur à son instant : on
+     l'ajoute à la prise, à sa place. r : un premier jugement (son décalage et son tempo disent où elle était attendue). */
+  function fillRepeats(tk, r) {
+    const fr = tk.frames || [], add = [];
+    r.notes.forEach((x) => {
+      const e = tk.exp[x.i];
+      if (x.kind !== 'missed' || !e.rep) return;
+      const at = r.off + r.k * e.t, pc = mod12(e.midi);
+      const near = fr.filter((f) => Math.abs(f.t - at) <= 0.12);
+      if (near.length >= 2 && near.every((f) => f.pc === pc)) add.push({ t: at, midi: e.midi, written: e.midi, hit: { r: e.midi + inst().off, cents: 0 }, syl: null, held: true });
+    });
+    if (!add.length) return false;
+    tk.got = tk.got.concat(add).sort((a, b) => a.t - b.t);
+    return true;
   }
 
   // toute la comptine jouée d'un coup (niveau 2) : bilan phrase par phrase, puis les phrases à revoir
@@ -2530,6 +2589,9 @@
     // pendant que la page joue, l'oreille attend : la note entendue pâlit
     el.heard.classList.toggle('is-wait', !!fr.gated);
     if (fr.gated) return;
+    // niveau 2, la voix : la hauteur tenue, trame par trame (pour les notes répétées, voir fillRepeats)
+    const tk = G && G.take;
+    if (tk && tk.sing && fr.note != null && fr.t != null) (tk.frames || (tk.frames = [])).push({ t: fr.t - Sound.outLatency() - 0.03 - tk.T0, pc: mod12(fr.note - inst().off) });
     // niveau 2, la voix : la note et son nom viennent de showSung ; ils restent un moment après la note
     const sung = G && G.take && G.take.sing ? G.take.shown || 0 : -1;
     if (fr.note == null) {

@@ -673,6 +673,10 @@ registerProcessor('ne-ear', NeEar);`;
       const [t0, t1] = PitchKit.sylWindow(w.on, w.prev, nx ? nx.on : null);
       if (S.ht < t1) return;
       S.wait.shift();
+      // la hauteur de la note : la médiane de sa partie tenue (après l'attaque, jusqu'à la fin de sa syllabe), plus juste
+      // que ses premières trames, où la voix glisse souvent vers la note
+      const r0 = w.hit.r, ms = (w.ms || []).filter((q) => q.t <= t1).map((q) => q.m + 12 * Math.round((r0 - q.m) / 12)).filter((m) => Math.abs(m - r0) <= 1.2).sort((a, b) => a - b);
+      if (ms.length >= 3) { const med = ms[ms.length >> 1]; w.hit.r = Math.round(med); w.hit.cents = (med - w.hit.r) * 100; }
       const x = sample(t0, t1);
       if (x && S.voice) {
         const seqs = PitchKit.sylSeqs(x, S.sr, 0, Math.round((w.on - t0) * S.sr), x.length);
@@ -704,7 +708,7 @@ registerProcessor('ne-ear', NeEar);`;
     if (heard < Sound.quietAt()) {
       S.gated = true;
       S.T.hold(null, rms);
-      frame(rms, null, true);
+      frame(rms, null, true, now);
       return;
     }
     if (S.gated) {
@@ -717,6 +721,11 @@ registerProcessor('ne-ear', NeEar);`;
     const gate = PitchKit.gateOf(S.nf);
     const res = rms > gate ? PitchKit.yin(x, S.sr, undefined, undefined, S.T.expectPc) : null;
     S.dg.f = res ? res.f : 0;
+    // la voix : les hauteurs entendues pendant les notes qui attendent leur syllabe (voir settleSyllables)
+    if (res && S.wait.length) {
+      const m = 69 + 12 * Math.log2(res.f / 440) - S.T.tune / 100;
+      for (const w of S.wait) if (now > w.on + 0.09) (w.ms || (w.ms = [])).push({ t: now, m });
+    }
     if (!res) S.nf = PitchKit.floorOf(S.nf, rms);
     const hit = S.T.push(res, rms, gate, now, on);
     if (hit && S.voice && S.hist) {
@@ -727,20 +736,23 @@ registerProcessor('ne-ear', NeEar);`;
       // la note est entendue, sa syllabe viendra un peu plus tard : la page peut déjà attendre la suivante
       if (onPending) onPending(hit);
     } else if (hit && onNote) onNote(hit);
-    frame(rms, res, false);
+    frame(rms, res, false, now);
   }
 
-  function frame(rms, res, gated) {
+  function frame(rms, res, gated, now) {
     const t = performance.now();
     if (!onFrame || t - S.lastUi < 50) return;
     S.lastUi = t;
     const c = S.T.cand;
     const db = 20 * Math.log10(rms + 1e-9), fl = Math.max(-80, 20 * Math.log10(S.nf + 1e-9));
+    // une note de la page qui résonne encore (sans attaque de l'élève par-dessus) n'est pas montrée comme entendue
+    const rg = S.T.ring, echo = !!(rg && c && !c.atk && (rg.body || rg.pcs.has(((c.r % 12) + 12) % 12)));
     onFrame({
       level: Math.max(0, Math.min(1, (db - fl - 4) / 40)),
-      note: !gated && res && c && c.n >= 2 ? c.r : null,
+      note: !gated && res && c && c.n >= 2 && !echo ? c.r : null,
       cents: c ? c.c : 0,
       gated,
+      t: now, // l'instant de la trame (le temps du son)
     });
   }
 
