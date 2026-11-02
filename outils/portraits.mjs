@@ -26,7 +26,7 @@ await ctx.addInitScript(() => {
 });
 const page = await ctx.newPage();
 page.on('pageerror', (e) => console.error('erreur de la page :', String(e)));
-await page.goto(`http://127.0.0.1:${server.address().port}/laine/`, { waitUntil: 'load' });
+await page.goto(`http://127.0.0.1:${server.address().port}/`, { waitUntil: 'load' });
 await page.waitForFunction(() => window.HomeSkin && window.Laine && Laine.Engine.supported(), null, { timeout: 60000 });
 const strips = await page.evaluate(() => HomeSkin.strips());
 const dir = path.join(root, 'laine/portraits');

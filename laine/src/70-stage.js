@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------------
    Le décor d'une comptine, branché sur le jeu (mêmes appels que les
-   décors en papier découpé de la première version) :
+   décors en papier découpé, repris sans WebGL 2) :
      Decor.markup(song)          → le HTML du décor
      Decor.mount(stage, song, st)
      Decor.update(stage, st)     → l'avancement (notes, phrases, fin)

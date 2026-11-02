@@ -20,21 +20,14 @@ const fontsCss = '/* Gluten (c) 2020 The Gluten Project Authors ; Andika (c) 200
   font('Andika', 400, 'andika-latin-400-normal.woff2'), font('Andika', 700, 'andika-latin-700-normal.woff2'),
 ].join('\n');
 const css = fontsCss + '\n' + ['_base.css', '_controls.css', '_scenes1.css', '_scenes2.css', '_motion.css'].map(r).join('\n');
-const js = ['songs.js', 'audio.js', 'voix-modeles.js', 'ear.js', 'rythme.js', 'scenes.js', 'scenes2.js', 'suivi.js', 'instruments.js', 'app.js'].map(r).join('\n');
-const shell = r('shell.html');
-const fill = (t, c = css, j = js) => t.replace('/*__CSS__*/', () => c).replace('/*__JS__*/', () => j);
-const page = fill(shell);
-const cut = shell.indexOf('<svg'); // le gabarit lui-même : en-tête avant, corps après
-const headPart = fill(shell.slice(0, cut)).trim(), bodyPart = fill(shell.slice(cut)).trim();
+const fill = (t, c, j) => t.replace('/*__CSS__*/', () => c).replace('/*__JS__*/', () => j);
 fs.mkdirSync(new URL('./dist/', import.meta.url), { recursive: true });
 const out = (name, html) => { if (QUALIF) return; fs.writeFileSync(new URL('./dist/' + name, import.meta.url), html); console.log('dist/' + name, (html.length / 1024).toFixed(1) + ' Ko'); };
 
-// 1) fragment publié comme artifact (l'hôte ajoute le squelette du document)
-out('notes-envolees.html', page);
-
-// 2) document autonome : la page publiée sur GitHub Pages (index.html), qu'on peut aussi ouvrir telle quelle
+// le nom du jeu, partout : titre de la page, application installée sur le téléphone, icône
+const NAME = 'Les Notes Envolées';
 const iconOf = (bg, ink) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="${bg}"/><path d="M27 15v25.5a8 8 0 1 0 5 7.4V24l12 4v-9z" fill="${ink}"/></svg>`)}`;
-const icon = iconOf('#F6C744', '#1D2350');
+const icon = iconOf('#2B2350', '#F2C14E'); // l'icône de l'onglet, pour toutes les pages
 let rev = ''; // la version testée, affichée dans le bandeau
 if (QUALIF) { try { rev = execSync('git rev-parse --short HEAD', { cwd: new URL('./', import.meta.url) }).toString().trim(); } catch (e) { /* hors dépôt */ } }
 // le Worker du suivi de la production : en qualification, la page de suivi et le tableau d'honneur du Défi le lisent
@@ -60,12 +53,9 @@ ${body}
 </html>
 `;
 // icône d'installation sur téléphone (écran d'accueil) : icone-180/192/512.png à la racine, manifest.webmanifest
-const INSTALL_V1 = `<link rel="apple-touch-icon" href="icone-180.png">\n<link rel="manifest" href="manifest.webmanifest">\n<meta name="apple-mobile-web-app-title" content="${QUALIF ? 'Qualif Notes' : 'Notes Envolées'}">`;
-const INSTALL_V2 = `<link rel="apple-touch-icon" href="../icone-180.png">\n<link rel="manifest" href="manifest.webmanifest">\n<meta name="apple-mobile-web-app-title" content="${QUALIF ? 'Qualif laine' : 'Notes en laine'}">`;
-const index = doc(headPart, bodyPart, '#F6C744', icon, INSTALL_V1);
-write('index.html', index);
+const INSTALL = `<link rel="apple-touch-icon" href="icone-180.png">\n<link rel="manifest" href="manifest.webmanifest">\n<meta name="apple-mobile-web-app-title" content="${QUALIF ? 'Qualif Notes' : NAME}">`;
 
-// 3) la page de suivi des élèves, pour le professeur (suivi.html, non liée depuis le jeu)
+// 1) la page de suivi des élèves, pour le professeur (suivi.html, non liée depuis le jeu)
 const pShell = r('suivi-page.html');
 const pCss = font('Gluten', 700, 'gluten-latin-700-normal.woff2') + '\n' + r('_suivi.css');
 const pJs = ['songs.js', 'suivi.js', 'page-retour.js', 'suivi-page.js'].map(r).join('\n');
@@ -75,7 +65,7 @@ const pExtra = QUALIF && PROD_SUIVI ? `<script>window.NE_SUIVI_LECTURE = ${JSON.
 const prof = doc(fill(pShell.slice(0, pCut), pCss, pJs).trim(), fill(pShell.slice(pCut), pCss, pJs).trim(), '#F6C744', icon, pExtra);
 write('suivi.html', prof);
 
-// 4) les pages de texte, liées en bas de l'accueil des deux versions : « Comment jouer » (comment-jouer.html, à partir
+// 2) les pages de texte, liées en bas de l'accueil : « Comment jouer » (comment-jouer.html, à partir
 //    de src/aide.html) et les mentions légales et confidentialité (mentions-legales.html, à partir de src/mentions.html)
 {
   const tCss = fontsCss.split('\n')[0] + '\n' + [font('Gluten', 800, 'gluten-latin-800-normal.woff2'), font('Andika', 400, 'andika-latin-400-normal.woff2'), font('Andika', 700, 'andika-latin-700-normal.woff2')].join('\n') + '\n' + r('_page.css');
@@ -88,7 +78,7 @@ write('suivi.html', prof);
   textPage('mentions.html', ['mentions.js'], 'mentions-legales.html');
 }
 
-/* 5) seconde version : décors en laine, en 3D image par image.
+/* 3) le jeu (index.html) : décors en laine, en 3D image par image (sans WebGL, les décors en papier de src/).
    laine/src et laine/scenes sont mis bout à bout dans une seule fonction
    (les fichiers de laine/src dont le nom commence par 80 ou plus passent après les décors). */
 {
@@ -103,31 +93,44 @@ write('suivi.html', prof);
   const css2 = css + '\n' + rl('laine.css');
   const js2 = ['songs.js', 'audio.js', 'voix-modeles.js', 'ear.js', 'rythme.js', 'scenes.js', 'scenes2.js', 'suivi.js', 'instruments.js'].map(r).join('\n') + '\n' + laineJs + '\n' + r('app.js');
   const lshell = rl('shell.html');
-  const ONLINE = 'https://romaingaudet-maker.github.io/notes-envolees/laine/';
+  const ONLINE = 'https://romaingaudet-maker.github.io/notes-envolees/';
   const lfill = (t, pre) => t.replace('/*__CSS__*/', () => css2).replace('/*__PRE__*/', () => pre).replace('/*__THREE__*/', () => three).replace('/*__JS__*/', () => js2);
-  // a) fragment publié comme artifact : les sons sont à côté (sons/)
+  // a) fragment publié comme artifact (claude.ai) : les sons et les pages de texte sont à côté
   out('laine.html', lfill(lshell, `window.NE_ONLINE_URL = ${JSON.stringify(ONLINE)};`));
-  // b) document autonome, publié sur GitHub Pages dans laine/ : les sons, les pages de texte et la page de suivi sont dans le dossier parent
-  const pre = `window.NE_ONLINE_URL = ${JSON.stringify(ONLINE)}; window.SONS_BASE = '../sons/'; window.NE_HELP_URL = '../comment-jouer.html'; window.NE_LEGAL_URL = '../mentions-legales.html'; window.NE_SUIVI_PAGE = '../suivi.html';`;
+  // b) document autonome, publié à la racine du site (GitHub Pages, Netlify) : les sons, les pages de texte et la page
+  //    de suivi sont à côté ; les portraits des décors dans laine/portraits/
+  const pre = `window.NE_ONLINE_URL = ${JSON.stringify(ONLINE)}; window.PORTRAITS_BASE = 'laine/portraits/';`;
   const lcut = lshell.indexOf('<svg');
-  const ldoc = doc(lfill(lshell.slice(0, lcut), pre).trim(), lfill(lshell.slice(lcut), pre).trim(), '#2B2350', iconOf('#2B2350', '#F2C14E'), INSTALL_V2);
-  write('laine/index.html', ldoc);
+  write('index.html', doc(lfill(lshell.slice(0, lcut), pre).trim(), lfill(lshell.slice(lcut), pre).trim(), '#2B2350', icon, INSTALL));
+  // c) l'ancienne adresse de la version en laine (laine/) : renvoie à la racine, en gardant la comptine demandée (#…)
+  write('laine/index.html', `<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>${NAME}</title>
+<meta http-equiv="refresh" content="0; url=../">
+<link rel="canonical" href="../">
+<script>location.replace('../' + location.search + location.hash);</script>
+</head>
+<body>
+<p><a href="../">${NAME}</a></p>
+</body>
+</html>
+`);
 }
 
-/* 6) manifestes d'installation : nom, nom court et icônes pour l'écran d'accueil du téléphone.
-   La version papier est à la racine, la version en laine dans laine/ (icônes dans le dossier parent). */
+/* 4) manifeste d'installation : nom, nom court et icônes pour l'écran d'accueil du téléphone (le même nom partout). */
 {
-  const manifest = (name, short, theme, bg, prefix) => JSON.stringify({
+  const manifest = (name, short, theme, bg) => JSON.stringify({
     name, short_name: short, lang: 'fr', start_url: './', scope: './', display: 'standalone',
     background_color: bg, theme_color: theme,
-    icons: [192, 512].map((n) => ({ src: `${prefix}icone-${n}.png`, sizes: `${n}x${n}`, type: 'image/png' })),
+    icons: [192, 512].map((n) => ({ src: `icone-${n}.png`, sizes: `${n}x${n}`, type: 'image/png' })),
   }, null, 2) + '\n';
-  const q = QUALIF ? ' (qualification)' : '';
-  write('manifest.webmanifest', manifest('Les Notes Envolées' + q, QUALIF ? 'Qualif Notes' : 'Notes Envolées', '#F6C744', '#FFFBF0', ''));
-  write('laine/manifest.webmanifest', manifest('Les Notes Envolées en laine' + q, QUALIF ? 'Qualif laine' : 'Notes en laine', '#2B2350', '#2B2350', '../'));
+  write('manifest.webmanifest', QUALIF ? manifest(NAME + ' (qualification)', 'Qualif Notes', '#2B2350', '#2B2350') : manifest(NAME, NAME, '#2B2350', '#2B2350'));
 }
 
-// 7) qualification : les sons et les icônes à côté des pages
+// 5) qualification : les sons, les portraits et les icônes à côté des pages
 if (QUALIF) {
   fs.cpSync(new URL('./sons/', import.meta.url), new URL(ROOT + 'sons/', import.meta.url), { recursive: true });
   if (fs.existsSync(new URL('./laine/portraits/', import.meta.url))) fs.cpSync(new URL('./laine/portraits/', import.meta.url), new URL(ROOT + 'laine/portraits/', import.meta.url), { recursive: true });

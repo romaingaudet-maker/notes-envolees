@@ -1,12 +1,12 @@
 {
   "name": "Les Notes Envolées",
-  "short_name": "Notes Envolées",
+  "short_name": "Les Notes Envolées",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#FFFBF0",
-  "theme_color": "#F6C744",
+  "background_color": "#2B2350",
+  "theme_color": "#2B2350",
   "icons": [
     {
       "src": "icone-192.png",

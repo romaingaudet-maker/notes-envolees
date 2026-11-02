@@ -9,7 +9,7 @@
   const LIB = SONGS.map(buildSong).sort((a, b) => a.level - b.level);
   const BY_ID = Object.fromEntries(LIB.map((s) => [s.id, s]));
   /* Le décor : en papier découpé (Scenes), ou un autre décor que la page apporte
-     (window.Decor, mêmes appels : la version en laine 3D). */
+     (window.Decor, mêmes appels : les décors en laine, en 3D). */
   const PAPER = {
     color: (t) => Scenes.W[t].color,
     markup: (song, st) => Scenes.svgFor(song, st),
@@ -223,7 +223,7 @@
     return `<button class="ic-card" type="button" data-k="${k}" aria-pressed="${settings.choisi && settings.inst === k}"><span class="ic-pic">${instPic(k)}</span><b>${t}</b>${sub ? `<small>${sub}</small>` : ''}</button>`;
   }).join('');
   const helloHtml = () => (settings.prenom ? `Bonjour, <b>${esc(settings.prenom)}</b>${NB}!` : `Bonjour${NB}!`);
-  // le rappel, en haut de l'accueil des deux versions : prénom, instrument, mode de jeu (en Défi, l'étape et le record)
+  // le rappel, en haut de l'accueil : prénom, instrument, mode de jeu (en Défi, l'étape et le record)
   const jeuHtml = () => `<span class="ec-jeu">${ICON[jeu()]}${JEU[jeu()].name}</span>`;
   function defiLine() {
     if (jeu() !== 'defi') return '';
@@ -790,7 +790,7 @@
   /* Le code secret du professeur : le Konami code, joué sur le titre de l'accueil (↑ ↑ ↓ ↓ ← → ← → B A Start).
      ↑ une lettre du fil du haut (« Les Notes »), ↓ une lettre du fil du bas (« Envolées »), ← la première lettre
      d'un mot (L, N ou E), → la dernière (un des trois « s »), B un Si et A un La (la notation anglaise), Start la
-     pelote bleue (version en laine) ou les petites notes qui s'envolent au bout du titre (version papier). Il ouvre
+     pelote bleue (les petites notes qui s'envolent au bout du titre, sur l'accueil en papier). Il ouvre
      la page de suivi, qui demande toujours la clé du professeur ; plus de 10 s entre deux touches, et il repart de
      zéro. Chaque touche du titre arrive ici : { note, line, first, last } ou { start }. */
   const KONAMI = [
@@ -812,7 +812,7 @@
     if (framed) { window.open('https://romaingaudet-maker.github.io/notes-envolees/suivi.html', '_blank', 'noopener'); return; }
     setTimeout(() => { location.href = SUIVI_PAGE; }, 520);
   }
-  // le titre de l'accueil papier : chaque lettre chante sa note (comme dans la version en laine), dans l'ordre
+  // le titre de l'accueil en papier : chaque lettre chante sa note (comme sur l'accueil en laine), dans l'ordre
   // de la gamme ; une petite note s'envole de la lettre touchée
   function titleHtmlHome() {
     let n = 0;
@@ -947,7 +947,7 @@
       ${rows ? `<ol class="db-list">${rows}</ol>` : `<p class="db-empty">Personne pour l’instant. Choisis le mode Défi (bouton «${NB}Changer${NB}», en haut) et relève-le${NB}!</p>`}`;
   }
 
-  /* ---------------- la présentation du Défi, sur l'accueil (les deux versions) ----------------
+  /* ---------------- la présentation du Défi, sur l'accueil ----------------
      À la place du chemin : la règle ; l'étape du moment (son décor, son titre, « Commencer », « Continuer » ou
      « Repartir » après un retour au départ) ; la course des 20 comptines (celles réussies dans cette course, celle
      du moment avec l'instrument de l'élève comme pion, le drapeau du record) ; le numéro du départ et le record.

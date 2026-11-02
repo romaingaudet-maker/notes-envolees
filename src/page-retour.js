@@ -1,9 +1,9 @@
 /* ------------------------------------------------------------------
    Les Notes Envolées — le lien de retour en haut des pages à part : « Retour au jeu » (comment-jouer.html,
-   mentions-legales.html), « Retour au menu » (suivi.html, la page du professeur). Il ramène à la version d'où l'on
-   vient (papier ou laine). Venu du jeu, on y revient par l'historique, à l'endroit où l'on était ; venu d'une autre
-   page à part (« Comment jouer », puis « Mentions légales »), on retourne à la version gardée pour cet onglet.
-   Sinon, le lien par défaut : la première version.
+   mentions-legales.html), « Retour au menu » (suivi.html, la page du professeur). Il ramène au jeu.
+   Venu du jeu, on y revient par l'historique, à l'endroit où l'on était ; venu d'une autre
+   page à part (« Comment jouer », puis « Mentions légales »), on retourne à l'adresse du jeu gardée pour cet onglet.
+   Sinon, le lien par défaut : l'accueil du jeu.
    Retour.bind(lien) : pour un lien dessiné plus tard (la page de suivi redessine son bandeau).
 ------------------------------------------------------------------- */
 const Retour = (() => {
