@@ -187,6 +187,7 @@
   }
   function setInst(k) {
     if (!INSTS[k]) return;
+    if (G && k !== settings.inst) G.listened = null; // un autre instrument (une autre transposition) : le grand rond la refera entendre
     settings.inst = k;
     save(SET_KEY, settings);
     Sound.setTranspose(inst().play);
@@ -427,8 +428,10 @@
   // et, au niveau 2, le décompte et la mesure
   function setSpeed(k) {
     if (!G) return;
+    const was = G.speed;
     G.speed = k > 0 ? Math.min(2, k | 0) : 0;
     if (G.speed) G.usedSlow = true;
+    if (G.speed !== was) G.listened = null; // une autre vitesse : le grand rond la refera entendre, à cette vitesse
     speedUI();
   }
   // la réglette de la vitesse, au bout de la ligne du niveau : l'animal choisi est enfoncé
@@ -657,6 +660,7 @@
     if (!Ear.active()) { startMic().then(() => { if (G && Ear.active() && !G.cal) calStart(first); }); return; }
     if (!Ear.voiceOk()) { setHint('Ce navigateur ne me laisse pas reconnaître les noms chantés : je vérifie seulement la hauteur.', ''); flashTop(4500); return; }
     G.acts++;
+    G.listened = null;
     cancelAttempt(true);
     stopPlayback(true);
     G.cal = { i: 0, seqs: {}, first: !!first };
@@ -1340,10 +1344,12 @@
     el.bGo.hidden = ear;
     el.ear.hidden = !ear;
     // en haut, hors du jeu : le niveau, qu'on peut changer à tout moment (en Défi, où en est le Défi) ; un message à lire
-    // (le bilan d'un essai…) y prend sa place quelques secondes (flashTop), puis le niveau revient
-    const seg = (st === 'repos' || st === 'apres') && !(G.flashUntil > performance.now());
+    // (le bilan d'un essai…) y prend sa place quelques secondes (flashTop), puis le niveau revient ; pendant que la
+    // page fait entendre la phrase suivante, après une phrase réussie, « Écoute la phrase n… »
+    const seg = (st === 'repos' || st === 'apres') && !(G.flashUntil > performance.now()) && !(G.playing && G.playing.auto);
     el.seg.hidden = !seg;
     el.hint.hidden = seg;
+    if (!seg) fitHint();
     pickUI();
     goLabel(st);
     // le bouton qui avait le clavier vient de laisser sa place : le clavier passe au bouton principal du moment
@@ -1444,8 +1450,17 @@
     h.innerHTML = html;
     // une longue phrase tient sur deux lignes, en plus petit (la ligne du haut du pupitre a une hauteur fixe)
     h.classList.toggle('long', h.textContent.trim().length > 34);
+    fitHint();
     void h.offsetWidth;
     h.classList.add('pop');
+  }
+  // une consigne en gros (« Joue ! », l'invitation à chanter) qui ne tient pas sur la ligne du haut, sur un téléphone
+  // étroit : un peu plus petite, sur une ligne (mesurée quand elle est à l'écran)
+  function fitHint() {
+    const h = el.hint;
+    if (!h) return;
+    h.classList.remove('fit');
+    if (!h.hidden && h.classList.contains('go') && h.scrollHeight > h.clientHeight + 1) h.classList.add('fit');
   }
 
   function cursorHint() {
@@ -1524,20 +1539,42 @@
     el.listenS.textContent = on ? 'l’écoute' : G.whole ? 'la comptine' : `la phrase${NB}${goPhrase() + 1}`;
     b.setAttribute('aria-label', on ? 'Arrêter l’écoute' : G.whole ? 'Écouter toute la comptine' : `Écouter la phrase ${goPhrase() + 1}`);
   }
-  // l'écoute libre : la phrase choisie, ou toute la comptine, sans commencer d'essai (les notes s'allument au passage) ;
-  // allée jusqu'au bout, la ligne du haut invite l'élève à la chanter, le temps de le lire
-  function hearFree() {
+  /* l'écoute libre : la phrase choisie, ou toute la comptine, sans commencer d'essai (les notes s'allument au passage) ;
+     allée jusqu'au bout, la ligne du haut invite l'élève à la chanter, le temps de le lire, et le grand rond ne la refait
+     pas entendre : l'élève vient de l'écouter, il joue tout de suite (G.listened, voir goAttempt).
+     auto : juste après une phrase réussie, la page fait entendre la suivante d'elle-même (chain) ; puis l'élève choisit :
+     l'écouter encore, ou la jouer */
+  function hearFree(auto) {
     if (!G || busy() || G.done || G.cal) return;
-    G.acts++; // la phrase suivante ne démarre plus toute seule
+    if (!auto) G.acts++; // la page ne fait plus entendre la phrase suivante d'elle-même
+    G.listened = null;
     if (G.playing && G.playing.kind === 'free') { stopPlayback(true); return; }
     if (!Sound.ensure()) return;
-    playEvents(G.whole ? G.song.events : G.song.phrases[goPhrase()].events, 'free', (P) => { if (P.natural) singInvite(); }, { which: G.whole ? 'a' : 'p' });
+    // juste après une phrase réussie : la suivante (la carte y passe tout de suite)
+    if (G.moveTo != null) { const nx = G.moveTo; G.moveTo = null; showPhrase(nx); }
+    const sc = { full: !!G.whole, p: G.view };
+    playEvents(sc.full ? G.song.events : G.song.phrases[sc.p].events, 'free', (P) => {
+      // arrêtée avant la fin : le niveau revient tout de suite en haut du pupitre
+      if (!P.natural) { if (auto && G) { G.flashUntil = 0; bandUI(); } return; }
+      G.listened = sc;
+      if (auto) nextInvite(); else singInvite();
+    }, { auto: !!auto });
+    if (auto && G.playing && G.playing.auto) setHint(`Écoute la phrase ${sc.p + 1}…`, '');
   }
   const SING_MS = 12000; // après l'invitation, l'élève qui chante n'est pas renvoyé tout de suite au grand rond (nudge)
   function singInvite() {
     if (!G || G.done || busy()) return;
     G.singUntil = performance.now() + SING_MS;
     setHint(`${ICON.note}<span>À toi de la chanter${NB}!</span>`, 'go');
+    flashTop(MSG_MS);
+  }
+  // la phrase suivante entendue (après une phrase réussie) : à l'élève de choisir, rien ne démarre tout seul ; le grand
+  // rond respire doucement (« Écouter » est à côté, pour l'entendre encore)
+  function nextInvite() {
+    if (!G || G.done || busy()) return;
+    G.singUntil = performance.now() + SING_MS;
+    setHint(`${ICON.note}<span>Chante-la, puis joue-la${NB}!</span>`, 'go');
+    if (el.bGo) el.bGo.classList.add('is-ready');
     flashTop(MSG_MS);
   }
 
@@ -1549,14 +1586,15 @@
   /* ================= LES ESSAIS =================
      Le grand rond (« À toi de jouer ! ») : la page joue toute la comptine ou la phrase affichée,
      au choix (au-dessus des paroles, les numéros des phrases et « Tout » ; au début, toute la
-     comptine), puis l'élève joue.
+     comptine), puis l'élève joue (tout de suite s'il vient de l'écouter jusqu'au bout, avec « Écouter »).
      - niveau 1 : les notes seules, à son rythme, sans décompte (le rythme ne compte pas). Phrase par phrase, avec l'aide (flèches,
        note montrée) ; comptine entière, sans aide : une fausse note est comptée et on passe.
      - niveau 2 : notes et rythme : un décompte, puis une prise chronométrée (voir startTake).
      Un essai repart toujours de zéro sur ce qu'il couvre ; on peut rejouer autant qu'on veut
      (toute la comptine, une fois un essai allé au bout : c'est une nouvelle partie).
      Après la comptine entière : bilan, puis le grand rond passe aux phrases à revoir. Une
-     phrase réussie, la suivante (ou la prochaine à revoir) démarre toute seule. */
+     phrase réussie, la page fait entendre la suivante (ou la prochaine à revoir), puis l'élève
+     choisit : l'écouter encore, ou la jouer (voir chain). */
   const NB = '\u00a0'; // espace insécable (« À toi de jouer ! » reste sur une ligne)
   const GO = `À toi de jouer${NB}!`;
   const whichPh = (qs) => (qs.length === 1 ? 'la phrase ' + (qs[0] + 1) : 'les phrases ' + qs.slice(0, -1).map((q) => q + 1).join(', ') + ' et ' + (qs[qs.length - 1] + 1));
@@ -1615,7 +1653,7 @@
   function goAttempt(sc) {
     if (!G || G.done) return;
     // toute la comptine, une fois un essai allé au bout : une nouvelle partie (comme « Rejouer la comptine », à la fin)
-    if ((sc ? sc.full : G.whole) && G.begun) { newRound(true); return; }
+    if ((sc ? sc.full : G.whole) && G.begun) { newRound(true, G.listened); return; }
     if (G.cal) { G.cal = null; applyVoice(); }
     // la voix jamais réglée sur cet appareil : le premier essai commence par « Régler ma voix » (on peut l'arrêter)
     if (singing() && !hasMyVoice() && !G.calAsked) { G.calAsked = true; calStart(true); return; }
@@ -1628,6 +1666,11 @@
     }
     if (!Sound.ensure()) return;
     sc = sc || scope();
+    // l'élève vient d'écouter jusqu'au bout ce qu'il va jouer (« Écouter », ou la phrase suivante après une phrase
+    // réussie) : il joue tout de suite, sans la réentendre
+    const heard = G.listened;
+    G.listened = null;
+    const fresh = !!heard && heard.full === !!sc.full && (sc.full || heard.p === sc.p);
     G.attemptSc = sc;
     const song = G.song;
     const ids = sc.full ? song.notes.map((_, n) => n) : song.phrases[sc.p].notes;
@@ -1638,11 +1681,13 @@
     el.main.classList.add('is-taking');
     setGoUI(true);
     resetHeard();
+    const play = () => (G.level === 2 ? startTake(sc) : startLive(sc));
+    if (fresh) { play(); return; }
     setHint(sc.full ? 'Écoute toute la comptine…' : `Écoute la phrase ${sc.p + 1}…`, '');
     playEvents(sc.full ? song.events : song.phrases[sc.p].events, 'go', (P) => {
       // écoute arrêtée avant la fin : pas d'essai
       if (!P.natural && G && !G.take && !G.live) { el.main.classList.remove('is-taking'); setGoUI(false); }
-    }, { then: () => (G.level === 2 ? startTake(sc) : startLive(sc)) });
+    }, { then: play });
   }
 
   // niveau 1 : pas de décompte (le rythme ne compte pas) : l'écoute finie, l'élève joue, à son rythme
@@ -1688,14 +1733,17 @@
     const queued = order.filter((q) => G.queue.includes(q));
     return queued.length ? queued[0] : order.length ? order[0] : null;
   }
-  // elle démarre toute seule (écoute, décompte), sauf si l'élève a fait autre chose entre-temps
+  /* la page la fait entendre, le temps de lire le bilan (sauf si l'élève a fait autre chose entre-temps) ; puis l'élève
+     choisit : « Écouter » encore, ou le grand rond (il vient de l'entendre : il la joue tout de suite). Rien ne démarre
+     tout seul. */
   function chain(p) {
     const nx = nextTarget(p);
+    G.listened = null;
     if (nx == null) return;
     G.moveTo = nx;
-    bandUI(); // le grand rond l'annonce déjà (« Jouer la phrase n »)
+    bandUI(); // le grand rond et « Écouter » l'annoncent déjà (« Jouer la phrase n »)
     const tok = G.acts;
-    later(() => { if (G && G.moveTo === nx && G.acts === tok && !busy() && !G.done && !G.playing) goAttempt(); }, 1300);
+    later(() => { if (G && G.moveTo === nx && G.acts === tok && !busy() && !G.done && !G.playing) hearFree(true); }, 1300);
   }
 
   /* ---------- comptine entière, niveau 1 : toutes les notes dans l'ordre, sans aide ---------- */
@@ -1747,11 +1795,13 @@
     flashTop(MSG_MS);
   }
 
-  // nouvelle partie de la même comptine, toute la comptine d'abord (go : l'essai démarre tout de suite)
-  function newRound(go) {
+  // nouvelle partie de la même comptine, toute la comptine d'abord (go : l'essai démarre tout de suite ; listened : elle
+  // vient d'être écoutée jusqu'au bout, l'élève la joue sans la réentendre)
+  function newRound(go, listened) {
     const had = !!(el.pu && el.pu.contains(document.activeElement)); // le clavier était sur le pupitre : il y reste
     stopAll();
     renderSong(G.song);
+    if (listened && listened.full) G.listened = listened;
     if (go) goAttempt();
     if (had) { const to = el.bStop.hidden ? el.bGo : el.bStop; if (!to.hidden) to.focus({ preventScroll: true }); }
   }
@@ -1887,7 +1937,7 @@
     if (st.done) { endLive(); later(() => finish(), 520); return; }
     const next = ph.notes.find((m) => m > n && !G.found.has(m));
     if (next != null) { setCursor(next, true, false); laterHint(() => { if (G && G.cursor === next) cursorHint(); }, 650); return; }
-    // phrase retrouvée : fin de l'essai ; la suivante démarre toute seule
+    // phrase retrouvée : fin de l'essai ; la page fait entendre la suivante, puis l'élève choisit (chain)
     G.begun = true;
     endLive();
     setHint(`Phrase ${p + 1} retrouvée !`, 'ok');
@@ -1962,7 +2012,7 @@
     const h = Sound.sequence(voiceNow(), items, opts.at ? Math.max(0.05, opts.at - Sound.now()) : undefined);
     if (!h) { goBack(home); return; }
     const noteEnd = h.t0 + items.reduce((m, it) => Math.max(m, it.start + it.dur), 0);
-    const P = { h, items, kind, t0: h.t0, end: h.t0 + total, noteEnd, cur: -1, raf: 0, onEnd, home, srcs: opts.srcs || [], ci: opts.ci || null, k: -1, then: opts.then || null, natural: false, which: opts.which || null };
+    const P = { h, items, kind, t0: h.t0, end: h.t0 + total, noteEnd, cur: -1, raf: 0, onEnd, home, srcs: opts.srcs || [], ci: opts.ci || null, k: -1, then: opts.then || null, natural: false, auto: !!opts.auto };
     G.playing = P;
     setPlayingUI(kind, true);
     const tick = () => {
@@ -2188,7 +2238,7 @@
         if (k >= 0 && k < tk.N && k !== tk.k) { tk.k = k; retrigger(el.card, 'beat'); }
         if (k >= 0) paintCountIn(tk, now, tk.phase === 'count');
         if (tk.phase === 'count' && now >= tk.T0 - 0.04) tk.phase = 'play';
-        if (now >= tk.Tgo - 0.04) { tk.go = true; setHint(tk.full ? 'Toute la comptine : joue !' : 'Joue !', 'go'); }
+        if (now >= tk.Tgo - 0.04) { tk.go = true; setHint(tk.full ? `Toute la comptine${NB}: joue${NB}!` : `Joue${NB}!`, 'go'); }
       }
       if (tk.phase === 'play') {
         if (tk.full) {
@@ -2244,7 +2294,7 @@
     if (!silent) idleHint();
   }
 
-  // phrase réussie : on passe à la suivante (tout de suite si l'élève relance)
+  // une écoute finie juste après une phrase réussie, avant que la page fasse entendre la suivante : la carte y passe
   function moveOn() {
     const nx = G.moveTo;
     G.moveTo = null;
@@ -2689,7 +2739,8 @@
   // « Tout », ou deux touchers rapides sur un numéro : le grand rond jouera toute la comptine (depuis la phrase 1)
   function pickAll() {
     if (!G || G.done || G.defi || prepping() || (G.live && G.live.full)) return;
-    G.acts++; // la phrase suivante ne démarre plus toute seule
+    G.acts++; // la page ne fait plus entendre la phrase suivante d'elle-même
+    if (!G.whole) G.listened = null;
     if (G.live) cancelAttempt(true); // une phrase en cours, au niveau 1 : elle s'arrête
     stopPlayback(true);
     G.moveTo = null;
@@ -2712,6 +2763,7 @@
     lastPill = dbl ? null : { p, t: now, song: G.song };
     if (prepping() || (G.live && G.live.full)) return;
     if (dbl && !G.defi && !G.done) { pickAll(); return; }
+    if (G.whole || p !== goPhrase()) G.listened = null; // une autre phrase : le grand rond la fera entendre d'abord
     G.moveTo = null;
     if (G.live && G.live.p !== p) cancelAttempt(true); // une autre phrase : l'essai en cours s'arrête
     stopPlayback(true);
