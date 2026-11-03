@@ -204,12 +204,12 @@
     applyVoice();
   }
   // le niveau change : la comptine repart à ce niveau, en gardant ce que jouait le grand rond (la phrase choisie, ou
-  // toute la comptine)
+  // toute la comptine) ; la comptine finie, elle repart comme en arrivant, à la phrase 1
   function setLevel(v) {
     settings.level = v === 2 ? 2 : 1;
     save(SET_KEY, settings);
     if (G && view === 'song') {
-      const keep = { whole: G.whole, view: G.moveTo != null ? G.moveTo : G.view };
+      const keep = G.done ? null : { whole: G.whole, view: G.moveTo != null ? G.moveTo : G.view };
       stopAll();
       renderSong(G.song, { keep });
     }
@@ -702,7 +702,7 @@
     G.cal = null;
     applyVoice();
     expectNext();
-    setHint(`Ta voix est réglée${NB}! Touche «${NB}${GO}${NB}»`, 'ok');
+    setHint(`Ta voix est réglée${NB}! Touche «${NB}${goText()}${NB}»`, 'ok');
     flashTop(3600);
   }
   function calStop() {
@@ -1142,11 +1142,12 @@
       speed: keepSpeed, playing: null, done: false, lastStars: 0, defi: DEFI,
       // niveau 2
       passed: new Set(), fails: 0, tries: song.phrases.map(() => 0), take: null, results: [], moveTo: null, keepMic: false, fullRes: null,
-      // whole : ce que joue le grand rond, toute la comptine (au début) ou la phrase affichée (au choix, au-dessus des
-      // paroles : un numéro, ou « Tout » et deux touchers rapides sur un numéro pour toute la comptine)
+      // whole : ce que joue le grand rond, la phrase affichée (en arrivant sur la comptine, la phrase 1) ou toute la
+      // comptine (au choix, au-dessus des paroles : un numéro, ou « Tout » et deux touchers rapides sur un numéro pour
+      // toute la comptine ; en Défi, toujours toute la comptine)
       // begun : un essai est allé jusqu'au bout (en haut du pupitre, ce que dit la page remplace alors le niveau)
       // miss : notes manquées pendant la comptine entière (niveau 1) ; queue : phrases à corriger ; acts : gestes de l'élève
-      whole: keep ? !!keep.whole : true, begun: false, miss: new Set(), queue: [], acts: 0,
+      whole: DEFI || !!(keep && keep.whole), begun: false, miss: new Set(), queue: [], acts: 0,
       // live : essai en cours au niveau 1 (dès la fin de l'écoute, sans décompte) ; helped : notes montrées
       live: null, helped: 0, nudged: false,
       // la voix : notes dont la hauteur (pitchOk) ou le nom (nameOk) ont été trouvés, à un essai ou un autre : les deux
@@ -1308,7 +1309,7 @@
 
   /* ================= LE PUPITRE (en bas) =================
      Deux étages de taille fixe ; seul leur contenu change avec le moment de la partie :
-       repos : en haut le casque (écouter), le niveau et la vitesse ; le grand rond (« À toi de jouer ! »), seul : ce
+       repos : en haut le niveau et la vitesse ; « Écouter » et le grand rond (« Jouer la phrase 1 » en arrivant) : ce
                qu'il joue, la phrase choisie ou toute la comptine, se choisit au-dessus des paroles
        jeu   : la consigne (écoute, décompte, « note n sur N », la réponse) ; Arrêter · le grand rond devient la note
                entendue, avec sa jauge · Recommencer (niveau 1, pendant une phrase : « Jusqu'à la note »)
@@ -1360,8 +1361,9 @@
   }
   // la phrase que jouerait le grand rond : celle qui est affichée, ou la suivante quand on vient d'en réussir une
   const goPhrase = () => (G.moveTo != null ? G.moveTo : G.view);
-  /* ce que lance le grand rond : toute la comptine (« À toi de jouer ! », puis « Rejouer la comptine ») ; la phrase
-     choisie (« Jouer », « Corriger » si elle est à corriger, « Rejouer » si elle est faite ou déjà essayée) */
+  /* ce que lance le grand rond : la phrase choisie (« Jouer » : en arrivant, « Jouer la phrase 1 » ; « Corriger » si
+     elle est à corriger, « Rejouer » si elle est faite ou déjà essayée) ; toute la comptine (« À toi de jouer ! », puis
+     « Rejouer la comptine ») */
   function goLabel(st = bandState()) {
     if (!G || !el.goT) return;
     let t = 'À toi', s = `de jouer${NB}!`;
@@ -1377,6 +1379,8 @@
     el.goT.textContent = t;
     el.goS.textContent = s;
   }
+  // ce que dit le grand rond, pour le rappeler dans un message (« Touche « Jouer la phrase 1 » »)
+  const goText = () => { if (!el.goT) return GO; goLabel(); return `${el.goT.textContent} ${el.goS.textContent}`; };
   // un message à lire hors du jeu (le niveau occupe la ligne du haut) : il prend sa place quelques secondes
   const MSG_MS = 4000; // le bilan d'un essai
   function flashTop(ms = 2800) {
@@ -1584,9 +1588,10 @@
   }
 
   /* ================= LES ESSAIS =================
-     Le grand rond (« À toi de jouer ! ») : la page joue toute la comptine ou la phrase affichée,
-     au choix (au-dessus des paroles, les numéros des phrases et « Tout » ; au début, toute la
-     comptine), puis l'élève joue (tout de suite s'il vient de l'écouter jusqu'au bout, avec « Écouter »).
+     Le grand rond (« Jouer la phrase n », « À toi de jouer ! ») : la page joue la phrase affichée ou
+     toute la comptine, au choix (au-dessus des paroles, les numéros des phrases et « Tout » ; en
+     arrivant sur la comptine, la phrase 1), puis l'élève joue (tout de suite s'il vient de l'écouter
+     jusqu'au bout, avec « Écouter »).
      - niveau 1 : les notes seules, à son rythme, sans décompte (le rythme ne compte pas). Phrase par phrase, avec l'aide (flèches,
        note montrée) ; comptine entière, sans aide : une fausse note est comptée et on passe.
      - niveau 2 : notes et rythme : un décompte, puis une prise chronométrée (voir startTake).
@@ -1622,7 +1627,7 @@
   function nudge() {
     if (G.nudged || G.done) return;
     G.nudged = true;
-    setHint(`Pour commencer, touche «${NB}${el.goT ? `${el.goT.textContent} ${el.goS.textContent}` : GO}${NB}»`, '');
+    setHint(`Pour commencer, touche «${NB}${goText()}${NB}»`, '');
     flashTop(3600);
   }
 
@@ -1795,12 +1800,13 @@
     flashTop(MSG_MS);
   }
 
-  // nouvelle partie de la même comptine, toute la comptine d'abord (go : l'essai démarre tout de suite ; listened : elle
-  // vient d'être écoutée jusqu'au bout, l'élève la joue sans la réentendre)
+  // nouvelle partie de la même comptine, toute la comptine d'un coup (« Rejouer la comptine », à la fin ; ou toute la
+  // comptine rejouée après un essai allé au bout) (go : l'essai démarre tout de suite ; listened : elle vient d'être
+  // écoutée jusqu'au bout, l'élève la joue sans la réentendre)
   function newRound(go, listened) {
     const had = !!(el.pu && el.pu.contains(document.activeElement)); // le clavier était sur le pupitre : il y reste
     stopAll();
-    renderSong(G.song);
+    renderSong(G.song, { keep: { whole: true } });
     if (listened && listened.full) G.listened = listened;
     if (go) goAttempt();
     if (had) { const to = el.bStop.hidden ? el.bGo : el.bStop; if (!to.hidden) to.focus({ preventScroll: true }); }
@@ -2621,7 +2627,7 @@
      comptine (le navigateur demande l'autorisation la première fois). Il se coupe quand la comptine est
      finie, au retour à l'accueil et quand la page passe en arrière-plan, et se rallume quand on rejoue
      ou qu'on revient sur la page. */
-  let micBusy = false;
+  let micStarting = null; // le micro en train de s'allumer (sa mise en route : une promesse)
   function pauseMicDone() {
     if (!Ear.active()) return;
     Ear.stop();
@@ -2671,9 +2677,14 @@
     paused: 'Micro en pause : il reprend tout seul quand tu reviens sur la page.',
   };
 
-  async function startMic() {
-    if (micBusy) return;
-    micBusy = true;
+  /* allumer le micro ; appelé pendant qu'il s'allume déjà, on attend la même mise en route (« Rejouer la comptine », à
+     la fin : la page rallume le micro en redessinant la comptine, et l'essai attend qu'il soit prêt pour commencer ;
+     avant, il ne commençait pas et il fallait toucher de nouveau le grand rond) */
+  function startMic() {
+    if (!micStarting) micStarting = micUp().finally(() => { micStarting = null; });
+    return micStarting;
+  }
+  async function micUp() {
     applyVoice();
     if (!Ear.active() && el.ear && document.contains(el.ear)) showEar(false, '', false, true);
     try {
@@ -2688,8 +2699,6 @@
       const code = (e && e.code) || 'other';
       if (!micErrs.has(code)) { micErrs.add(code); track('micro', { code }); }
       showEar(false, micMsgHtml(code), FATAL(code));
-    } finally {
-      micBusy = false;
     }
   }
 
@@ -2727,7 +2736,8 @@
   }
 
   /* ---------------- événements ---------------- */
-  // « À toi de jouer ! » / « Arrêter » ; comptine finie : on la rejoue de la même façon
+  // le grand rond (« Jouer la phrase n », « À toi de jouer ! »…) / « Arrêter » ; comptine finie : « Rejouer la
+  // comptine », toute la comptine d'un coup
   function goButton() {
     if (!G) return;
     G.acts++;
