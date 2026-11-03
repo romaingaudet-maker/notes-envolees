@@ -229,6 +229,8 @@
 .rg-z-play.is-off .seg { opacity: .42; }
 .rg-z-play .seg button:disabled { cursor: default; }
 .rg-lg { display: none; }
+/* la vitesse : les trois animaux seuls, côte à côte avec le niveau ; leurs noms quand la place le permet (écran large) */
+.rg-speed .rg-sp-t { display: none; }
 /* l'instrument : 5 colonnes, 3 rangées ; « Régler ma voix » à droite de l'étiquette (la voix seulement) */
 .rg-lblrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 32px; }
 .rg-voice { height: 32px; padding: 0 12px; gap: 6px; font-size: 13.5px; }
@@ -253,6 +255,7 @@
   .rg-z-play { grid-template-columns: minmax(0, 1fr); row-gap: 14px; }
   .rg-lg { display: inline; }
   .rg-sh { display: none; }
+  .rg-speed .rg-sp-t { display: inline; }
 }
 /* téléphone : une colonne, en bas de l'écran, serrée */
 @media (max-width: 599px) {
@@ -324,43 +327,58 @@
 .pu-top .hint svg { width: 26px; height: 26px; }
 .pu-top .hint small { font-size: 13px; }
 .pu-top .cin b { width: 1.5em; height: 1.5em; }
-/* le casque (écouter), le niveau et, au bout, la vitesse : le lapin (normale) au clair, la tortue (lente) en couleur */
+/* le niveau et, au bout, la vitesse : une réglette à trois cases (le lapin, normale ; la tortue, aux trois quarts ;
+   l'escargot, à moitié), comme celle du niveau */
 .pu-top .pu-lvrow { width: min(100%, 470px); display: flex; align-items: center; gap: 8px; }
 .pu-top .pu-lvrow[hidden] { display: none; }
 .pu-top .pu-lvrow .seg { flex: 1 1 auto; width: auto; min-width: 0; }
-/* les deux niveaux prennent la place de leur nom (« Notes et rythme » est plus long), pour rester lisibles en entier */
+/* les deux niveaux prennent la place de leur nom (« Notes et rythme » est plus long), pour rester lisibles en entier ;
+   sur un téléphone étroit, en plus court (« Notes », « + rythme ») */
 .pu-top .pu-lvrow .seg button { flex: 1 1 auto; gap: 6px; padding: 0 6px; }
+.pu-top .pu-lvrow .seg-level .sh { display: none; }
+.pu-top .pu-lvrow .seg-speed { flex: none; }
+.pu-top .pu-lvrow .seg-speed button { flex: none; width: 38px; padding: 0; }
+.seg-speed button svg { width: 22px; height: 22px; }
+/* la spirale de l'escargot : de la couleur du fond de sa case */
+.seg .cut { stroke: var(--panel); }
+.seg button[aria-checked="true"] .cut { stroke: var(--text); }
+@media (max-width: 420px) {
+  .pu-top .pu-lvrow .seg-level button { font-size: 12px; gap: 5px; padding: 0 5px; }
+}
 @media (max-width: 380px) {
   .pu-top .pu-lvrow { gap: 6px; }
-  .pu-top .pu-lvrow .seg button { font-size: 12px; gap: 5px; padding: 0 5px; }
+  .pu-top .pu-lvrow .seg-level .lg { display: none; }
+  .pu-top .pu-lvrow .seg-level .sh { display: inline; }
+  .pu-top .pu-lvrow .seg-speed button { width: 34px; }
 }
-@media (max-width: 340px) { .pu-top .pu-lvrow .seg .lv { display: none; } }
-.pu-speed {
-  flex: none; display: grid; place-items: center; width: var(--pt); height: var(--pt); padding: 0; border-radius: 50%;
-  border: 2px solid var(--line-strong); background: var(--panel); color: var(--text); cursor: pointer;
-  box-shadow: 0 3px 0 var(--line); transition: transform .08s, background-color .15s;
-}
-.pu-speed svg { width: 62%; height: 62%; }
-.pu-speed[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 62%, #000); }
-.pu-speed:active { transform: translateY(2px); }
-.pu-speed:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-/* le casque, au début de la ligne : écouter ce que jouerait le grand rond (la phrase choisie, ou toute la comptine),
-   sans jouer ; pendant l'écoute, il l'arrête */
-.pu-listen {
-  flex: none; display: grid; place-items: center; width: var(--pt); height: var(--pt); padding: 0; border-radius: 50%;
-  border: 2px solid var(--text); background: var(--text); color: var(--panel); cursor: pointer;
-  box-shadow: 0 3px 0 color-mix(in srgb, var(--text) 62%, #000); transition: transform .08s, background-color .15s;
-}
-.pu-listen svg { width: 52%; height: 52%; }
-.pu-listen.is-on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 62%, #000); }
-.pu-listen:active { transform: translateY(2px); }
-.pu-listen:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 
 /* les trois ronds */
 .pu-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--gb) minmax(0, 1fr); width: 100%; max-width: 520px; margin: 0 auto; }
 .pu-slot, .pu-mid { display: grid; min-width: 0; }
 .pu-slot > *, .pu-mid > * { grid-area: 1 / 1; }
 .pu-mid { place-items: center; width: var(--gb); height: var(--gb); }
+/* au repos : « Écouter » et le grand rond, deux grands ronds de part et d'autre du milieu (le grand rond un peu plus
+   grand, il reste le geste principal) ; pendant le jeu et à la fin, les trois places habituelles */
+.pupitre.is-pair .pu-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.pupitre.is-pair .pu-row > .pu-slot:last-child { display: none; }
+.pupitre.is-pair .pu-row > .pu-slot:first-child { padding-right: calc((var(--gb) - var(--gc)) / 2 + 12px); }
+.pupitre.is-pair .pu-mid { justify-self: start; margin-left: 12px; }
+.pupitre.is-pair .pu-go { --gc: calc(var(--gb) - 24px); }
+/* « Écouter » : en anneau (fond clair, bord sombre) ; pendant l'écoute, plein (« Arrêter l'écoute ») */
+.pu-listen {
+  align-self: center; justify-self: end;
+  width: var(--gc); height: var(--gc); padding: 0; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  border: 3px solid var(--text); background: var(--panel); color: var(--text); cursor: pointer; text-align: center; touch-action: manipulation;
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--text) 28%, transparent), 0 0 0 8px color-mix(in srgb, var(--text) 8%, transparent);
+  transition: transform .08s, background-color .15s, color .15s;
+}
+.pu-listen[hidden] { display: none; }
+.pu-listen .ic { display: grid; margin-bottom: 2px; }
+.pu-listen .ic svg { width: calc(var(--gc) * .22); height: calc(var(--gc) * .22); }
+.pu-listen.is-on { background: var(--text); color: var(--panel); }
+.pu-listen:active { transform: translateY(3px); box-shadow: 0 2px 0 color-mix(in srgb, var(--text) 28%, transparent), 0 0 0 8px color-mix(in srgb, var(--text) 8%, transparent); }
+.pu-listen:focus-visible { outline: 3px solid var(--accent); outline-offset: 10px; }
 .pu-side {
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   height: var(--gb); min-width: 0; padding: calc((var(--gb) - var(--sc)) / 2) 2px 0;

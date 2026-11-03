@@ -905,6 +905,8 @@ html.onb-open, html.onb-open body { overflow: hidden; }
 .rg-z-play.is-off .seg { opacity: .42; }
 .rg-z-play .seg button:disabled { cursor: default; }
 .rg-lg { display: none; }
+/* la vitesse : les trois animaux seuls, côte à côte avec le niveau ; leurs noms quand la place le permet (écran large) */
+.rg-speed .rg-sp-t { display: none; }
 /* l'instrument : 5 colonnes, 3 rangées ; « Régler ma voix » à droite de l'étiquette (la voix seulement) */
 .rg-lblrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 32px; }
 .rg-voice { height: 32px; padding: 0 12px; gap: 6px; font-size: 13.5px; }
@@ -929,6 +931,7 @@ html.onb-open, html.onb-open body { overflow: hidden; }
   .rg-z-play { grid-template-columns: minmax(0, 1fr); row-gap: 14px; }
   .rg-lg { display: inline; }
   .rg-sh { display: none; }
+  .rg-speed .rg-sp-t { display: inline; }
 }
 /* téléphone : une colonne, en bas de l'écran, serrée */
 @media (max-width: 599px) {
@@ -1000,43 +1003,58 @@ html.onb-open, html.onb-open body { overflow: hidden; }
 .pu-top .hint svg { width: 26px; height: 26px; }
 .pu-top .hint small { font-size: 13px; }
 .pu-top .cin b { width: 1.5em; height: 1.5em; }
-/* le casque (écouter), le niveau et, au bout, la vitesse : le lapin (normale) au clair, la tortue (lente) en couleur */
+/* le niveau et, au bout, la vitesse : une réglette à trois cases (le lapin, normale ; la tortue, aux trois quarts ;
+   l'escargot, à moitié), comme celle du niveau */
 .pu-top .pu-lvrow { width: min(100%, 470px); display: flex; align-items: center; gap: 8px; }
 .pu-top .pu-lvrow[hidden] { display: none; }
 .pu-top .pu-lvrow .seg { flex: 1 1 auto; width: auto; min-width: 0; }
-/* les deux niveaux prennent la place de leur nom (« Notes et rythme » est plus long), pour rester lisibles en entier */
+/* les deux niveaux prennent la place de leur nom (« Notes et rythme » est plus long), pour rester lisibles en entier ;
+   sur un téléphone étroit, en plus court (« Notes », « + rythme ») */
 .pu-top .pu-lvrow .seg button { flex: 1 1 auto; gap: 6px; padding: 0 6px; }
+.pu-top .pu-lvrow .seg-level .sh { display: none; }
+.pu-top .pu-lvrow .seg-speed { flex: none; }
+.pu-top .pu-lvrow .seg-speed button { flex: none; width: 38px; padding: 0; }
+.seg-speed button svg { width: 22px; height: 22px; }
+/* la spirale de l'escargot : de la couleur du fond de sa case */
+.seg .cut { stroke: var(--panel); }
+.seg button[aria-checked="true"] .cut { stroke: var(--text); }
+@media (max-width: 420px) {
+  .pu-top .pu-lvrow .seg-level button { font-size: 12px; gap: 5px; padding: 0 5px; }
+}
 @media (max-width: 380px) {
   .pu-top .pu-lvrow { gap: 6px; }
-  .pu-top .pu-lvrow .seg button { font-size: 12px; gap: 5px; padding: 0 5px; }
+  .pu-top .pu-lvrow .seg-level .lg { display: none; }
+  .pu-top .pu-lvrow .seg-level .sh { display: inline; }
+  .pu-top .pu-lvrow .seg-speed button { width: 34px; }
 }
-@media (max-width: 340px) { .pu-top .pu-lvrow .seg .lv { display: none; } }
-.pu-speed {
-  flex: none; display: grid; place-items: center; width: var(--pt); height: var(--pt); padding: 0; border-radius: 50%;
-  border: 2px solid var(--line-strong); background: var(--panel); color: var(--text); cursor: pointer;
-  box-shadow: 0 3px 0 var(--line); transition: transform .08s, background-color .15s;
-}
-.pu-speed svg { width: 62%; height: 62%; }
-.pu-speed[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 62%, #000); }
-.pu-speed:active { transform: translateY(2px); }
-.pu-speed:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-/* le casque, au début de la ligne : écouter ce que jouerait le grand rond (la phrase choisie, ou toute la comptine),
-   sans jouer ; pendant l'écoute, il l'arrête */
-.pu-listen {
-  flex: none; display: grid; place-items: center; width: var(--pt); height: var(--pt); padding: 0; border-radius: 50%;
-  border: 2px solid var(--text); background: var(--text); color: var(--panel); cursor: pointer;
-  box-shadow: 0 3px 0 color-mix(in srgb, var(--text) 62%, #000); transition: transform .08s, background-color .15s;
-}
-.pu-listen svg { width: 52%; height: 52%; }
-.pu-listen.is-on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 62%, #000); }
-.pu-listen:active { transform: translateY(2px); }
-.pu-listen:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 
 /* les trois ronds */
 .pu-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--gb) minmax(0, 1fr); width: 100%; max-width: 520px; margin: 0 auto; }
 .pu-slot, .pu-mid { display: grid; min-width: 0; }
 .pu-slot > *, .pu-mid > * { grid-area: 1 / 1; }
 .pu-mid { place-items: center; width: var(--gb); height: var(--gb); }
+/* au repos : « Écouter » et le grand rond, deux grands ronds de part et d'autre du milieu (le grand rond un peu plus
+   grand, il reste le geste principal) ; pendant le jeu et à la fin, les trois places habituelles */
+.pupitre.is-pair .pu-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.pupitre.is-pair .pu-row > .pu-slot:last-child { display: none; }
+.pupitre.is-pair .pu-row > .pu-slot:first-child { padding-right: calc((var(--gb) - var(--gc)) / 2 + 12px); }
+.pupitre.is-pair .pu-mid { justify-self: start; margin-left: 12px; }
+.pupitre.is-pair .pu-go { --gc: calc(var(--gb) - 24px); }
+/* « Écouter » : en anneau (fond clair, bord sombre) ; pendant l'écoute, plein (« Arrêter l'écoute ») */
+.pu-listen {
+  align-self: center; justify-self: end;
+  width: var(--gc); height: var(--gc); padding: 0; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  border: 3px solid var(--text); background: var(--panel); color: var(--text); cursor: pointer; text-align: center; touch-action: manipulation;
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--text) 28%, transparent), 0 0 0 8px color-mix(in srgb, var(--text) 8%, transparent);
+  transition: transform .08s, background-color .15s, color .15s;
+}
+.pu-listen[hidden] { display: none; }
+.pu-listen .ic { display: grid; margin-bottom: 2px; }
+.pu-listen .ic svg { width: calc(var(--gc) * .22); height: calc(var(--gc) * .22); }
+.pu-listen.is-on { background: var(--text); color: var(--panel); }
+.pu-listen:active { transform: translateY(3px); box-shadow: 0 2px 0 color-mix(in srgb, var(--text) 28%, transparent), 0 0 0 8px color-mix(in srgb, var(--text) 8%, transparent); }
+.pu-listen:focus-visible { outline: 3px solid var(--accent); outline-offset: 10px; }
 .pu-side {
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   height: var(--gb); min-width: 0; padding: calc((var(--gb) - var(--sc)) / 2) 2px 0;
@@ -22246,6 +22264,8 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     rabbit: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><ellipse cx="15.3" cy="6.2" rx="1.6" ry="4.7" transform="rotate(-20 15.3 6.2)"/><ellipse cx="18.5" cy="6.1" rx="1.6" ry="4.5" transform="rotate(14 18.5 6.1)"/><path fill-rule="evenodd" d="M14.2 12.5a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0zM18 11.8a.9.9 0 1 0 1.8 0a.9.9 0 1 0-1.8 0z"/><ellipse cx="10.6" cy="15.4" rx="7.1" ry="4.7"/><ellipse cx="7" cy="18.7" rx="3.7" ry="1.9"/><ellipse cx="16.8" cy="19.3" rx="2.3" ry="1.3"/><circle cx="3.2" cy="13.8" r="2.1"/></g></svg>',
     ears: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.2 15.2v-3.4a7.8 7.8 0 0 1 15.6 0v3.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><rect x="2.6" y="13.2" width="5.2" height="7.8" rx="2.2" fill="currentColor"/><rect x="16.2" y="13.2" width="5.2" height="7.8" rx="2.2" fill="currentColor"/></svg>',
     turtle: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 15.5c0-4.3 3.7-7.5 8.5-7.5s8.5 3.2 8.5 7.5z" fill="currentColor"/><circle cx="20.6" cy="13.2" r="2.3" fill="currentColor"/><path d="M5 15.5v3M9 15.5v3M13.5 15.5v3M17 15.5v3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
+    // l'escargot : la coquille pleine, sa spirale « creusée » de la couleur du fond (.cut, voir _controls.css)
+    snail: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="1.6" y="18.4" width="20.2" height="3.2" rx="1.6"/><rect x="18.2" y="10.8" width="3.6" height="10.8" rx="1.8"/><circle cx="17.5" cy="6.3" r="1.25"/><circle cx="22.4" cy="6.6" r="1.25"/><circle cx="11" cy="12.2" r="6.2"/></g><g fill="none" stroke-linecap="round"><path d="M19.3 11.3 17.6 6.5M20.8 11.3l1.6-4.5" stroke="currentColor" stroke-width="1.5"/><path class="cut" d="M11.1 12.3a1 1 0 0 1 2 0a2.1 2.1 0 0 1-4.2 0a3.2 3.2 0 0 1 6.4 0a4.3 4.3 0 0 1-8.6.2" stroke-width="1.35"/></g></svg>',
     reset: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2.2-5.1M5 4v4h4" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     right: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 16h21M17 8l8 8-8 8" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     left: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M28 16H7M15 8l-8 8 8 8" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -22264,6 +22284,14 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     // « Tout », au-dessus des paroles : toute la comptine (deux rangées de perles)
     song: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><circle cx="3.6" cy="8" r="2.4"/><circle cx="9.2" cy="4.2" r="2.4"/><circle cx="14.8" cy="6.2" r="2.4"/><circle cx="20.4" cy="2.9" r="2.4"/><circle cx="3.6" cy="20.6" r="2.4"/><circle cx="9.2" cy="16.8" r="2.4"/><circle cx="14.8" cy="18.8" r="2.4"/><circle cx="20.4" cy="15.5" r="2.4"/></g></svg>',
   };
+  // les trois vitesses : la page joue la comptine à 100 %, 75 % ou 50 % de son allure
+  const SPEEDS = [1, 0.75, 0.5];
+  const SPEED_UI = [
+    { icon: ICON.rabbit, lbl: 'Normale', aria: 'Vitesse normale (le lapin)' },
+    { icon: ICON.turtle, lbl: 'Lente', aria: 'Plus lent : aux trois quarts (la tortue)' },
+    { icon: ICON.snail, lbl: 'Très lente', aria: 'Très lent : à moitié (l’escargot)' },
+  ];
+  const speedOf = () => SPEEDS[(G && G.speed) || 0];
   const star = (on, size = 24) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.45 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z" fill="${on ? '#F5C32C' : 'none'}" stroke="${on ? '#C8901A' : 'currentColor'}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
   const chip = (letter, name) => `<span class="nchip" data-l="${letter}">${name}</span>`;
   /* La jauge du grand rond, pendant le jeu : un arc au-dessus de la note entendue (bas à gauche, juste en haut, en
@@ -22579,28 +22607,26 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     step(steps[0]);
   }
   /* Les réglages, sur une seule feuille : le prénom, le mode de jeu et l'instrument, chacun modifiable directement ;
-     dans une comptine, aussi le niveau et la vitesse (la tortue : la page joue plus lentement ; au niveau 2, le
-     décompte et la mesure aussi) et, pour la voix, « Régler ma voix ». On l'ouvre par « Changer » (le rappel, en haut
-     de l'accueil) ou par le bouton à son nom, en haut d'une comptine. La vitesse se change aussi d'un toucher, au
-     bout de la ligne du niveau (le lapin : normale ; la tortue : lente). Chaque zone garde sa taille quel que soit le choix : les textes de tous les choix
+     dans une comptine, aussi le niveau et la vitesse (la tortue, aux trois quarts, et l'escargot, à moitié : la page
+     joue plus lentement ; au niveau 2, le décompte et la mesure aussi) et, pour la voix, « Régler ma voix ». On l'ouvre
+     par « Changer » (le rappel, en haut de l'accueil) ou par le bouton à son nom, en haut d'une comptine. La vitesse se
+     change aussi d'un toucher, au bout de la ligne du niveau (le lapin, la tortue, l'escargot). Chaque zone garde sa taille quel que soit le choix : les textes de tous les choix
      sont posés au même endroit (seul celui du choix se voit), la case du tableau d'honneur garde sa place, le niveau
      et la vitesse restent (grisés en Défi). La feuille tient dans l'écran, bouton OK compris (fitSheet).
      card : le rappel de l'accueil d'où l'on vient (remis à jour en fermant). */
-  function setSlow(on) {
+  // la vitesse : le lapin (normale), la tortue (aux trois quarts), l'escargot (à moitié) ; pour l'écoute, l'exemple
+  // et, au niveau 2, le décompte et la mesure
+  function setSpeed(k) {
     if (!G) return;
-    G.slow = !!on;
-    if (G.slow) G.usedSlow = true;
+    G.speed = k > 0 ? Math.min(2, k | 0) : 0;
+    if (G.speed) G.usedSlow = true;
     speedUI();
   }
-  // le bouton de la vitesse, au bout de la ligne du niveau : le lapin (normale) sur fond sombre, la tortue (lente) en jaune
+  // la réglette de la vitesse, au bout de la ligne du niveau : l'animal choisi est enfoncé
   function speedUI() {
-    const b = el && el.speed;
-    if (!b || !document.contains(b)) return;
-    b.setAttribute('aria-pressed', String(!!G.slow));
-    b.innerHTML = G.slow ? ICON.turtle : ICON.rabbit;
-    const t = G.slow ? 'Vitesse lente : toucher pour revenir à la vitesse normale' : 'Vitesse normale : toucher pour jouer plus lentement';
-    b.setAttribute('aria-label', t);
-    b.title = t;
+    const s = el && el.speedSeg;
+    if (!s || !document.contains(s)) return;
+    s.querySelectorAll('[data-speed]').forEach((b) => b.setAttribute('aria-checked', String(+b.dataset.speed === G.speed)));
   }
   // en une ou deux lignes (réglages) : comment la page joue pour cet instrument, et avec quel son
   function instBrief(k) {
@@ -22652,8 +22678,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
             <div class="rg-pl">
               <p class="rg-lbl" id="rg-sp-l">Vitesse</p>
               <div class="seg rg-seg rg-speed" role="radiogroup" aria-labelledby="rg-sp-l">
-                <button type="button" role="radio" data-slow="0" aria-checked="${!G.slow}">${ICON.rabbit}<span>Normale</span></button>
-                <button type="button" role="radio" data-slow="1" aria-checked="${G.slow}">${ICON.turtle}<span>Lente</span></button>
+                ${SPEED_UI.map((sp, k) => `<button type="button" role="radio" data-speed="${k}" aria-checked="${k === G.speed}" aria-label="${sp.aria}" title="${sp.aria}">${sp.icon}<span class="rg-sp-t">${sp.lbl}</span></button>`).join('')}
               </div>
             </div>
           </div>` : ''}
@@ -22692,7 +22717,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
         pz.classList.toggle('is-off', df);
         pz.querySelectorAll('[role="radio"]').forEach((x) => {
           x.disabled = df;
-          x.setAttribute('aria-checked', String(df ? x.dataset.level === '2' || x.dataset.slow === '0' : x.dataset.level ? (x.dataset.level === '2') === (G.level === 2) : (x.dataset.slow === '1') === G.slow));
+          x.setAttribute('aria-checked', String(df ? x.dataset.level === '2' || x.dataset.speed === '0' : x.dataset.level ? (x.dataset.level === '2') === (G.level === 2) : +x.dataset.speed === G.speed));
         });
       }
     };
@@ -22762,7 +22787,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     if (!inSong) return;
     wrap.querySelectorAll('.rg-speed [role="radio"]').forEach((b) => b.addEventListener('click', () => {
       if (b.disabled) return;
-      setSlow(b.dataset.slow === '1');
+      setSpeed(+b.dataset.speed);
       wrap.querySelectorAll('.rg-speed [role="radio"]').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
     }));
     // un autre niveau : la comptine recommence (la feuille se ferme d'abord)
@@ -23296,12 +23321,12 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     setWorld(song.theme);
     // le Défi : toujours au niveau 2 (notes et rythme), à vitesse normale
     const DEFI = jeu() === 'defi';
-    const keepSlow = !DEFI && G && G.slow;
+    const keepSpeed = !DEFI && G ? G.speed || 0 : 0;
     const lv2 = DEFI || settings.level === 2;
     if (DEFI) keep = null; // le Défi : toujours toute la comptine
     G = {
       song, level: lv2 ? 2 : 1, found: new Set(), revealed: new Set(), errors: 0, attempts: 0, cursor: null, view: 0,
-      slow: !!keepSlow, playing: null, done: false, lastStars: 0, defi: DEFI,
+      speed: keepSpeed, playing: null, done: false, lastStars: 0, defi: DEFI,
       // niveau 2
       passed: new Set(), fails: 0, tries: song.phrases.map(() => 0), take: null, results: [], moveTo: null, keepMic: false, fullRes: null,
       // whole : ce que joue le grand rond, toute la comptine (au début) ou la phrase affichée (au choix, au-dessus des
@@ -23315,7 +23340,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
       // trouvés, même à des essais différents, la note est réussie (la reconnaissance a pu se tromper une fois)
       pitchOk: new Set(), nameOk: new Set(),
       // suivi : début de la partie (temps page visible), « lentement » utilisé, résultat déjà envoyé
-      t0: Suivi.clock(), usedSlow: !!keepSlow, tracked: false,
+      t0: Suivi.clock(), usedSlow: keepSpeed > 0, tracked: false,
     };
     track('debut', { c: song.id, niveau: G.level, entiere: G.whole });
     const idx = LIB.indexOf(song);
@@ -23365,17 +23390,17 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
       <section class="pupitre" aria-label="À toi" data-band="repos">
         <div class="pu-top">
           ${DEFI ? '<p class="pu-first pu-defi" id="pu-defi"></p>' : `<div class="pu-first pu-lvrow">
-            <button class="pu-listen" id="b-ecoute" type="button" aria-label="Écouter toute la comptine" title="Écouter toute la comptine">${ICON.ears}</button>
             <div class="seg seg-level" role="radiogroup" aria-label="Niveau">
-              <button type="button" role="radio" data-level="1" aria-checked="${!lv2}"><b class="lv">1</b><span>Les notes</span></button>
-              <button type="button" role="radio" data-level="2" aria-checked="${lv2}"><b class="lv">2</b><span>Notes et rythme</span></button>
+              <button type="button" role="radio" data-level="1" aria-checked="${!lv2}" aria-label="Niveau 1 : les notes"><b class="lv">1</b><span class="lg">Les notes</span><span class="sh">Notes</span></button>
+              <button type="button" role="radio" data-level="2" aria-checked="${lv2}" aria-label="Niveau 2 : notes et rythme"><b class="lv">2</b><span class="lg">Notes et rythme</span><span class="sh">+${NB}rythme</span></button>
             </div>
-            <button class="pu-speed" id="b-speed" type="button" aria-pressed="${!!G.slow}">${G.slow ? ICON.turtle : ICON.rabbit}</button>
+            <div class="seg seg-speed" id="speed" role="radiogroup" aria-label="Vitesse">${SPEED_UI.map((sp, k) => `<button type="button" role="radio" data-speed="${k}" aria-checked="${k === G.speed}" aria-label="${sp.aria}" title="${sp.aria}">${sp.icon}</button>`).join('')}</div>
           </div>`}
           <p class="hint" id="hint" aria-live="polite" hidden></p>
         </div>
         <div class="pu-row">
           <div class="pu-slot">
+            ${DEFI ? '' : `<button class="pu-listen" id="b-ecoute" type="button"><span class="ic">${ICON.ears}</span><b class="pu-go-t" id="ec-t">Écouter</b> <span class="pu-go-s" id="ec-s">la comptine</span></button>`}
             ${side('b-stop', ICON.stop, 'Arrêter')}
             ${side('b-level', lv2 ? ICON.note : ICON.metro, lv2 ? `Niveau${NB}1` : `Niveau${NB}2`, lv2 ? 'Niveau 1 : les notes' : 'Niveau 2 : notes et rythme')}
           </div>
@@ -23415,8 +23440,10 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
       done: app.querySelector('#done'),
       pu: app.querySelector('.pupitre'),
       seg: app.querySelector('.pu-top .pu-first'), // le niveau (et la vitesse) ; en Défi, où en est le Défi de cette comptine
-      speed: app.querySelector('#b-speed'),
-      listen: app.querySelector('#b-ecoute'), // le casque, au début de la ligne du niveau : écouter, sans jouer
+      speedSeg: app.querySelector('#speed'), // la vitesse, au bout de la ligne du niveau (pas en Défi)
+      listen: app.querySelector('#b-ecoute'), // « Écouter », à côté du grand rond : écouter, sans jouer (pas en Défi)
+      listenT: app.querySelector('#ec-t'),
+      listenS: app.querySelector('#ec-s'),
       hint: app.querySelector('#hint'),
       beads: [...app.querySelectorAll('.bead')].sort((a, b) => a.dataset.n - b.dataset.n),
       syls: [...app.querySelectorAll('.syl')].sort((a, b) => a.dataset.n - b.dataset.n),
@@ -23483,11 +23510,12 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     if (busy() || (el.main && el.main.classList.contains('is-taking'))) return 'jeu';
     return G.begun ? 'apres' : 'repos';
   }
-  // au repos, rien sur les côtés : ce que joue le grand rond se choisit au-dessus des paroles (les numéros, « Tout »)
-  const SIDES = { repos: [], jeu: ['bStop', 'bRestart'], apres: [], cal: ['bStop', 'bHear'], fin: ['bLevel', 'aNext'] };
-  // en Défi, toujours toute la comptine : ni l'autre niveau à la fin
+  // au repos, « Écouter » et le grand rond, deux grands ronds côte à côte (ce que joue le grand rond se choisit
+  // au-dessus des paroles : les numéros, « Tout ») ; pendant le jeu et à la fin, les petits ronds de chaque côté
+  const SIDES = { repos: ['listen'], jeu: ['bStop', 'bRestart'], apres: ['listen'], cal: ['bStop', 'bHear'], fin: ['bLevel', 'aNext'] };
+  // en Défi, toujours toute la comptine, sans écoute libre : ni « Écouter », ni l'autre niveau à la fin
   const SIDES_DEFI = { repos: [], jeu: ['bStop'], apres: [], cal: ['bStop', 'bHear'], fin: [] };
-  const SIDE_KEYS = ['bStop', 'bLevel', 'bRestart', 'bTo', 'bHear', 'aNext'];
+  const SIDE_KEYS = ['listen', 'bStop', 'bLevel', 'bRestart', 'bTo', 'bHear', 'aNext'];
   function bandUI() {
     if (!G || !el.pu || !document.contains(el.pu)) return;
     const st = bandState();
@@ -23498,6 +23526,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     const had = el.pu.contains(document.activeElement) ? document.activeElement : null;
     el.pu.dataset.band = st;
     SIDE_KEYS.forEach((k) => { if (el[k]) el[k].hidden = !shown.includes(k); });
+    el.pu.classList.toggle('is-pair', shown.includes('listen'));
     const ear = st === 'jeu' || st === 'cal';
     el.bGo.hidden = ear;
     el.ear.hidden = !ear;
@@ -23672,23 +23701,35 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     G.song.phrases.forEach((_, q) => paintPill(q));
     hearUI();
   }
-  // le casque : écouter ce que jouerait le grand rond (ou arrêter l'écoute en cours)
+  // « Écouter » : ce que jouerait le grand rond (ou, pendant l'écoute, l'arrêter)
   function hearUI() {
     const b = el.listen;
     if (!b || !G) return;
     const on = !!(G.playing && G.playing.kind === 'free');
-    if (b.classList.contains('is-on') !== on || !b.firstChild) { b.classList.toggle('is-on', on); b.innerHTML = on ? ICON.stop : ICON.ears; }
-    const t = on ? 'Arrêter l’écoute' : G.whole ? 'Écouter toute la comptine' : `Écouter la phrase ${goPhrase() + 1}`;
-    b.setAttribute('aria-label', t);
-    b.title = t;
+    if (b.classList.contains('is-on') !== on || !b.dataset.ui) {
+      b.dataset.ui = '1';
+      b.classList.toggle('is-on', on);
+      b.querySelector('.ic').innerHTML = on ? ICON.stop : ICON.ears;
+      el.listenT.textContent = on ? 'Arrêter' : 'Écouter';
+    }
+    el.listenS.textContent = on ? 'l’écoute' : G.whole ? 'la comptine' : `la phrase${NB}${goPhrase() + 1}`;
+    b.setAttribute('aria-label', on ? 'Arrêter l’écoute' : G.whole ? 'Écouter toute la comptine' : `Écouter la phrase ${goPhrase() + 1}`);
   }
-  // l'écoute libre : la phrase choisie, ou toute la comptine, sans commencer d'essai (les notes s'allument au passage)
+  // l'écoute libre : la phrase choisie, ou toute la comptine, sans commencer d'essai (les notes s'allument au passage) ;
+  // allée jusqu'au bout, la ligne du haut invite l'élève à la chanter, le temps de le lire
   function hearFree() {
     if (!G || busy() || G.done || G.cal) return;
     G.acts++; // la phrase suivante ne démarre plus toute seule
     if (G.playing && G.playing.kind === 'free') { stopPlayback(true); return; }
     if (!Sound.ensure()) return;
-    playEvents(G.whole ? G.song.events : G.song.phrases[goPhrase()].events, 'free', null, { which: G.whole ? 'a' : 'p' });
+    playEvents(G.whole ? G.song.events : G.song.phrases[goPhrase()].events, 'free', (P) => { if (P.natural) singInvite(); }, { which: G.whole ? 'a' : 'p' });
+  }
+  const SING_MS = 12000; // après l'invitation, l'élève qui chante n'est pas renvoyé tout de suite au grand rond (nudge)
+  function singInvite() {
+    if (!G || G.done || busy()) return;
+    G.singUntil = performance.now() + SING_MS;
+    setHint(`${ICON.note}<span>À toi de la chanter${NB}!</span>`, 'go');
+    flashTop(MSG_MS);
   }
 
   function expectNext() {
@@ -23959,7 +24000,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     if (G.cal) { calHit(hit); return; }
     if (G.take) { recordNote({ t: (hit.t != null ? hit.t : Sound.now()) - Sound.outLatency() - 0.03, written: hit.r - inst().off, hit, syl: hit.syl }); return; }
     if (G.done) return;
-    if (!G.live && !prepping() && !G.playing) { if (G.moveTo == null) nudge(); return; }
+    if (!G.live && !prepping() && !G.playing) { if (G.moveTo == null && !(G.singUntil > performance.now())) nudge(); return; }
     if (G.level === 2 || !G.live) return;
     if (G.cursor == null) return;
     if (G.playing) {
@@ -24101,7 +24142,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     while (a < evs.length && evs[a].rest) a++;
     evs = evs.slice(a);
     if (!evs.length) { goBack(home); return; }
-    const spb = 60 / (G.song.bpm * (G.slow ? 0.68 : 1));
+    const spb = 60 / (G.song.bpm * speedOf());
     const base = evs[0].t;
     const items = evs.filter((e) => !e.rest).map((e) => ({
       midi: e.midi, n: e.n, start: (e.t - base) * spb, dur: e.dur * spb,
@@ -24215,8 +24256,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
      « À toi ! » : décompte (pulsations de départ), puis l'enfant joue toute
      la phrase ; on note l'instant de chaque attaque, et à la fin on compare
      notes et rythme à la phrase attendue (voir rythme.js). */
-  const SLOW = 0.68;
-  const spbOf = () => 60 / (G.song.bpm * (G.slow ? SLOW : 1));
+  const spbOf = () => 60 / (G.song.bpm * speedOf());
 
   /* Décompte avant la phrase p, calé sur la mesure : les temps de la mesure où
      la phrase commence, précédés d'une mesure entière s'il en faut pour
@@ -24902,10 +24942,10 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
         if (G.found.has(n) || G.song.given.has(n) || G.revealed.has(n)) { Sound.tap(voiceNow(), G.song.notes[n].midi, 0.5); retrigger(b, 'pop'); }
       });
     });
-    el.seg.querySelectorAll('[role="radio"]').forEach((b) => b.addEventListener('click', () => {
+    el.seg.querySelectorAll('.seg-level [role="radio"]').forEach((b) => b.addEventListener('click', () => {
       if (+b.dataset.level !== G.level) setLevel(+b.dataset.level);
     }));
-    if (el.speed) { el.speed.addEventListener('click', () => { G.acts++; setSlow(!G.slow); }); speedUI(); }
+    if (el.speedSeg) el.speedSeg.querySelectorAll('[data-speed]').forEach((b) => b.addEventListener('click', () => { G.acts++; setSpeed(+b.dataset.speed); }));
     if (el.listen) el.listen.addEventListener('click', () => hearFree());
     el.earMsg.addEventListener('click', (ev) => { if (ev.target.closest('#mic-on')) startMic(); });
     if (FINE.matches) {
