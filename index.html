@@ -6582,8 +6582,14 @@ const Sound = (() => {
     return sequence(voiceId, [60, 64, 67, 72].map((m, i) => ({ midi: m, start: i * 0.11, dur: i === 3 ? 0.6 : 0.16, vel: 0.8 })));
   }
 
+  /* Une phrase réussie : deux notes claires et aiguës (Sol puis Do), au célesta, quel que soit l'instrument
+     (notées comme les autres sons de la page : le micro ne les prend pas pour des notes de l'élève) */
+  function chime() {
+    return sequence('celesta', [{ midi: 79, start: 0, dur: 0.12, vel: 0.7 }, { midi: 84, start: 0.12, dur: 0.4, vel: 0.75 }]);
+  }
+
   return {
-    ensure, tap, sequence, flourish, clickAt,
+    ensure, tap, sequence, flourish, chime, clickAt,
     now: () => (ctx ? ctx.currentTime : 0),
     // délai entre l'instant programmé et le son dans le haut-parleur
     outLatency: () => (ctx ? (ctx.outputLatency || 0) + (ctx.baseLatency || 0) : 0),
@@ -23612,7 +23618,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     b.firstChild.textContent = shown ? note.fr : '?';
     const oct = note.octave === 3 ? ' grave' : note.octave === 5 ? ' aigu' : '';
     b.setAttribute('aria-label', found ? `Note ${n + 1} : ${note.fr}${oct}, trouvée. Toucher pour l’entendre.`
-      : shown ? `Note ${n + 1} : ${note.fr}${oct}, donnée, à jouer.` : `Note ${n + 1} : à trouver.`);
+      : shown ? `Note ${n + 1} : ${note.fr}${oct}, donnée, à jouer.` : `Note ${n + 1} : à trouver.${G.defi ? '' : ' Toucher pour l’entendre.'}`);
   }
 
   function paintPill(p) {
@@ -24131,9 +24137,10 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     if (st.done) { endLive(); later(() => finish(), 520); return; }
     const next = ph.notes.find((m) => m > n && !G.found.has(m));
     if (next != null) { setCursor(next, true, false); laterHint(() => { if (G && G.cursor === next) cursorHint(); }, 650); return; }
-    // phrase retrouvée : fin de l'essai ; la page fait entendre la suivante, puis l'élève choisit (chain)
+    // phrase retrouvée : fin de l'essai, un petit signal ; la page fait entendre la suivante, puis l'élève choisit (chain)
     G.begun = true;
     endLive();
+    Sound.chime();
     setHint(`Phrase ${p + 1} retrouvée !`, 'ok');
     flashTop(MSG_MS);
     chain(p);
@@ -24574,6 +24581,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     else if (fresh) D.react(el.stage, 'correct', st);
     if (!r.pass) return;
     if (st.done) { later(() => { if (G && !busy() && !G.done) finish(); }, 1400); return; }
+    Sound.chime(); // phrase réussie : un petit signal (la dernière : la fanfare de fin)
     chain(tk.p);
   }
 
@@ -24995,8 +25003,13 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
         const b = e.target.closest('.bead');
         if (!b) return;
         const n = +b.dataset.n;
-        // une note écrite sur la perle : on l'entend
-        if (G.found.has(n) || G.song.given.has(n) || G.revealed.has(n)) { Sound.tap(voiceNow(), G.song.notes[n].midi, 0.5); retrigger(b, 'pop'); }
+        // on entend la note de la perle touchée, même cachée (sans rien en montrer : ni son nom, ni sa hauteur) ; pas
+        // pendant le décompte, une prise ou l'exemple, ni pendant toute la comptine sans aide ; en Défi, seulement les
+        // notes écrites
+        const shown = G.found.has(n) || G.song.given.has(n) || G.revealed.has(n);
+        if (prepping() || (G.live && G.live.full) || (!shown && G.defi)) return;
+        Sound.tap(voiceNow(), G.song.notes[n].midi, 0.5);
+        retrigger(b, 'pop');
       });
     });
     el.seg.querySelectorAll('.seg-level [role="radio"]').forEach((b) => b.addEventListener('click', () => {

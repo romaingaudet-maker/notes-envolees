@@ -625,8 +625,14 @@ const Sound = (() => {
     return sequence(voiceId, [60, 64, 67, 72].map((m, i) => ({ midi: m, start: i * 0.11, dur: i === 3 ? 0.6 : 0.16, vel: 0.8 })));
   }
 
+  /* Une phrase réussie : deux notes claires et aiguës (Sol puis Do), au célesta, quel que soit l'instrument
+     (notées comme les autres sons de la page : le micro ne les prend pas pour des notes de l'élève) */
+  function chime() {
+    return sequence('celesta', [{ midi: 79, start: 0, dur: 0.12, vel: 0.7 }, { midi: 84, start: 0.12, dur: 0.4, vel: 0.75 }]);
+  }
+
   return {
-    ensure, tap, sequence, flourish, clickAt,
+    ensure, tap, sequence, flourish, chime, clickAt,
     now: () => (ctx ? ctx.currentTime : 0),
     // délai entre l'instant programmé et le son dans le haut-parleur
     outLatency: () => (ctx ? (ctx.outputLatency || 0) + (ctx.baseLatency || 0) : 0),

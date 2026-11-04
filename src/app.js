@@ -1412,7 +1412,7 @@
     b.firstChild.textContent = shown ? note.fr : '?';
     const oct = note.octave === 3 ? ' grave' : note.octave === 5 ? ' aigu' : '';
     b.setAttribute('aria-label', found ? `Note ${n + 1} : ${note.fr}${oct}, trouvée. Toucher pour l’entendre.`
-      : shown ? `Note ${n + 1} : ${note.fr}${oct}, donnée, à jouer.` : `Note ${n + 1} : à trouver.`);
+      : shown ? `Note ${n + 1} : ${note.fr}${oct}, donnée, à jouer.` : `Note ${n + 1} : à trouver.${G.defi ? '' : ' Toucher pour l’entendre.'}`);
   }
 
   function paintPill(p) {
@@ -1931,9 +1931,10 @@
     if (st.done) { endLive(); later(() => finish(), 520); return; }
     const next = ph.notes.find((m) => m > n && !G.found.has(m));
     if (next != null) { setCursor(next, true, false); laterHint(() => { if (G && G.cursor === next) cursorHint(); }, 650); return; }
-    // phrase retrouvée : fin de l'essai ; la page fait entendre la suivante, puis l'élève choisit (chain)
+    // phrase retrouvée : fin de l'essai, un petit signal ; la page fait entendre la suivante, puis l'élève choisit (chain)
     G.begun = true;
     endLive();
+    Sound.chime();
     setHint(`Phrase ${p + 1} retrouvée !`, 'ok');
     flashTop(MSG_MS);
     chain(p);
@@ -2374,6 +2375,7 @@
     else if (fresh) D.react(el.stage, 'correct', st);
     if (!r.pass) return;
     if (st.done) { later(() => { if (G && !busy() && !G.done) finish(); }, 1400); return; }
+    Sound.chime(); // phrase réussie : un petit signal (la dernière : la fanfare de fin)
     chain(tk.p);
   }
 
@@ -2795,8 +2797,13 @@
         const b = e.target.closest('.bead');
         if (!b) return;
         const n = +b.dataset.n;
-        // une note écrite sur la perle : on l'entend
-        if (G.found.has(n) || G.song.given.has(n) || G.revealed.has(n)) { Sound.tap(voiceNow(), G.song.notes[n].midi, 0.5); retrigger(b, 'pop'); }
+        // on entend la note de la perle touchée, même cachée (sans rien en montrer : ni son nom, ni sa hauteur) ; pas
+        // pendant le décompte, une prise ou l'exemple, ni pendant toute la comptine sans aide ; en Défi, seulement les
+        // notes écrites
+        const shown = G.found.has(n) || G.song.given.has(n) || G.revealed.has(n);
+        if (prepping() || (G.live && G.live.full) || (!shown && G.defi)) return;
+        Sound.tap(voiceNow(), G.song.notes[n].midi, 0.5);
+        retrigger(b, 'pop');
       });
     });
     el.seg.querySelectorAll('.seg-level [role="radio"]').forEach((b) => b.addEventListener('click', () => {
