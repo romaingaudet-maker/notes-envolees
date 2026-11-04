@@ -76,5 +76,23 @@ longCheck('comptine entière (44 notes), 2 fausses notes', 44, (ex) => ex.map((e
 longCheck('comptine entière (44 notes), 4 fausses notes', 44, (ex) => ex.map((e, i) => [i % 11 === 3 ? e.p + 2 : e.p, e.t]), (r) => !r.pass && r.wrong === 4);
 longCheck('comptine entière, ralentit peu à peu (× 1,2)', 44, (ex) => ex.map((e) => [e.p, e.t * (1 + 0.2 * e.t / ex[43].t)]), (r) => !r.pass);
 
+// ---- piano au micro, à la tortue : la même note entendue deux fois, ~0,1 s avant ou après une note juste ----
+// Une poule sur un mur, phrase 4 (do do ré do ré sol do, croches ; 96 à la noire × 0,75) : ce qu'a vu Romain
+{
+  const b = 60 / 72, e8 = b / 2, ex = [60, 60, 62, 60, 62, 67, 60].map((p, i) => ({ t: i * e8, p }));
+  const pl = ex.map((e) => [e.p, e.t]);
+  const run = (name, got, fn, mic = true) => {
+    total++;
+    const r = evaluate({ exp: ex, got: got.sort((x, y) => x[1] - y[1]).map(([p, t]) => ({ p, t: t + 0.1 })), beat: b, same, mic });
+    const ok = fn(r);
+    if (!ok) fails++;
+    console.log(`${ok ? '✓' : '✗'} ${name.padEnd(46)} → ${verdict(r).text}${ok ? '' : `   [${JSON.stringify({ pass: r.pass, extra: r.extra.length, dup: r.dup })}]`}`);
+  };
+  const echo = [...pl, [60, pl[1][1] - 0.096], [60, pl[1][1] + 0.116], [60, pl[4][1] - 0.104]];
+  run('piano : 3 notes entendues deux fois (0,1 s)', echo, (r) => r.pass && r.extra.length === 0 && r.dup === 3);
+  run('xylophone à l’écran : elles comptent', echo, (r) => !r.pass && r.extra.length === 3, false);
+  run('piano : un do de trop, une croche à part', [...pl.slice(0, 2), [60, 2 * e8], ...pl.slice(2).map(([p, t]) => [p, t + e8])], (r) => r.extra.length === 1);
+}
+
 console.log(fails ? `\n${fails}/${total} tests en échec` : `\nLes ${total} tests du rythme passent.`);
 process.exit(fails ? 1 : 0);

@@ -7462,12 +7462,20 @@ const Rhythm = (() => {
       rp = rightPairs();
     }
 
-    // au micro, une « note en trop » collée à une note jouée (moins de 90 ms, plus court que la plus
-    // brève note des comptines) est la même attaque entendue deux fois, pas une note jouée
+    // au micro, une « note en trop » tout près d'une note jouée est la même note entendue deux fois (son
+    // attaque, la touche relâchée juste avant de la rejouer, le son qui ondule…), pas une note jouée : au
+    // piano, à la tortue, on en voyait à ~0,1 s avant ou après des notes justes. « Tout près » : moins d'un
+    // quart de pulsation, et moins de la moitié de l'écart entre cette note et ses voisines dans la phrase
+    // (jamais moins de 90 ms, plus court que la plus brève note des comptines)
     let dup = 0;
     if (mic && A.extra.length) {
-      const played = A.pairs.filter((j) => j >= 0).map((j) => got[j].t);
-      const kept = A.extra.filter((j) => !played.some((t) => Math.abs(got[j].t - t) < 0.09));
+      const played = [];
+      A.pairs.forEach((j, i) => {
+        if (j < 0) return;
+        const gaps = [i > 0 ? exp[i].t - exp[i - 1].t : Infinity, i < n - 1 ? exp[i + 1].t - exp[i].t : Infinity];
+        played.push({ t: got[j].t, near: Math.max(0.09, Math.min(0.25 * beat, 0.45 * k * Math.min(...gaps))) });
+      });
+      const kept = A.extra.filter((j) => !played.some((p) => Math.abs(got[j].t - p.t) < p.near));
       dup = A.extra.length - kept.length;
       A = { pairs: A.pairs, extra: kept };
     }
