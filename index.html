@@ -23353,7 +23353,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     const lv2 = DEFI || settings.level === 2;
     if (DEFI) keep = null; // le Défi : toujours toute la comptine
     G = {
-      song, level: lv2 ? 2 : 1, found: new Set(), revealed: new Set(), errors: 0, attempts: 0, cursor: null, view: 0,
+      song, level: lv2 ? 2 : 1, found: new Set(), revealed: new Set(), errors: 0, cursor: null, view: 0,
       speed: keepSpeed, playing: null, done: false, lastStars: 0, defi: DEFI,
       // niveau 2
       passed: new Set(), fails: 0, tries: song.phrases.map(() => 0), take: null, results: [], moveTo: null, keepMic: false, fullRes: null,
@@ -23723,7 +23723,6 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
       el.syls[G.cursor].classList.remove('is-cur');
     }
     G.cursor = n;
-    G.attempts = 0;
     toUI();
     expectNext();
     if (n == null) return;
@@ -23805,8 +23804,9 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
      affichée ou toute la comptine, au choix (au-dessus des paroles, les numéros des phrases et « Tout » ;
      en arrivant sur la comptine, la phrase 1) ; pour l'entendre d'abord, « Écouter » (en Défi, sans
      « Écouter », la page joue d'abord la comptine).
-     - niveau 1 : les notes seules, à son rythme, sans décompte (le rythme ne compte pas). Phrase par phrase, avec l'aide (flèches,
-       note montrée) ; comptine entière, sans aide : une fausse note est comptée et on passe.
+     - niveau 1 : les notes seules, à son rythme, sans décompte (le rythme ne compte pas). L'élève joue autant de notes
+       que la phrase (ou la comptine) en compte : une fausse note est comptée et on passe ; au bout, le bilan. Une phrase
+       manquée trois fois : une note de plus est montrée (voir phraseNote) ; toute la comptine, sans aide.
      - niveau 2 : notes et rythme : un décompte, puis une prise chronométrée (voir startTake).
      Un essai repart toujours de zéro sur ce qu'il couvre ; on peut rejouer autant qu'on veut
      (toute la comptine, une fois un essai allé au bout : c'est une nouvelle partie).
@@ -23860,9 +23860,10 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     return { full: false, p: G.view };
   }
 
-  // niveau 1 : un nouvel essai cache de nouveau les notes qu'il couvre (la première de chaque phrase reste écrite)
-  function resetNotes(ids) {
-    ids.forEach((n) => { G.found.delete(n); G.revealed.delete(n); G.miss.delete(n); el.beads[n].classList.remove(...R_CLASSES); paintBead(n); });
+  // niveau 1 : un nouvel essai cache de nouveau les notes qu'il couvre (la première de chaque phrase reste écrite ; pour
+  // une phrase, les notes montrées après des essais manqués aussi ; toute la comptine, elle, se joue sans aide)
+  function resetNotes(ids, full) {
+    ids.forEach((n) => { G.found.delete(n); if (full) G.revealed.delete(n); G.miss.delete(n); el.beads[n].classList.remove(...R_CLASSES); paintBead(n); });
     G.song.phrases.forEach((_, q) => paintPill(q));
     paintCount();
     D.update(el.stage, info());
@@ -23887,7 +23888,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     G.attemptSc = sc;
     const song = G.song;
     const ids = sc.full ? song.notes.map((_, n) => n) : song.phrases[sc.p].notes;
-    if (G.level === 1) resetNotes(ids);
+    if (G.level === 1) resetNotes(ids, !!sc.full);
     if (sc.full) { G.fullRes = null; song.phrases.forEach((_, q) => clearResult(q)); if (G.level === 1) G.miss.clear(); }
     else clearResult(sc.p);
     G.nudged = false;
@@ -23916,7 +23917,8 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     resetHeard();
     // comptine entière, sans aide : écoute et choix des phrases fermés le temps de l'essai
     el.main.classList.toggle('is-taking', !!sc.full);
-    const first = sc.full ? 0 : G.song.phrases[sc.p].notes.find((m) => !G.found.has(m));
+    G.liveWrong = 0;
+    const first = sc.full ? 0 : G.song.phrases[sc.p].notes[0];
     setCursor(first, true, false);
     setHint('Joue\u00a0!', 'go');
     laterHint(() => { if (G && G.live === sc) cursorHint(); }, 700);
@@ -24097,29 +24099,13 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
       wholeNote((pitchOk && said !== 'non') || both, el.heard);
       return;
     }
-    if (both && !(pitchOk && said !== 'non')) {
-      // trouvés à des essais différents : réussi
-      if (pitchOk) tuneTo(hit, target.midi);
-      good(el.heard, target);
-    } else if (pitchOk && said === 'non') {
-      // la bonne hauteur, mais un autre nom
-      tuneTo(hit, target.midi);
-      retrigger(el.heard, 'is-wrong');
-      bad(`Bonne hauteur${NB}! Mais j’entends «${NB}${SYL_FR[hit.syl.best]}${NB}»${NB}: chante «${NB}${SYL_FR[sylOf(target.midi)]}${NB}»`, null);
-    } else if (pitchOk) {
-      tuneTo(hit, target.midi);
-      good(el.heard, target);
-    } else {
-      // l'octave ne compte pas : on guide vers la bonne note la plus proche
-      // (à égale distance, on suit l'octave de la partition)
-      const raw = target.midi - written;
-      let d = raw - 12 * Math.round(raw / 12);
-      if (Math.abs(d) === 6) d = raw > 0 ? 6 : -6;
-      const up = d > 0;
-      const pc = mod12(written), L = PC_LETTER[pc];
-      retrigger(el.heard, 'is-wrong');
-      bad(`J’entends ${L ? chip(L, NOTE_FR[L]) : `<span class="nchip">${PC_FR[pc]}</span>`} : ${up ? 'plus aigu' : 'plus grave'}`, up, '', '');
-    }
+    // une phrase : la note jouée prend sa place, juste ou fausse, et l'on passe à la suivante (voir phraseNote)
+    if (pitchOk) tuneTo(hit, target.midi);
+    if ((pitchOk && said !== 'non') || both) { phraseNote(true); return; }
+    const pc = mod12(written), L = PC_LETTER[pc];
+    phraseNote(false, pitchOk && said === 'non'
+      ? `Bonne hauteur, mais j’entends «${NB}${SYL_FR[hit.syl.best]}${NB}»`
+      : `J’entends ${L ? chip(L, NOTE_FR[L]) : `<span class="nchip">${PC_FR[pc]}</span>`}${NB}: pas celle-là`);
   }
 
   function retrigger(node, cls) {
@@ -24137,55 +24123,59 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     later(() => { if (G === g && !busy() && !(G.playing && G.playing.kind === 'free' && !G.playing.auto)) Sound.chime(); }, CHIME_MS);
   }
 
-  function good(fromEl, target) {
-    const n = G.cursor;
-    G.found.add(n);
-    el.beads[n].classList.remove(...R_CLASSES); // manquée pendant la comptine entière, retrouvée maintenant
-    if (fromEl === el.heard) retrigger(el.heard, 'is-good');
-    setHint(PRAISE[Math.floor(Math.random() * PRAISE.length)], 'ok');
-    paintBead(n);
-    const bead = el.beads[n];
-    bead.style.opacity = '0';
-    flyTo(fromEl, bead, target, () => { bead.style.opacity = ''; retrigger(bead, 'pop'); });
+  /* niveau 1, une phrase : chaque note jouée prend la place suivante, juste ou fausse (une fausse note est comptée,
+     entourée de rouge, et l'on passe) ; l'élève joue autant de notes que la phrase en compte. Au bout : toutes justes,
+     la phrase est retrouvée (la bulle, puis la page fait entendre la suivante) ; sinon le bilan, et on la rejoue.
+     Tous les trois essais manqués d'une phrase, une note de plus est montrée (et le reste). */
+  function phraseNote(ok, wrongHtml) {
+    const n = G.cursor, target = G.song.notes[n], p = target.phrase, ph = G.song.phrases[p];
+    if (ok) {
+      G.found.add(n);
+      el.beads[n].classList.remove(...R_CLASSES);
+      retrigger(el.heard, 'is-good');
+      setHint(PRAISE[Math.floor(Math.random() * PRAISE.length)], 'ok');
+      paintBead(n);
+      const bead = el.beads[n];
+      bead.style.opacity = '0';
+      flyTo(el.heard, bead, target, () => { bead.style.opacity = ''; retrigger(bead, 'pop'); });
+    } else {
+      G.errors++;
+      G.liveWrong++;
+      retrigger(el.heard, 'is-wrong');
+      el.beads[n].classList.add('r-wrong');
+      setHint(wrongHtml, 'down');
+    }
     paintCount();
-    const p = target.phrase;
-    const ph = G.song.phrases[p];
-    const phraseDone = ph.notes.every((m) => G.found.has(m));
     paintPill(p);
     const st = info();
     D.update(el.stage, st);
-    D.react(el.stage, phraseDone ? 'phrase' : 'correct', st);
-    if (st.done) { endLive(); later(() => finish(), 520); return; }
-    const next = ph.notes.find((m) => m > n && !G.found.has(m));
-    if (next != null) { setCursor(next, true, false); laterHint(() => { if (G && G.cursor === next) cursorHint(); }, 650); return; }
-    // phrase retrouvée : fin de l'essai, un petit signal ; la page fait entendre la suivante, puis l'élève choisit (chain)
+    const i = ph.notes.indexOf(n), last = i === ph.notes.length - 1;
+    if (ok) D.react(el.stage, last && !G.liveWrong ? 'phrase' : 'correct', st);
+    if (!last) {
+      const next = ph.notes[i + 1];
+      setCursor(next, true, false);
+      laterHint(() => { if (G && G.cursor === next) cursorHint(); }, 650);
+      return;
+    }
+    // la phrase jouée jusqu'au bout : fin de l'essai
+    const wrong = G.liveWrong;
     G.begun = true;
     endLive();
-    chimeSoon();
-    setHint(`Phrase ${p + 1} retrouvée !`, 'ok');
-    flashTop(MSG_MS);
-    chain(p);
-  }
-
-  function bad(text, up, rightTxt, leftTxt) {
-    G.errors++;
-    G.attempts++;
-    // up : la flèche (plus aigu, plus grave) ; null : pas de flèche (la voix : bonne hauteur, mauvais nom)
-    const html = up == null ? text : up ? `${text} ${ICON.right}${rightTxt ? `<small>${rightTxt}</small>` : ''}` : `${ICON.left} ${text}${leftTxt ? ` <small>${leftTxt}</small>` : ''}`;
-    setHint(html, up == null ? 'down' : up ? 'up' : 'down');
-    if (G.attempts >= 3 && G.cursor != null) {
-      const target = G.song.notes[G.cursor];
-      if (!G.revealed.has(G.cursor) && !G.song.given.has(G.cursor)) {
-        G.revealed.add(G.cursor);
-        G.helped++;
-        const seq = hintSeq;
-        later(() => {
-          if (!G || G.cursor == null || G.song.notes[G.cursor] !== target) return;
-          paintBead(G.cursor);
-          if (hintSeq === seq) setHint(`Je te la montre : ${chip(target.letter, target.fr)}`, '');
-        }, 1300);
-      }
+    if (!wrong && st.done) { later(() => finish(), 520); return; }
+    if (!wrong) {
+      chimeSoon();
+      setHint(`Phrase ${p + 1} retrouvée !`, 'ok');
+      flashTop(MSG_MS);
+      chain(p);
+      return;
     }
+    if (++G.tries[p] % 3 === 0) {
+      const hide = ph.notes.find((m) => !G.found.has(m) && !G.song.given.has(m) && !G.revealed.has(m));
+      if (hide != null) { G.revealed.add(hide); G.helped++; paintBead(hide); }
+    }
+    setHint(wrong === 1 ? `Presque${NB}! Une note n’est pas la bonne.` : `${wrong} notes ne sont pas les bonnes.`, 'down');
+    flashTop(MSG_MS);
+    goLabel(); // « Rejouer la phrase n »
   }
 
   function flyTo(from, toBead, note, done) {
