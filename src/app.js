@@ -1910,6 +1910,14 @@
     node.classList.add(cls);
   }
 
+  /* phrase réussie : la clochette, un court instant après la dernière note (le temps qu'elle sonne), sauf si l'élève a
+     déjà relancé un essai ou une écoute entre-temps */
+  const CHIME_MS = 350;
+  function chimeSoon() {
+    const g = G;
+    later(() => { if (G === g && !busy() && !(G.playing && G.playing.kind === 'free' && !G.playing.auto)) Sound.chime(); }, CHIME_MS);
+  }
+
   function good(fromEl, target) {
     const n = G.cursor;
     G.found.add(n);
@@ -1934,7 +1942,7 @@
     // phrase retrouvée : fin de l'essai, un petit signal ; la page fait entendre la suivante, puis l'élève choisit (chain)
     G.begun = true;
     endLive();
-    Sound.chime();
+    chimeSoon();
     setHint(`Phrase ${p + 1} retrouvée !`, 'ok');
     flashTop(MSG_MS);
     chain(p);
@@ -2375,7 +2383,7 @@
     else if (fresh) D.react(el.stage, 'correct', st);
     if (!r.pass) return;
     if (st.done) { later(() => { if (G && !busy() && !G.done) finish(); }, 1400); return; }
-    Sound.chime(); // phrase réussie : un petit signal (la dernière : la fanfare de fin)
+    chimeSoon(); // phrase réussie : la clochette (la dernière : la fanfare de fin)
     chain(tk.p);
   }
 
