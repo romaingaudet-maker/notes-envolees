@@ -1,0 +1,107 @@
+<title>Banc d’essai de l’oreille · Les Notes Envolées</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="robots" content="noindex">
+<style>
+/*__CSS__*/
+/* propre au banc d'essai (le reste : src/_page.css) */
+:root { --ok: #2A8C55; --near: #C98A12; --wrong: #D93D43; --miss: #8A8FB3; --dup: #6C63C9; --white: #FFFFFF; }
+.wrap { gap: 24px; }
+.lead { color: var(--ink-soft); }
+.panel { background: var(--white); border: 2px solid var(--ink); border-radius: 18px; padding: 16px 18px; display: grid; gap: 14px; }
+.row { display: grid; gap: 8px; }
+.row > .lab { font-weight: 700; font-size: 15px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 2px solid var(--ink); background: var(--white); color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+select { min-height: 42px; border-radius: 12px; border: 2px solid var(--ink); background: var(--white); color: var(--ink); font: inherit; font-weight: 700; padding: 0 10px; max-width: 100%; }
+.exnotes { font-size: 14px; color: var(--ink-soft); }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.btn { min-height: 48px; padding: 0 20px; border-radius: 999px; border: 2px solid var(--ink); background: var(--white); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.btn.main { background: var(--red); border-color: var(--red); color: var(--white); font-size: 18px; min-height: 56px; padding: 0 26px; }
+.btn[disabled] { opacity: .45; cursor: default; }
+.live { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; background: var(--card); border-radius: 16px; padding: 14px 16px; }
+.heard { width: 84px; height: 84px; border-radius: 50%; background: var(--white); border: 3px solid var(--ink); display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; font-size: 24px; position: relative; }
+.heard::after { content: ""; position: absolute; inset: -9px; border-radius: 50%; border: 5px solid var(--cover); opacity: var(--lvl, 0); }
+.status { display: grid; gap: 6px; min-width: 0; }
+.status b { font-size: 18px; }
+.count { font-family: var(--font-display); font-weight: 800; font-size: 34px; line-height: 1; color: var(--red); }
+.stream { display: flex; flex-wrap: wrap; gap: 4px; min-height: 26px; }
+.stream span { font-size: 13px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--white); border: 1.5px solid var(--line); }
+.result { display: grid; gap: 14px; }
+.verdict { font-size: 18px; font-weight: 700; padding: 12px 16px; border-radius: 14px; background: var(--card); }
+.sum { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.sum div { background: var(--white); border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; display: grid; }
+.sum b { font-family: var(--font-display); font-weight: 800; font-size: 26px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.sum span { font-size: 13px; color: var(--ink-soft); }
+.sum .bad b { color: var(--wrong); }
+.tl { overflow-x: auto; background: var(--white); border: 2px solid var(--line); border-radius: 14px; padding: 8px; }
+.tl svg { display: block; min-width: 520px; width: 100%; height: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--ink-soft); }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 13px; color: var(--ink-soft); font-weight: 700; }
+td.k-right { color: var(--ok); font-weight: 700; }
+td.k-wrong { color: var(--wrong); font-weight: 700; }
+td.k-missed { color: var(--miss); font-weight: 700; }
+td.late, td.early { color: var(--near); }
+.extras { display: grid; gap: 4px; font-size: 15px; }
+.copy { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.copy span { font-size: 14px; color: var(--ink-soft); }
+textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, 'SF Mono', Menlo, Consolas, monospace; border-radius: 12px; border: 2px solid var(--line); padding: 10px; background: var(--white); color: var(--ink); }
+.hist { display: grid; gap: 6px; }
+.hist div { font-size: 14px; padding: 8px 12px; border-radius: 12px; background: var(--white); border: 1.5px solid var(--line); }
+.hist b { font-weight: 700; }
+.err { color: var(--wrong); font-weight: 700; }
+@media (max-width: 520px) { .live { grid-template-columns: minmax(0, 1fr); justify-items: start; } }
+</style>
+<header class="band">
+  <div class="band-in">
+    <a class="back" id="back" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Retour au jeu</a>
+    <h1>Banc d’essai de l’oreille</h1>
+    <p class="updated">Pour le professeur · ce que la page entend, note par note</p>
+  </div>
+</header>
+<main class="wrap">
+  <p class="lead">Choisis un exercice et un tempo, touche «&#160;Jouer&#160;», puis joue sur ton instrument après le décompte (quatre clics). La page écoute exactement comme pendant une prise du niveau 2 et montre ce qu’elle a entendu&#160;: notes justes, fausses, manquées, en trop, entendues deux fois, octave, décalage. «&#160;Copier le compte rendu&#160;» te donne un texte à m’envoyer.</p>
+
+  <section class="panel" aria-label="Réglages de l’essai">
+    <div class="row">
+      <label class="lab" for="inst">Instrument</label>
+      <select id="inst"></select>
+    </div>
+    <div class="row">
+      <span class="lab" id="ex-lab">Exercice</span>
+      <div class="chips" id="ex" role="group" aria-labelledby="ex-lab"></div>
+      <span class="exnotes" id="exnotes"></span>
+    </div>
+    <div class="row">
+      <span class="lab" id="tp-lab">Tempo (noires par minute)</span>
+      <div class="chips" id="tp" role="group" aria-labelledby="tp-lab"></div>
+    </div>
+    <div class="actions">
+      <button class="btn main" id="go" type="button">Jouer</button>
+      <button class="btn" id="model" type="button">Écouter le modèle</button>
+      <button class="btn" id="stop" type="button" disabled>Arrêter</button>
+    </div>
+    <div class="live" aria-live="polite">
+      <div class="heard" id="heard" aria-hidden="true">…</div>
+      <div class="status">
+        <b id="state">Prêt.</b>
+        <div class="count" id="count" aria-hidden="true"></div>
+        <div class="stream" id="stream"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="result" id="result" hidden aria-label="Résultat de l’essai"></section>
+
+  <section class="row" id="histbox" hidden>
+    <h2>Essais de cette visite</h2>
+    <div class="hist" id="hist"></div>
+  </section>
+</main>
+<script>
+/*__JS__*/
+</script>
