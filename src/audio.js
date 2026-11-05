@@ -625,10 +625,23 @@ const Sound = (() => {
     return sequence(voiceId, [60, 64, 67, 72].map((m, i) => ({ midi: m, start: i * 0.11, dur: i === 3 ? 0.6 : 0.16, vel: 0.8 })));
   }
 
-  /* Une phrase réussie : une clochette, un seul « ding » sur un Do aigu, quel que soit l'instrument (noté comme les
-     autres sons de la page : le micro ne le prend pas pour une note de l'élève) */
+  /* Une phrase réussie : une bulle, un « bloup » rond qui monte (un son glissé, sans note : il ne ressemble à aucun
+     instrument). Le micro se tait le temps qu'elle sonne (quietUntil) : elle ne passe pas pour une note de l'élève. */
   function chime() {
-    return sequence('bell', [{ midi: 84, start: 0, dur: 0.45, vel: 0.7 }]);
+    if (!ensure()) return;
+    const at = ctx.currentTime + 0.02;
+    [[380, 1250, 0.16, 0.11, 0.45], [760, 2500, 0.1, 0.08, 0.08]].forEach(([f0, f1, dur, glide, vol]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(f0, at);
+      o.frequency.exponentialRampToValueAtTime(f1, at + glide);
+      g.gain.setValueAtTime(0, at);
+      g.gain.linearRampToValueAtTime(vol, at + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0008, at + dur);
+      o.connect(g); g.connect(master);
+      o.start(at); o.stop(at + dur + 0.05);
+    });
+    quietUntil = Math.max(quietUntil, at + 0.2);
   }
 
   return {

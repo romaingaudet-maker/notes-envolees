@@ -1910,7 +1910,7 @@
     node.classList.add(cls);
   }
 
-  /* phrase réussie : la clochette, un court instant après la dernière note (le temps qu'elle sonne), sauf si l'élève a
+  /* phrase réussie : la bulle, un court instant après la dernière note (le temps qu'elle sonne), sauf si l'élève a
      déjà relancé un essai ou une écoute entre-temps */
   const CHIME_MS = 350;
   function chimeSoon() {
@@ -2383,7 +2383,7 @@
     else if (fresh) D.react(el.stage, 'correct', st);
     if (!r.pass) return;
     if (st.done) { later(() => { if (G && !busy() && !G.done) finish(); }, 1400); return; }
-    chimeSoon(); // phrase réussie : la clochette (la dernière : la fanfare de fin)
+    chimeSoon(); // phrase réussie : la bulle (la dernière : la fanfare de fin)
     chain(tk.p);
   }
 
