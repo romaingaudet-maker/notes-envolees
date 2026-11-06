@@ -77,8 +77,8 @@ write('suivi.html', prof);
   textPage('aide.html', ['aide.js'], 'comment-jouer.html');
   textPage('mentions.html', ['mentions.js'], 'mentions-legales.html');
 
-  // le banc d'essai de l'oreille, pour le professeur (banc.html, non liée depuis le jeu) : l'oreille, les sons et le
-  // juge du jeu ; les instruments, tirés de src/app.js (FAMS, INSTS), pour rester les mêmes
+  // le banc d'essai de l'oreille, pour le professeur (banc.html, non liée depuis le jeu ; en qualification seulement) :
+  // l'oreille, les sons et le juge du jeu ; les instruments, tirés de src/app.js (FAMS, INSTS), pour rester les mêmes
   const app = r('app.js');
   const grab = (name) => (app.match(new RegExp(`const ${name} = \\{[\\s\\S]*?\\n  \\};`)) || [])[0];
   const fams = grab('FAMS'), insts = grab('INSTS');
@@ -86,7 +86,7 @@ write('suivi.html', prof);
   const bJs = ['audio.js', 'ear.js', 'rythme.js', 'page-retour.js'].map(r).join('\n')
     + `\nconst BANC_INST = (() => {\n${fams}\n${insts}\nreturn { FAMS, INSTS };\n})();\n` + r('banc.js');
   const b = r('banc.html'), bCut = b.indexOf('<header');
-  write('banc.html', doc(fill(b.slice(0, bCut), tCss, bJs).trim(), fill(b.slice(bCut), tCss, bJs).trim(), '#F6C744'));
+  if (QUALIF) write('banc.html', doc(fill(b.slice(0, bCut), tCss, bJs).trim(), fill(b.slice(bCut), tCss, bJs).trim(), '#F6C744'));
 }
 
 /* 3) le jeu (index.html) : décors en laine, en 3D image par image (sans WebGL, les décors en papier de src/).
