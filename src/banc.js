@@ -22,6 +22,7 @@
     { id: 'do4', name: 'Do répété, noires', seq: rep(60, 6, 1) },
     { id: 'do16', name: 'Do répété, doubles croches', seq: rep(60, 8, 0.25) },
     { id: 'doubles', name: 'Notes doublées', seq: [[60, .5], [60, .5], [62, .5], [62, .5], [64, .5], [64, .5], [65, .5], [65, .5], [67, 1]] },
+    { id: 'picoti', name: 'Picoti, picota (phrase 3)', seq: [[60, .5], [60, .5], [60, 1], [60, .5], [60, .5], [62, 1]] },
     { id: 'poule', name: 'Une poule sur un mur (phrase 4)', seq: [[60, .5], [60, .5], [62, .5], [60, .5], [62, .5], [67, .5], [60, 1]] },
     { id: 'octaves', name: 'Octaves', seq: [[60, 1], [72, 1], [60, 1], [72, 1], [64, 1], [76, 1], [64, 1], [60, 1]] },
     { id: 'sauts', name: 'Grands sauts', seq: [[60, 1], [67, 1], [72, 1], [67, 1], [64, 1], [72, 1], [60, 1]] },
