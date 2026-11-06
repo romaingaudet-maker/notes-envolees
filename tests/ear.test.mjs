@@ -40,9 +40,10 @@ for (let k = 0; k < 20; k++) { const x = new Float32Array(N); for (let i = 0; i 
 console.log(`hauteurs : ${total - fails}/${total} justes ; bruit blanc pris pour une note : ${noisy}/20`);
 
 // ---- suivi : signal continu analysé toutes les 28 ms ----
-let LEVEL = 1, NOISE = 0.004, LEAD = 0; // niveau du jeu et du souffle (micro d'ordinateur ; voir plus bas pour le téléphone)
+let LEVEL = 1, NOISE = 0.004, LEAD = 0, PERC = false; // PERC : un son qui ne fait que décroître (piano), voir render // niveau du jeu et du souffle (micro d'ordinateur ; voir plus bas pour le téléphone)
 function render(sr, events, tail = 0.4) {
   events = events.map((e) => Object.assign({}, e, { t: e.t + LEAD })); // le micro est allumé un moment avant de jouer
+  PERC = events.some((e) => e.decay); // la page dit à l'oreille si l'instrument ne fait que décroître (Ear.setPerc)
   const dur = events.reduce((a, e) => Math.max(a, e.t + e.d), 0) + tail;
   const y = new Float32Array(Math.ceil(dur * sr));
   for (const e of events) {
@@ -61,7 +62,7 @@ function render(sr, events, tail = 0.4) {
 }
 function listen(sr, y, expectPc = null) {
   // expectPc : une note attendue pour tout le passage, ou la suite des notes attendues (comme pendant un essai)
-  const T = makeTracker(); const seq = Array.isArray(expectPc) ? expectPc : null; T.expectPc = seq ? seq[0] : expectPc;
+  const T = makeTracker(); T.perc = PERC; const seq = Array.isArray(expectPc) ? expectPc : null; T.expectPc = seq ? seq[0] : expectPc;
   const hop = Math.round(0.028 * sr), got = [], onset = makeOnset(sr);
   let nf = NF0;
   for (let s = 0; s + N <= y.length; s += hop) {
@@ -279,5 +280,36 @@ afterPage('même note jouée un peu avant la fin', [{ m: 60, t: 0.1, d: 0.9 }, {
 afterPage('fin d\'une note tenue de la page', [{ m: 60, t: 0.1, d: 0.9 }], 0.75, [{ pc: 0, end: 1.0, until: 1.4 }], []);
 // la page finit sur Mi (cloche) ; l'élève joue tout de suite Sol, la note suivante
 afterPage('note suivante jouée dès la fin (cloche qui résonne)', [{ m: 64, t: 0.1, d: 2.2, decay: 0.6, timbre: 'piano/scie' }, { m: 67, t: 0.62, d: 0.5 }], 0.45, [{ pc: 4, end: 0.6, until: 3 }], [67], [0.6, 0.85]);
+
+// ---- sifflé (Romain, « Picoti, picota » : do do do-o do do ré) : la 3e note, longue, faiblit puis reprend de la force ;
+// la même note est attendue ensuite. Une note longue n'est pas deux notes ; les notes détachées (coup de langue) comptent ----
+{
+  const sr = 48000;
+  const whistle = (notes, { lvl, trem, push, ramp = 0.15, gap = 0.05 }) => {
+    const dur = notes.reduce((a, n) => Math.max(a, n.t + n.d), 0) + 0.5;
+    const y = new Float32Array(Math.ceil(dur * sr)); let ph = 0;
+    for (const n of notes) {
+      const i0 = Math.floor(n.t * sr), i1 = Math.floor((n.t + n.d - gap) * sr), T = (i1 - i0) / sr;
+      for (let i = i0; i < i1; i++) {
+        const t = (i - i0) / sr;
+        ph += 2 * Math.PI * hz(n.m + 12) * (1 + 0.004 * Math.sin(2 * Math.PI * 5.5 * t)) / sr; // sifflé une octave au-dessus
+        let a = Math.min(1, t / 0.03) * Math.min(1, (T - t) / 0.03) * (1 + trem * Math.sin(2 * Math.PI * 4.5 * t + n.m));
+        if (T > 0.4) a *= t < T * 0.55 ? 1 - 0.35 * (t / (T * 0.55)) : 0.65 + push * Math.min(1, (t - T * 0.55) / ramp);
+        y[i] += lvl * a * (Math.sin(ph) + 0.08 * rand());
+      }
+    }
+    for (let i = 0; i < y.length; i++) y[i] += 0.0003 * rand();
+    return y;
+  };
+  PERC = false; // sifflé : un son tenu
+  let ok = 0, n = 0;
+  for (const bpm of [60, 80, 96, 120]) for (const trem of [0, 0.1, 0.15]) for (const push of [0, 0.3, 0.6]) for (const lvl of [0.02, 0.2]) {
+    const e = 60 / bpm / 2, notes = [{ m: 60, t: 0.3, d: e }, { m: 60, t: 0.3 + e, d: e }, { m: 60, t: 0.3 + 2 * e, d: 2 * e }];
+    const got = listen(sr, whistle(notes, { lvl, trem, push }), [60, 60, 60, 60, 60, 62]);
+    n++; total++;
+    if (got.join() === '72,72,72') ok++; else { fails++; console.log(`✗ sifflé « pi-co-ti » à ${bpm}, tremolo ${trem}, regain ${push}, niveau ${lvl} → ${names(got)}`); }
+  }
+  console.log(`${ok === n ? '✓' : '✗'} sifflé « pi-co-ti » (la 3e longue, la même note attendue ensuite) : ${ok}/${n} comptés 3 notes`);
+}
 console.log(fails ? `\n${fails} échec(s) au total` : '\nAprès la page : tout passe.');
 process.exit(fails ? 1 : 0);

@@ -54,7 +54,8 @@
   chips($('ex'), EX.map((e) => [e.id, e.name]), () => S.ex, (k) => { S.ex = k; });
   chips($('tp'), TEMPOS.map((t) => [t, String(t)]), () => S.tempo, (k) => { S.tempo = +k; });
   function paintEx() { $('exnotes').textContent = ex().seq.map(([m]) => nameOf(m)).join(' · '); }
-  function applyInst() { Sound.setTranspose(inst().play); Sound.useSamples(inst().voice); }
+  const PERC = new Set(['piano', 'xylophone', 'guitare', 'guitareelec']); // comme dans le jeu (src/app.js)
+  function applyInst() { Sound.setTranspose(inst().play); Sound.useSamples(inst().voice); Ear.setPerc(PERC.has(S.inst)); }
   paintEx();
 
   // ---- l'écoute ----

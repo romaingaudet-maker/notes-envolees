@@ -191,6 +191,7 @@
     save(SET_KEY, settings);
     Sound.setTranspose(inst().play);
     Sound.useSamples(inst().voice);
+    Ear.setPerc(PERC.has(k));
     app.querySelectorAll('select.inst-sel').forEach((sel) => { sel.value = k; });
     const ipn = app.querySelector('#ip-name');
     if (ipn) ipn.textContent = instShort();
@@ -222,6 +223,9 @@
      bouton « Changer », comme dans une comptine le bouton à son nom, ouvre les réglages : le prénom, le mode de jeu et
      l'instrument s'y changent directement, sans repasser par les trois écrans. Quand le suivi est branché, le prénom
      part avec les résultats (voir les mentions légales). */
+  // les instruments dont le son ne fait que décroître : l'oreille y accepte la même note frappée de nouveau sur la
+  // résonance ; les autres (et « Autre instrument ») tiennent leurs notes : une note longue n'est pas deux notes
+  const PERC = new Set(['piano', 'xylophone', 'guitare', 'guitareelec']);
   const INST_LIST = ['flute', 'clarinette', 'saxalto', 'trompette', 'trombone', 'cor', 'violon', 'alto', 'violoncelle', 'guitare', 'guitareelec', 'piano', 'xylophone', 'voix', 'none'];
   // nom court (bouton d'une comptine, rappel de l'accueil) ; sur les cartes à dessin, une précision si besoin
   const INST_TILE = { flute: 'Flûte', clarinette: 'Clarinette', saxalto: 'Saxophone', trompette: 'Trompette', trombone: 'Trombone', cor: 'Cor', violon: 'Violon', alto: 'Alto', violoncelle: 'Violoncelle', guitare: 'Guitare', guitareelec: 'Guitare élec.', piano: 'Piano', xylophone: 'Xylophone', voix: 'Voix', none: 'Autre' };
@@ -760,6 +764,7 @@
   const micErrs = new Set();
   Sound.setTranspose(inst().play);
   Sound.useSamples(inst().voice);
+  Ear.setPerc(PERC.has(settings.inst));
 
   let view = 'home';
   let G = null; // partie en cours
