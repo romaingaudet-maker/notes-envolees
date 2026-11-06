@@ -179,6 +179,22 @@ h3.sub { font-size: 15px; font-weight: 650; padding: 18px 16px 6px; border-top: 
 .tbl.ep small.ok { color: var(--ok); }
 .tbl.ep small.warn { color: var(--warn); }
 .x { font-size: 12.5px; color: var(--muted); }
+/* les séances d'un élève, une par une (la plus récente d'abord) */
+.d-h { font-size: 14px; font-weight: 700; margin: 14px 0 6px; }
+.sess { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.se { border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; }
+.se-h { font-size: 13.5px; color: var(--ink-2); margin: 0 0 4px; }
+.se-h b { color: var(--ink); display: inline-block; }
+.se-h b::first-letter { text-transform: uppercase; }
+.se-l { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.se-l li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; font-size: 14px; }
+.se-c { min-width: 0; }
+.se-c b { color: var(--muted); font-weight: 600; margin-right: 4px; font-variant-numeric: tabular-nums; }
+.se-r { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
+.se-r small { font-size: 12.5px; color: var(--muted); }
+.se-r small.ok { color: var(--ok); }
+.se-r small.warn { color: var(--warn); }
+.se-more { font-size: 13px; margin-top: 6px; }
 .stars { letter-spacing: 1px; white-space: nowrap; }
 .stars b { color: var(--star-off); font-weight: 400; }
 .stars b.on { color: var(--star); }

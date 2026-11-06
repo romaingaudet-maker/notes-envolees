@@ -192,6 +192,22 @@ h3.sub { font-size: 15px; font-weight: 650; padding: 18px 16px 6px; border-top: 
 .tbl.ep small.ok { color: var(--ok); }
 .tbl.ep small.warn { color: var(--warn); }
 .x { font-size: 12.5px; color: var(--muted); }
+/* les séances d'un élève, une par une (la plus récente d'abord) */
+.d-h { font-size: 14px; font-weight: 700; margin: 14px 0 6px; }
+.sess { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.se { border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; }
+.se-h { font-size: 13.5px; color: var(--ink-2); margin: 0 0 4px; }
+.se-h b { color: var(--ink); display: inline-block; }
+.se-h b::first-letter { text-transform: uppercase; }
+.se-l { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.se-l li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; font-size: 14px; }
+.se-c { min-width: 0; }
+.se-c b { color: var(--muted); font-weight: 600; margin-right: 4px; font-variant-numeric: tabular-nums; }
+.se-r { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
+.se-r small { font-size: 12.5px; color: var(--muted); }
+.se-r small.ok { color: var(--ok); }
+.se-r small.warn { color: var(--warn); }
+.se-more { font-size: 13px; margin-top: 6px; }
 .stars { letter-spacing: 1px; white-space: nowrap; }
 .stars b { color: var(--star-off); font-weight: 400; }
 .stars b.on { color: var(--star); }
@@ -752,9 +768,11 @@ const Retour = (() => {
      coince ; le détail de chaque épreuve en le touchant ;
    - chaque instrument : élèves, part jouée au micro, difficulté, abandons ;
    - les comptines difficiles selon l'instrument, avec le résultat de chaque élève.
-   Partout, un élève qui a donné son prénom sur l'accueil (c'est facultatif)
-   est nommé : élèves actifs de la semaine, élèves de chaque instrument,
-   résultats de chaque comptine.
+   Seuls les élèves qui ont donné leur prénom sur l'accueil (c'est facultatif
+   dans le jeu) sont montrés, partout : fiches, chiffres, instruments,
+   comptines. Dans le détail d'un élève, ses séances une par une (une pause
+   de plus de 30 min en commence une autre) : jour, heure, durée de jeu, et
+   ce qu'il a joué ce jour-là ; puis le bilan de toutes ses séances.
 
    Les appareils du professeur : ouvrir cette page (avec la clé) sur un
    appareil le reconnaît comme le sien. Le jeu n'y envoie plus rien, et ses
@@ -918,7 +936,9 @@ const Retour = (() => {
     for (const e of RAW) if (isMark(e)) marks.set(e.eleve, e); // dans l'ordre d'arrivée : la dernière marque compte
     MINE = new Map([...marks].filter(([, e]) => e.d.prof));
     MY_NETS = new Set(RAW.filter((e) => MINE.has(e.eleve) && e.ip && e.t > NOW - 30 * DAY).map((e) => net(e.ip)));
-    EVENTS = RAW.filter((e) => !isMark(e) && !MINE.has(e.eleve));
+    // seuls les élèves qui ont donné leur prénom (une fois au moins, sur cet appareil) sont montrés
+    const named = new Set(RAW.filter((e) => !isMark(e) && typeof e.d.prenom === 'string' && e.d.prenom.trim()).map((e) => e.eleve));
+    EVENTS = RAW.filter((e) => !isMark(e) && !MINE.has(e.eleve) && named.has(e.eleve));
   }
 
   // marque (ou démarque) un appareil comme celui du professeur
@@ -1004,6 +1024,32 @@ const Retour = (() => {
     });
     if (stuck) out.push(`Bloque sur « ${songTitle(stuck.id)} »${stuck.lv === 2 ? ' (niveau 2)' : ''} : ${plural(stuck.n, 'abandon', 'abandons')}`);
     return out;
+  }
+
+  /* Les séances d'un élève : ses parties rangées dans le temps, une pause de plus de 30 min en commence une
+     nouvelle. Pour chacune : début, fin, temps de jeu (durée des parties terminées ou quittées), instruments, et
+     ce qu'il a joué (comptine et niveau : terminée et étoiles, toute la comptine réussie, abandons, ouverte). La
+     plus récente d'abord. */
+  const GAP = 30 * 60e3;
+  function sessions(id) {
+    const evs = EVENTS.filter((e) => e.eleve === id && /^(debut|fin|sortie|bilan)$/.test(e.type)).sort((a, b) => a.t - b.t);
+    const out = [];
+    let cur = null;
+    for (const e of evs) {
+      if (!cur || e.t - cur.end > GAP) { cur = { start: e.t, end: e.t, temps: 0, insts: new Set(), items: new Map() }; out.push(cur); }
+      cur.end = e.t;
+      const d = e.d;
+      if (e.type === 'debut') cur.insts.add(d.inst || 'none');
+      if (!BY_ID[d.c]) continue;
+      const lv = d.niveau === 2 ? 2 : 1, k = epKey(d.c, lv);
+      let it = cur.items.get(k);
+      if (!it) { it = { c: d.c, lv, debuts: 0, fins: [], sorties: [], bilans: [] }; cur.items.set(k, it); }
+      if (e.type === 'debut') it.debuts++;
+      else if (e.type === 'fin') { it.fins.push(d); cur.temps += num(d.duree); }
+      else if (e.type === 'sortie') { it.sorties.push(d); cur.temps += num(d.duree); }
+      else it.bilans.push(d);
+    }
+    return out.reverse();
   }
 
   /* Les prénoms dans les statistiques : un élève qui a donné son prénom est nommé ; le même prénom sur
@@ -1112,7 +1158,7 @@ const Retour = (() => {
         <h3 class="sub">Difficulté de chaque comptine</h3>
         ${heatmap(cols)}
       </section>` : `
-      <section class="card pad empty"><p><b>Aucun élève pour l’instant.</b></p><p>Dès qu’un élève ouvrira le jeu, il apparaîtra ici.</p></section>`}
+      <section class="card pad empty"><p><b>Aucun élève pour l’instant.</b></p><p>Dès qu’un élève ouvrira le jeu et donnera son prénom sur l’accueil, il apparaîtra ici.</p></section>`}
       ${footer()}
     </main>`;
     bindBack();
@@ -1234,6 +1280,39 @@ const Retour = (() => {
     return out.join('');
   }
 
+  // les séances d'un élève, une par une (voir sessions) : les 12 plus récentes, les autres comptées
+  const DF_SESS = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+  const MAX_SESS = 12;
+  function sessionsHtml(s) {
+    const list = sessions(s.id);
+    if (!list.length) return '';
+    const main = mainInst(s);
+    const one = (se) => {
+      const d0 = new Date(se.start);
+      const yr = d0.getFullYear() !== new Date(NOW).getFullYear() ? ` ${d0.getFullYear()}` : '';
+      const play = se.temps || (se.end - se.start) / 1000;
+      const insts = [...se.insts].filter((k) => k !== main).map(instName);
+      const items = [...se.items.values()].map((it) => {
+        const b = Math.max(0, ...it.fins.map((d) => starsOf(d.etoiles)));
+        const bits = [];
+        if (it.fins.length) bits.push(`${starIcons(b)}${it.fins.length > 1 ? ` <span class="x">${it.fins.length} fois</span>` : ''}`);
+        if (it.bilans.some((d) => d.reussi)) bits.push(`<small class="ok">✓ toute la comptine${it.lv === 2 ? ' en rythme' : ' d’un coup'}</small>`);
+        if (it.sorties.length) {
+          const last = it.sorties[it.sorties.length - 1];
+          bits.push(`<small class="warn">${plural(it.sorties.length, 'abandon', 'abandons')}${!it.fins.length && num(last.sur) ? ` (arrêté à ${NF0.format(num(last.fait))}/${NF0.format(num(last.sur))} ${it.lv === 2 ? 'phrases' : 'notes'})` : ''}</small>`);
+        }
+        if (!bits.length) bits.push('<span class="mute">ouverte</span>');
+        const song = BY_ID[it.c];
+        return `<li><span class="se-c"><b>${song.level}</b> ${esc(nb(song.title))}${it.lv === 2 ? ' <span class="x">niv.' + NBSP + '2</span>' : ''}</span><span class="se-r">${bits.join(' ')}</span></li>`;
+      }).join('');
+      return `<li class="se"><p class="se-h"><b>${esc(DF_SESS.format(d0))}${yr}</b> · ${esc(DF_TIME.format(d0))} · ${esc(dur(play))} de jeu${insts.length ? ` · ${esc(insts.join(', '))}` : ''}</p>${items ? `<ul class="se-l">${items}</ul>` : '<p class="mute">Rien de joué.</p>'}</li>`;
+    };
+    const more = list.length - MAX_SESS;
+    return `<h3 class="d-h">Séances <span class="count">${NF0.format(list.length)}</span></h3>
+      <ol class="sess">${list.slice(0, MAX_SESS).map(one).join('')}</ol>
+      ${more > 0 ? `<p class="mute se-more">et ${plural(more, 'séance plus ancienne', 'séances plus anciennes')}</p>` : ''}`;
+  }
+
   function detail(s) {
     const lv2 = touched(s, 2);
     const td = (label, html) => `<td data-l="${label}"${html === DASH ? ' class="nil"' : ''}><div>${html}</div></td>`;
@@ -1244,7 +1323,8 @@ const Retour = (() => {
     const me = myId() === s.id;
     return `<div class="detail">
       <p class="d-meta">${esc(dur(s.temps))} de jeu${s.first < s.last - DAY ? ` depuis le ${esc(day(s.first))}` : ''}${others.length ? ` · a aussi joué : ${esc(others.join(', '))}` : ''}${names.length ? ` · ${names.length > 1 ? 'autres prénoms donnés' : 'autre prénom donné'} : ${esc(names.join(', '))}` : ''}</p>
-      ${rows ? `<table class="tbl ep"><thead><tr><th scope="col">Comptine</th><th scope="col">Niveau 1 · les notes</th>${lv2 ? '<th scope="col">Niveau 2 · notes et rythme</th>' : ''}</tr></thead><tbody>${rows}</tbody></table>` : '<p class="mute">Aucune comptine commencée.</p>'}
+      ${sessionsHtml(s)}
+      ${rows ? `<h3 class="d-h">Toutes séances confondues</h3><table class="tbl ep"><thead><tr><th scope="col">Comptine</th><th scope="col">Niveau 1 · les notes</th>${lv2 ? '<th scope="col">Niveau 2 · notes et rythme</th>' : ''}</tr></thead><tbody>${rows}</tbody></table>` : '<p class="mute">Aucune comptine commencée.</p>'}
       <p class="d-act">
         ${me ? '' : `<button type="button" class="btn ghost" data-act="mine" data-id="${esc(s.id)}">C’est moi : ne plus afficher</button>`}
         ${defiBtn(s)}
