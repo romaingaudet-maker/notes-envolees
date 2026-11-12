@@ -23943,6 +23943,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
 
   function endLive() {
     if (!G || !G.live) return;
+    wrongDrop();
     G.live = null;
     el.main.classList.remove('is-taking');
     setCursor(null);
@@ -24111,18 +24112,42 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
       if (said === 'oui') G.nameOk.add(G.cursor);
       both = G.pitchOk.has(G.cursor) && G.nameOk.has(G.cursor);
     }
+    const ok = (pitchOk && said !== 'non') || both, pc = mod12(written);
+    if (pitchOk) tuneTo(hit, target.midi);
     if (G.live.full) {
-      if (pitchOk) tuneTo(hit, target.midi);
-      wholeNote((pitchOk && said !== 'non') || both, el.heard);
+      if (ok) { wrongDrop(); wholeNote(true, el.heard); } else wrongSoon(pc, () => wholeNote(false, el.heard));
       return;
     }
     // une phrase : la note jouée prend sa place, juste ou fausse, et l'on passe à la suivante (voir phraseNote)
-    if (pitchOk) tuneTo(hit, target.midi);
-    if ((pitchOk && said !== 'non') || both) { phraseNote(true); return; }
-    const pc = mod12(written), L = PC_LETTER[pc];
-    phraseNote(false, pitchOk && said === 'non'
+    if (ok) { wrongDrop(); phraseNote(true); return; }
+    const L = PC_LETTER[pc];
+    const html = pitchOk && said === 'non'
       ? `Bonne hauteur, mais j’entends «${NB}${SYL_FR[hit.syl.best]}${NB}»`
-      : `J’entends ${L ? chip(L, NOTE_FR[L]) : `<span class="nchip">${PC_FR[pc]}</span>`}${NB}: pas celle-là`);
+      : `J’entends ${L ? chip(L, NOTE_FR[L]) : `<span class="nchip">${PC_FR[pc]}</span>`}${NB}: pas celle-là`;
+    wrongSoon(pc, () => phraseNote(false, html));
+  }
+
+  /* niveau 1 : une fausse note n'est retenue qu'au bout d'un court instant (WRONG_MS), puisqu'elle fait passer à la
+     note suivante. La voix qui glisse jusqu'à sa note, une note entendue deux fois de suite : une note juste arrivée
+     entre-temps l'emporte, une autre fausse la remplace. Et la même fausse note entendue de nouveau juste après (moins
+     de WRONG_SAME ms depuis la dernière fois qu'on l'a entendue) est la même note, toujours chantée ou jouée : elle ne
+     compte pas une deuxième fois. */
+  const WRONG_MS = 350, WRONG_SAME = 1200;
+  function wrongSoon(pc, commit) {
+    const g = G, n = G.cursor, now = performance.now();
+    if (g.lastWrong && g.lastWrong.pc === pc && now - g.lastWrong.at < WRONG_SAME && !g.wrongT) { g.lastWrong.at = now; return; }
+    if (g.wrongT) clearTimeout(g.wrongT);
+    g.wrongT = later(() => {
+      g.wrongT = null;
+      if (G !== g || !g.live || g.cursor !== n) return;
+      g.lastWrong = { pc, at: performance.now() };
+      commit();
+    }, WRONG_MS);
+  }
+  function wrongDrop() {
+    if (!G) return;
+    if (G.wrongT) { clearTimeout(G.wrongT); G.wrongT = null; }
+    G.lastWrong = null;
   }
 
   function retrigger(node, cls) {
