@@ -103,8 +103,36 @@ const Sound = (() => {
     return pcs ? { pcs, body } : null;
   }
 
+  /* Le son peut être coupé par le téléphone : appel, autre appli qui joue, veille, écouteurs branchés ou débranchés.
+     Le contexte audio passe alors à « suspended » ou, sur iPhone, « interrupted » : on le relance au toucher suivant
+     (et au retour sur la page). Fermé, ou bloqué (« running » mais son horloge n'avance plus), on le refait à neuf :
+     avant, il fallait recharger la page pour retrouver le son. Ceux qui tenaient des nœuds de l'ancien (le micro)
+     sont prévenus (onReset). */
+  let lastWall = 0, lastCT = 0;
+  const resetCbs = [];
+  function drop() {
+    try { if (ctx.state !== 'closed') { const p = ctx.close(); if (p && p.catch) p.catch(() => {}); } } catch (e) { /* déjà fermé */ }
+    ctx = null; master = null; revIn = null; noise = null;
+    waves.clear(); tapBuses.clear(); clickBuf = null;
+    recent = []; quietUntil = 0; lastWall = 0;
+    resetCbs.forEach((f) => { try { f(); } catch (e) { /* rien */ } });
+  }
+  function wake() {
+    if (!ctx) return;
+    if (ctx.state === 'closed') { drop(); return; }
+    if (ctx.state !== 'running') { lastWall = 0; try { const p = ctx.resume(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* au prochain toucher */ } return; }
+    const w = performance.now(), ct = ctx.currentTime;
+    if (lastWall && w - lastWall > 1000 && ct - lastCT < 0.05 * (w - lastWall) / 1000) { drop(); return; }
+    lastWall = w; lastCT = ct;
+  }
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
+    addEventListener('pageshow', wake);
+  }
+
   function ensure() {
     if (!AC) return null;
+    if (ctx) wake();
     if (!ctx) {
       try { if (navigator.audioSession && navigator.audioSession.type === 'auto') navigator.audioSession.type = 'playback'; } catch (e) { /* facultatif */ }
       ctx = new AC({ latencyHint: 'interactive' });
@@ -125,7 +153,7 @@ const Sound = (() => {
       for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
       packs.forEach((k) => decode(k)); // sons arrivés avant (navigateur sans contexte hors ligne)
     }
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state !== 'running') { try { const p = ctx.resume(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* au prochain toucher */ } }
     return ctx;
   }
 
@@ -653,6 +681,7 @@ const Sound = (() => {
     ringing, EARLY,
     lastConcert: () => lastConcert,
     lastVoice: () => lastVoice,
+    onReset: (f) => { resetCbs.push(f); }, // le contexte audio a été refait (voir drop)
     hasVoice: (id) => !!VOICES[id],
     setTranspose: (n) => { transpose = n | 0; },
     // l'instrument choisi joue avec ses enregistrements (chargés à la demande) ; null : timbres synthétisés

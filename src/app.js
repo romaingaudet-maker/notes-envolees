@@ -2868,6 +2868,13 @@
     fitRaf = requestAnimationFrame(() => { if (view === 'song' && G && el.done && document.contains(el.done)) fitDone(); });
   });
 
+  // le son a été refait à neuf (le téléphone l'avait coupé, voir Sound.onReset) : l'écoute ou la prise en cours,
+  // calées sur l'ancien, s'arrêtent ; le micro, branché sur l'ancien, est rallumé sur le nouveau
+  Sound.onReset(() => {
+    if (G && (prepping() || G.playing)) { cancelAttempt(true); stopPlayback(true); }
+    if (Ear.active()) { Ear.stop(); if (view === 'song' && G && !G.done && !micBlocked()) startMic(); }
+  });
+
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && G && prepping()) cancelAttempt();
     if (document.hidden && Ear.active()) {
