@@ -23840,9 +23840,15 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     flashTop(MSG_MS);
   }
 
+  /* L'oreille attend la note du curseur. Quand on chante, une note n'arrive qu'avec sa syllabe, jusqu'à 0,35 s après son
+     début (voir Ear) : dès qu'elle est entendue (heardPending), l'oreille attend déjà la suivante, et aussi les deux
+     d'après ; sinon, la note suivante chantée vite était prise pour une note inattendue, reconnue plus lentement, et il
+     fallait chanter plus lentement que la comptine (comme au niveau 2, voir expectTake). */
   function expectNext() {
     if (!G || G.cursor == null) { Ear.expect(null); return; }
-    Ear.expect(mod12(G.song.notes[G.cursor].midi + inst().off));
+    const all = G.song.notes, k = Math.min(all.length - 1, G.cursor + (G.livePend || 0)), pcs = [];
+    for (let i = k; i < Math.min(all.length, k + (singing() ? 3 : 1)); i++) pcs.push(mod12(all[i].midi + inst().off));
+    Ear.expect(pcs.length > 1 ? pcs : pcs[0]);
   }
 
   /* ================= LES ESSAIS =================
@@ -23964,6 +23970,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     // comptine entière, sans aide : écoute et choix des phrases fermés le temps de l'essai
     el.main.classList.toggle('is-taking', !!sc.full);
     G.liveWrong = 0;
+    G.livePend = 0;
     const first = sc.full ? 0 : G.song.phrases[sc.p].notes[0];
     setCursor(first, true, false);
     setHint('Joue\u00a0!', 'go');
@@ -23973,6 +23980,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
   function endLive() {
     if (!G || !G.live) return;
     wrongDrop();
+    G.livePend = 0;
     G.live = null;
     el.main.classList.remove('is-taking');
     setCursor(null);
@@ -24120,6 +24128,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     }
     if (G.cal) { calHit(hit); return; }
     if (G.take) { recordNote({ t: (hit.t != null ? hit.t : Sound.now()) - Sound.outLatency() - 0.03, written: hit.r - inst().off, hit, syl: hit.syl }); return; }
+    if (G.livePend) G.livePend--; // la note annoncée (heardPending) est arrivée
     if (G.done) return;
     if (!G.live && !prepping() && !G.playing) { if (G.moveTo == null && !(G.singUntil > performance.now())) nudge(); return; }
     if (G.level === 2 || !G.live) return;
@@ -24557,6 +24566,7 @@ window.Laine = Object.assign(window.Laine || {}, { Engine, SCENES, KIT, FPS });
     Ear.expect(pcs);
   }
   function heardPending() {
+    if (G && G.live && !G.take) { G.livePend = (G.livePend || 0) + 1; expectNext(); return; }
     const tk = G && G.take;
     if (!tk || !tk.mic) return;
     tk.pend = (tk.pend || 0) + 1;
