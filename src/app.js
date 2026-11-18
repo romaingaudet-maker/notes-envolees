@@ -2056,10 +2056,13 @@
       if (!G || G.playing !== P) return;
       const now = Sound.now();
       if (P.ci) {
-        const heard = now - Sound.outLatency();
-        if (heard < P.t0 - 0.04) {
-          const k = Math.floor((heard - P.ci.clicks[0]) / P.ci.beatSec + 0.001);
-          if (k >= 0 && k < P.ci.N && k !== P.k) { P.k = k; showCount(P.ci, k); retrigger(el.card, 'beat'); }
+        // le décompte dessiné comme pour la prise (paintCountIn) : une levée tombe dedans, en pointillé, et se remplit
+        // pendant que la page la joue ; il reste jusqu'à la fin du décompte entier
+        const heard = now - Sound.outLatency(), ci = P.ci;
+        if (heard < ci.clicks[0] + ci.total * ci.beatSec - 0.04) {
+          const k = Math.floor((heard - ci.clicks[0]) / ci.beatSec + 0.001);
+          if (k >= 0 && k < ci.N && k !== P.k) { P.k = k; retrigger(el.card, 'beat'); }
+          if (k >= 0) paintCountIn(ci, heard, heard < P.t0 - 0.04);
         } else if (!P.heard) {
           P.heard = true;
           // « Écouter » (niveau 2) : le décompte fini, le niveau et la vitesse reviennent en haut du pupitre
@@ -2185,18 +2188,6 @@
     // départ (pour une levée, le départ tombe dedans : « 1 2 3 4 » avec la levée sur le 4 ou le 3 et demi)
     const S = full + pos, total = pos > 1e-6 ? full + perBar : N;
     return { N, clicks, labels, downs, beatSec, spb, T0: c0 + S * beatSec, S, total };
-  }
-
-  function showCount(ci, k) {
-    // d'un temps à l'autre, on change seulement la bulle allumée (pas de nouvelle apparition)
-    const cin = el.hint && el.hint.classList.contains('count') ? el.hint.querySelector('.cin') : null;
-    if (cin && cin.children.length === ci.N) {
-      [...cin.children].forEach((b, i) => { b.classList.toggle('past', i < k); b.classList.toggle('on', i === k); });
-      cin.setAttribute('aria-label', `Décompte : ${ci.labels[k]}`);
-      hintSeq++;
-      return;
-    }
-    setHint(`<span class="cin" aria-label="Décompte : ${ci.labels[k]}">${ci.labels.map((l, i) => `<b class="${i < k ? 'past' : i === k ? 'on' : ''}">${l}</b>`).join('')}</span>`, 'count');
   }
 
   /* Le décompte des deux niveaux, redessiné à chaque image : le décompte entier (tk.total temps). Pour une phrase en
