@@ -1348,7 +1348,7 @@
     // en haut, hors du jeu : le niveau, qu'on peut changer à tout moment (en Défi, où en est le Défi) ; un message à lire
     // (le bilan d'un essai…) y prend sa place quelques secondes (flashTop), puis le niveau revient ; pendant que la
     // page fait entendre la phrase suivante, après une phrase réussie, « Écoute la phrase n… »
-    const seg = (st === 'repos' || st === 'apres') && !(G.flashUntil > performance.now()) && !(G.playing && G.playing.auto);
+    const seg = (st === 'repos' || st === 'apres') && !(G.flashUntil > performance.now()) && !(G.playing && (G.playing.auto || (G.playing.ci && !G.playing.heard)));
     el.seg.hidden = !seg;
     el.hint.hidden = seg;
     if (!seg) fitHint();
@@ -1556,11 +1556,16 @@
     // juste après une phrase réussie : la suivante (la carte y passe tout de suite)
     if (G.moveTo != null) { const nx = G.moveTo; G.moveTo = null; showPhrase(nx); }
     const sc = { full: !!G.whole, p: G.view };
+    // niveau 2 (notes et rythme) : l'écoute commence par le même décompte que la prise, pour entendre la phrase dans
+    // sa mesure, à sa place (une levée tombe dans le décompte)
+    const ci = G.level === 2 ? countIn(sc.full ? 0 : sc.p) : null;
+    const opts = { auto: !!auto };
+    if (ci) Object.assign(opts, { ci, at: ci.T0, srcs: ci.clicks.map((t, i) => Sound.clickAt(t, ci.downs[i])) });
     playEvents(sc.full ? G.song.events : G.song.phrases[sc.p].events, 'free', (P) => {
       // arrêtée avant la fin : le niveau revient tout de suite en haut du pupitre
       if (!P.natural) { if (auto && G) { G.flashUntil = 0; bandUI(); } return; }
       if (auto) nextInvite(); else singInvite();
-    }, { auto: !!auto });
+    }, opts);
     if (auto && G.playing && G.playing.auto) setHint(`Écoute la phrase ${sc.p + 1}…`, '');
   }
   const SING_MS = 12000; // après l'invitation, l'élève qui chante n'est pas renvoyé tout de suite au grand rond (nudge)
@@ -2055,7 +2060,11 @@
         if (heard < P.t0 - 0.04) {
           const k = Math.floor((heard - P.ci.clicks[0]) / P.ci.beatSec + 0.001);
           if (k >= 0 && k < P.ci.N && k !== P.k) { P.k = k; showCount(P.ci, k); retrigger(el.card, 'beat'); }
-        } else if (!P.heard) { P.heard = true; setHint('Écoute bien…', ''); }
+        } else if (!P.heard) {
+          P.heard = true;
+          // « Écouter » (niveau 2) : le décompte fini, le niveau et la vitesse reviennent en haut du pupitre
+          if (P.kind === 'free' && !P.auto) bandUI(); else setHint('Écoute bien…', '');
+        }
       }
       let cur = -1;
       for (const it of P.items) {
